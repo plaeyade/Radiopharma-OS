@@ -1,0 +1,33 @@
+{
+  "nuclide": "11C",
+  "Z": 6,
+  "A": 11,
+  "half_life_s": 1221.8400000000001,
+  "half_life_min": 20.364,
+  "half_life_uncertainty_min": 0.014,
+  "decay_constant_s-1": 0.0005672978299613248,
+  "decay_modes": [
+    {
+      "mode": "beta+",
+      "branching_ratio": 0.9979,
+      "endpoint_energy_keV": 960.4
+    },
+    {
+      "mode": "electron_capture",
+      "branching_ratio": 0.0021
+    }
+  ],
+  "emissions": [
+    {
+      "type": "annihilation_photon",
+      "energy_keV": 511.0,
+      "intensity_%": 199.534
+    }
+  ],
+  "provenance": {
+    "source": "IAEA LiveChart of Nuclides / DDEP recommended data",
+    "reference": "Hermanne et al., arXiv:2006.03125 (DB-2003): T1/2 = 20.364(14) min; I(511) = 199.534(5)%",
+    "retrieved": "2026-07-18",
+    "version": "livechart-ddep-2021"
+  }
+}

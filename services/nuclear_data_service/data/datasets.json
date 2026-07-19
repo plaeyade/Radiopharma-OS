@@ -1,0 +1,94 @@
+{
+  "datasets": [
+    {
+      "id": "o18_p_n_f18_iaea2021",
+      "type": "cross_section",
+      "reaction": "18O(p,n)18F",
+      "file": "data/cross_sections/o18_p_n_f18/o18_p_n_f18_iaea2021.csv",
+      "source": "IAEA-NDS Medical Portal (May 2021 update)",
+      "url": "https://nds.iaea.org/medical/o8p18f4.html",
+      "exfor_entries": [
+        "D4095",
+        "C1010",
+        "A1366",
+        "C1016",
+        "D0095",
+        "O0916",
+        "A0235",
+        "O0454"
+      ],
+      "retrieved": "2026-07-17",
+      "sha256": "386113508795aab41db9171b0dcadb8cec647842e032f6ace74be26264366c81",
+      "license": "IAEA-NDS open data"
+    },
+    {
+      "id": "f18_decay_ddep",
+      "type": "decay",
+      "nuclide": "18F",
+      "file": "data/decay/f18.json",
+      "source": "IAEA LiveChart / DDEP",
+      "retrieved": "2026-07-17",
+      "license": "open data"
+    },
+    {
+      "id": "n14_p_a_c11_iaea2021",
+      "type": "cross_section",
+      "reaction": "14N(p,alpha)11C",
+      "file": "data/cross_sections/n14_p_a_c11/n14_p_a_c11_iaea2021.csv",
+      "source": "IAEA-NDS Medical Portal (May 2021 update)",
+      "url": "https://nds.iaea.org/medical/n4p11c4.html",
+      "retrieved": "2026-07-18",
+      "sha256": "3eacc2ba895cc02524dda150a88f21e9319f057f4226cbd4033b5ae683fe72f6",
+      "license": "IAEA-NDS open data"
+    },
+    {
+      "id": "c11_decay_ddep",
+      "type": "decay",
+      "nuclide": "11C",
+      "file": "data/decay/c11.json",
+      "source": "IAEA LiveChart / DDEP",
+      "retrieved": "2026-07-18",
+      "license": "open data"
+    },
+    {
+      "id": "n15_p_n_o15_iaea2021",
+      "type": "cross_section",
+      "reaction": "15N(p,n)15O",
+      "file": "data/cross_sections/n15_p_n_o15/n15_p_n_o15_iaea2021.csv",
+      "source": "IAEA-NDS Medical Portal (May 2021 update)",
+      "url": "https://nds.iaea.org/medical/n5p15o4.html",
+      "retrieved": "2026-07-18",
+      "sha256": "dec3063f46f34f9283e85ada1b40965c9d39834258a7bf0a0383e63acf33a858",
+      "license": "IAEA-NDS open data"
+    },
+    {
+      "id": "zn68_p_n_ga68_iaea2021",
+      "type": "cross_section",
+      "reaction": "68Zn(p,n)68Ga",
+      "file": "data/cross_sections/zn68_p_n_ga68/zn68_p_n_ga68_iaea2021.csv",
+      "source": "IAEA-NDS Medical Portal (May 2021 update)",
+      "url": "https://nds.iaea.org/medical/znp68ga4.html",
+      "retrieved": "2026-07-18",
+      "sha256": "4bc49f58d3800946431859626a29b6bb9bfd414cc8c74c74d9ed5e98b935de93",
+      "license": "IAEA-NDS open data"
+    },
+    {
+      "id": "o15_decay_ddep",
+      "type": "decay",
+      "nuclide": "15O",
+      "file": "data/decay/o15.json",
+      "source": "IAEA LiveChart / DDEP",
+      "retrieved": "2026-07-18",
+      "license": "open data"
+    },
+    {
+      "id": "ga68_decay_ddep",
+      "type": "decay",
+      "nuclide": "68Ga",
+      "file": "data/decay/ga68.json",
+      "source": "IAEA LiveChart / DDEP",
+      "retrieved": "2026-07-18",
+      "license": "open data"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+fastapi==0.115.*
+uvicorn[standard]==0.30.*
+pydantic==2.*
+numpy>=1.26
+pycatima==1.981
+httpx==0.27.*

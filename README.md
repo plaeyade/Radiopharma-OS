@@ -1,0 +1,348 @@
+# Radiopharma OS — MVP Physics Twin
+
+**Radiopharma OS** · v0.19.0 · Burnup multizona 1D (perfil axial de quemado) · Conector OPC-UA · Trending EOB GMP · eBR PDF/A-2b · plataforma completa en `docker compose up` · datos 100 % abiertos
+
+Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
+EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
+producción de radionúclidos PET en ciclotrón.
+
+```
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│ Nuclear Data Svc   │   │    Yield Engine    │   │  Data Lake Svc     │
+│  FastAPI · :8001   │──▶│  FastAPI · :8002   │──▶│  FastAPI · :8003   │
+│ σ(E) IAEA/EXFOR    │HTTP│ A_sat, EOB, burnup │HTTP│ ALCOA+ batches     │
+│ decaimiento DDEP   │   │  CATIMA/ATIMA      │   │ PostgreSQL + MinIO │
+└────────────────────┘   └────────────────────┘   └────────────────────┘
+         ▲                                               ▲
+         └──────────── pipelines/batch_cli.py ───────────┘
+┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐
+│   Auth Service     │  │     QC Engine      │  │ Telemetry Service  │
+│  FastAPI · :8004   │  │  FastAPI · :8005   │  │  FastAPI · :8006   │
+└────────────────────┘  └────────────────────┘  └────────────────────┘
+```
+
+## Qué calcula
+
+- Actividad a **saturación** y a **EOB** (fin de bombardeo) para blancos gruesos,
+  integrando σ(E)/S(E) con las ecuaciones estándar de producción.
+- Reacciones del MVP: **¹⁸O(p,n)¹⁸F** (H₂¹⁸O / ¹⁸O₂), **¹⁴N(p,α)¹¹C** (N₂),
+  **¹⁵N(p,n)¹⁵O** (¹⁵N₂ enriquecido) y **⁶⁸Zn(p,n)⁶⁸Ga** (⁶⁸Zn enriquecido).
+- **Burnup Engine** (cap. 16 EDS): corrección de rendimiento por depleción del
+  blanco enriquecido. Modelo analítico de grupo único
+  (`POST /api/v1/production/burnup`) y modelo **multizona 1D**
+  (`POST /api/v1/production/burnup-multizone`): N capas axiales con pesos de
+  producción σ(E)/S(E) por capa (misma malla de 4000 puntos del modelo base),
+  σ_b(E) paramétrica con umbral, atenuación exponencial del flujo y Bateman
+  con término de quemado por capa. Con `n_zones=1` reproduce exactamente el
+  grupo único; el EOB sin quemado es idéntico al del modelo base.
+- **Data Lake (Fase 1)**: registros de lote inmutables ALCOA+ con hash SHA-256
+  de integridad, anulación controlada (sin borrado), artefactos JSON en object
+  store (MinIO/S3 en despliegue, filesystem en dev) y metadatos en PostgreSQL.
+- **Pipeline CLI** (`pipelines/batch_cli.py`): encadena producción → linaje de
+  datasets → login JWT → registro del lote → tabla de decaimiento post-EOB.
+- **Auth Service**: emisión/verificación JWT (HS256), usuarios con PBKDF2-100k,
+  roles de plataforma. El Data Lake exige token en todo; `created_by` se deriva
+  del token (ALCOA+ *atribuible*), anular lote requiere rol `calidad`+.
+- **Sesiones con refresh tokens** (Auth v2, control de acceso §11.10(d)):
+  - `/login` emite par **access (corta vida) + refresh** (JWT_REFRESH_TTL_MIN,
+    720 min por defecto); los access tokens llevan `jti` único por emisión,
+  - `/refresh` **rota** el refresh token: el usado queda revocado en servidor
+    (detección básica de reuso) y se entrega un par nuevo,
+  - `/logout` revoca el refresh presentado (idempotente, tolera expirados),
+  - `POST /users/{u}/revoke` (admin): revoca todas las sesiones de un usuario
+    (offboarding inmediato),
+  - store SQL `refresh_tokens` (jti, usuario, expira, revocado); los access
+    tokens siguen verificándose localmente sin red en cada servicio.
+- **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
+  (revisión inicial `0001_batch_records`).
+- **QC Engine** (Quality Control Twin, EDS Vol. IV):
+  - corrección por decaimiento (futuro/pasado) con incertidumbres propagadas,
+  - verificación de vida media por WLS sobre ln A (identidad radionuclídica,
+    tolerancia configurable) y **detección de impurezas** por χ² reducido,
+  - motor de reglas de aceptación: packs `fdg` y `generic_pet` precargados
+    (referencias generales USP <823>/Ph. Eur. — verificar monografía vigente),
+  - vidas medias resueltas desde el NDS (fallback DDEP local).
+- **Ciclo GMP completo** (Data Lake v2 + `pipelines/qc_cli.py`):
+  - informes QC inmutables ligados al lote (`qc_reports`, hash SHA-256),
+  - decisión de liberación con reglas GMP: solo rol `calidad`+, **exige al menos
+    un informe QC 'pass'**, rechazo con motivo obligatorio, lote liberado queda
+    inmutable (no admite anulación ni doble decisión),
+  - migración Alembic `0002_qc_reports_release`.
+- **eBR — Electronic Batch Record** (Data Lake v3 + `pipelines/ebr_cli.py`):
+  - documento consolidado del lote: registro de producción + informes QC +
+    firmas + **pista de auditoría cronológica**, con hash de integridad del
+    documento completo (`GET /api/v1/batches/{id}/ebr`),
+  - **firmas electrónicas estilo 21 CFR Part 11**: re-autenticación con
+    usuario+contraseña contra el Auth Service en el momento de firmar
+    (§11.200), tres significados (`performed_by` operador+, `reviewed_by`
+    supervisor+, `approved_by` calidad+), el firmante debe coincidir con la
+    sesión JWT, y cada firma liga registro (hash) + firmante + significado +
+    sello de tiempo (§11.50/11.70),
+  - reglas de estado: no se firma un lote anulado; `approved_by` exige decisión
+    de liberación previa; una firma queda **obsoleta de forma detectable** si el
+    registro cambiara después,
+  - verificación de integridad lote + QC + firmas
+    (`GET /api/v1/batches/{id}/ebr/verify`),
+  - migración Alembic `0003_ebr_signatures` (+ `released_at` en lotes).
+- **eBR archivable en PDF/A-2b** (`GET /api/v1/batches/{id}/ebr/pdf`):
+  copia legible por humanos para inspección y archivo documental — portada,
+  registro de lote, informes QC con reglas de aceptación, tabla de firmas con
+  hash SHA-256, pista de auditoría y bloque de integridad del documento.
+  Emitido directamente como **PDF/A-2b (ISO 19005-2)** — preservación a largo
+  plazo exigible en archivo GMP:
+  - fuentes **DejaVu TrueType incrustadas** (subseteadas; alias de las
+    base-14 para el reset de estado de reportlab — `rendering/fonts.py`),
+    con cobertura unicode completa (µA, ±, ¹⁸F, →, ✓),
+  - **OutputIntent ICC sRGB** incrustado (`assets/color/sRGB.icc`) y
+    metadatos **XMP con `pdfaid:part=2` / `conformance=B`** + Dublin Core
+    (`rendering/pdfa.py`, pikepdf), PDF 1.7,
+  - **validador estructural interno** `validate_pdfa2b()` (XMP de
+    conformidad, OutputIntent, incrustación de fuentes página a página,
+    ausencia de cifrado) ejercido en tests; la validación formal con
+    veraPDF se ejecuta en la ingesta del archivo documental,
+  - cabecera `X-PDF-Conformance: PDF/A-2b` en la respuesta; descarga
+    directa con `pipelines/ebr_cli.py --pdf archivo.pdf`.
+- **Telemetry Service** (Operational Twin, Fase 1 · :8006):
+  - series temporales de la corrida (corriente de haz, presión de blanco,
+    caudal de enfriamiento…) **append-only**, etiquetadas por `batch_id` para
+    vincular la evidencia operacional al expediente del lote,
+  - backend conmutable por entorno: **InfluxDB 2.x** en despliegue
+    (`TELEMETRY_BACKEND=influx`, protocolo de línea + Flux vía HTTP, sin
+    cliente oficial) o **SQLite** en dev/test,
+  - endpoints: ingesta por lotes (`POST /telemetry/points`), consulta por
+    serie/etiqueta/rango (`GET /telemetry/query`), catálogo
+    (`GET /telemetry/series`) y **resumen estadístico por lote**
+    (`GET /telemetry/batches/{id}/summary`: n, media, min, max, σ por serie),
+  - JWT de plataforma obligatorio (mismo secreto que DL/Auth); ingesta
+    requiere rol operador+,
+  - `pipelines/telemetry_cli.py`: simulador de corrida (rampa de corriente,
+    ruido, deriva térmica) para pruebas sin hardware, con inyección de
+    excursión de enfriamiento (`--excursion`).
+- **Conector OPC-UA** (`pipelines/opcua_connector.py`) — ingreso de
+  telemetría con el protocolo industrial del PLC del ciclotrón:
+  - cliente OPC-UA (asyncua) que lee periódicamente los nodos del PLC
+    (corriente/energía de haz, presión del blanco, caudal de enfriamiento)
+    por *browse path* y los empuja al Telemetry Service con JWT de
+    plataforma, etiquetados `source=opcua`,
+  - **mapa de tags configurable** (`--mapa tags.json`): contra el PLC real
+    solo cambian el endpoint y el mapa — el conector no se toca,
+  - **servidor OPC-UA simulado** (`pipelines/opcua_server_sim.py`): banco
+    de pruebas con el mismo árbol de nodos y modelo de proceso (rampa,
+    deriva, ruido, excursión opcional); en compose con
+    `docker compose --profile demo up` (servicio `opcua-sim`, puerto 4840),
+  - requisito de despliegue: `pip install -r pipelines/requirements-opcua.txt`
+    en la red del acelerador.
+- **Operational Twin F2** — downsampling y desviaciones de proceso:
+  - **diezmado de series** en `GET /telemetry/query` (`max_points` +
+    `method`): **LTTB** (Largest-Triangle-Three-Buckets — selecciona puntos
+    reales preservando picos y forma visual) o `bucket-mean` (promedio por
+    ventana), aplicado en la capa de aplicación para paridad
+    SQLite/InfluxDB,
+  - **detección de desviaciones** (`POST
+    /telemetry/batches/{id}/deviation-check`): reglas de rango por serie en
+    packs precargados (`cyclotron_generic`: haz, presión de blanco,
+    enfriamiento) o reglas propias; excluye la rampa inicial del haz
+    (`grace_fraction`) y agrupa rachas fuera de límite en **eventos**
+    (inicio, fin, nº de puntos, extremo, lado),
+  - **registro GMP de desviaciones**: `POST /api/v1/batches/{id}/events`
+    (Data Lake, operador+) declara eventos de proceso append-only con actor
+    del token y sello de servidor — entran en la **pista de auditoría del
+    eBR** (y de su PDF/A) vía tabla `audit_events` (Alembic `0004`),
+  - en la consola: gráficas diezmadas LTTB (≤400 puntos/serie), simulación
+    con excursión opcional y «Verificar desviaciones» → «Registrar en Data
+    Lake (eBR)» — verificado e2e (fallo de enfriamiento → 2 eventos
+    coherentes → visibles en el eBR).
+- **Trending EOB histórico** (`GET /api/v1/analytics/eob-trend`) — análisis
+  de deriva del rendimiento lote a lote, insumo del *trending* GMP de la
+  revisión periódica de producto (APR/PQR):
+  - **gráfico de control de Shewhart** sobre el EOB normalizado
+    (`eob_per_uah` = GBq por µA·h de haz — comparable entre corridas con
+    distinta corriente y duración): límites de aviso ±2σ y de control ±3σ;
+  - detección de valores atípicos **leave-one-out** (un solo outlier no
+    enmascara su propia desviación inflando σ) y límites recalculados sin
+    ellos (fase I SPC); lotes anulados (`voided`) excluidos por defecto;
+  - **deriva temporal**: regresión lineal sobre puntos limpios (pendiente
+    %/día + R²) y **run rules** (racha monótona de 6+, racha de un mismo
+    lado de la media) con clasificación estable / creciente / decreciente y
+    alertas textuales por lote;
+  - en la consola: pestaña **Tendencias** con control chart por reacción
+    (puntos coloreados por estado, líneas de media/±2σ/±3σ), tarjetas de
+    rendimiento/límites y panel de alertas — verificado e2e (deriva
+    −0.42 %/día + punto 3σ detectados en vivo).
+- **Consola web operativa** (`console/`, React + TypeScript + Vite +
+  Tailwind/shadcn): el ciclo GMP completo desde el navegador —
+  - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
+    logout), con gating por rol en la UI y en servidor,
+  - **acciones operativas**: registrar lote (Yield Engine → Nuclear Data →
+    Data Lake, como `batch_cli`), simular la corrida de telemetría,
+    evaluar QC (QC Engine → informe persistido), liberar/rechazar (rol
+    calidad+) y **firmar el eBR con re-autenticación** (21 CFR §11.200),
+  - **CORS habilitado** en los 6 microservicios (`CORS_ORIGINS`, `*` por
+    defecto en dev) para consumo desde el navegador,
+  - *Resumen*: KPIs (lotes, EOB liberada, QC conforme, salud 6/6) y panel de
+    salud de los 6 microservicios con latencia,
+  - *Lotes*: tabla ALCOA+ con integridad de hash y detalle del registro,
+  - *Control de calidad*: informes con reglas de aceptación evaluadas,
+  - *eBR*: firmas electrónicas, pista de auditoría cronológica e integridad del
+    documento, con descarga del PDF archivable (modo en vivo),
+  - *Telemetría*: gráficas de las series de la corrida + resumen estadístico,
+  - opera en **modo en vivo** contra los microservicios (URL + token JWT en
+    Configuración) o en **modo demostración** con dataset determinista cuando
+    los servicios no son alcanzables;
+  - **servida en docker-compose** (`console/Dockerfile` multi-etapa
+    node→nginx, puerto **8080**): la consola usa **prefijos relativos de mismo
+    origen** (`/dl`, `/auth`, `/ye`, `/nds`, `/qc`, `/tel`) que nginx proxifica
+    a cada microservicio — sin CORS ni configuración de URLs en despliegue;
+    migración automática de configuraciones guardadas con URLs absolutas
+    (`rpos.cfgver`); en desarrollo las URLs absolutas siguen disponibles en
+    Ajustes;
+  - `cd console && npm install && npm run build` → `dist/` estático (servible
+    por cualquier web server o el compose).
+- El Yield Engine puede consumir los datos del Nuclear Data Service **vía HTTP**
+  (variable `NUCLEAR_DATA_URL`) o en modo standalone con datasets empaquetados.
+- Incertidumbre combinada (σ evaluada IAEA + stopping + corriente) y trazabilidad
+  de procedencia por dataset (ALCOA+).
+
+## Validación física
+
+Motor vs. literatura publicada (Hess et al. 2001, EXFOR D4095, blanco gaseoso ¹⁸O):
+
+| E (MeV) | Motor (MBq/µA sat) | Hess 2001 | Desviación |
+|---|---|---|---|
+| 6.0 | 2343 | 2209 | +6.1 % |
+| 10.0 | 6713 | 6871 | −2.3 % |
+| 14.0 | 10601 | 11004 | −3.7 % |
+| 18.0 | 13091 | 13454 | −2.7 % |
+| 20.0 | 13847 | 14228 | −2.7 % |
+
+Caso típico ¹⁸F (16.5 MeV, 37 µA, 60 min, H₂¹⁸O 99.5 %): **EOB = 108.9 ± 8.1 GBq**,
+saturación 9.34 GBq/µA — dentro del rango industrial habitual (2–4 Ci EOB).
+
+Validación ¹¹C vs. rendimientos a saturación calculados por la IAEA (misma σ(E)):
+
+| E (MeV) | Motor (GBq/µA sat) | IAEA (GBq/µA sat) | Desviación |
+|---|---|---|---|
+| 8.0 | 1.68 | 1.76 | −4.4 % |
+| 10.0 | 2.66 | 2.71 | −1.8 % |
+| 12.0 | 4.00 | 4.08 | −2.0 % |
+| 16.0 | 7.37 | 7.47 | −1.3 % |
+| 20.0 | 9.74 | 9.84 | −1.0 % |
+
+Validación ¹⁵O y ⁶⁸Ga (saturación, misma referencia IAEA):
+
+| Reacción | E (MeV) | Motor (GBq/µA) | IAEA | Desviación |
+|---|---|---|---|---|
+| ¹⁵N(p,n)¹⁵O | 16.0 | 5.87 | 6.00 | −2.1 % |
+| ⁶⁸Zn(p,n)⁶⁸Ga | 16.0 | 14.56 | 15.00 | −2.9 % |
+
+Casos típicos verificados en vivo: ⁶⁸Ga 14.5 MeV/25 µA/60 min → **146.1 ± 10.0 GBq EOB**;
+¹⁵O 16 MeV/20 µA/5 min → **96.0 GBq EOB** (factor saturación 0.82).
+
+Detalle completo en [`docs/VALIDATION.md`](docs/VALIDATION.md).
+
+## Decisiones de arquitectura (vs. EDS v2.0)
+
+1. **CATIMA/ATIMA sustituye a SRIM.** SRIM es escritorio Windows sin API; ATIMA
+   (GSI) ofrece tablas de stopping power equivalentes como librería automatizable
+   (`pycatima`). Fallback a tablas CSV empaquetadas si el wheel no está disponible.
+2. **Datos empaquetados con el servicio.** Los datasets IAEA/EXFOR y DDEP viven
+   versionados en el repo con hash SHA-256, URL fuente y fecha (ALCOA+), no se
+   descargan en runtime.
+3. **Datos 100 % abiertos**: IAEA-NDS Medical Portal (Padé fit, May-2021),
+   LiveChart/DDEP, CATIMA. Sin licencias comerciales.
+
+## Arranque rápido
+
+```bash
+# opción A: docker — plataforma completa en un comando
+docker compose up --build
+#   consola operativa  -> http://localhost:8080  (nginx: SPA + proxy same-origin)
+#   APIs               -> http://localhost:8001..8006/docs
+#   (usuario inicial: admin / admin-change-me — cámbiese en el primer arranque)
+
+# opción B: local
+pip install -r services/yield_engine/requirements.txt
+make nds   # Nuclear Data Service  -> http://localhost:8001/docs
+make ye    # Yield Engine          -> http://localhost:8002/docs
+```
+
+## Uso
+
+```bash
+curl -X POST http://localhost:8002/api/v1/production \
+  -H "Content-Type: application/json" \
+  -d '{"reaction_id":"o18_p_n_f18","target_id":"h2_18o",
+       "beam_energy_mev":16.5,"current_ua":37.0,"irradiation_time_min":60.0}'
+```
+
+Respuesta: saturación, actividad EOB, factor de saturación, incertidumbre y
+procedencia del dataset usado.
+
+## Tests
+
+```bash
+make test     # 191 tests (12 NDS + 32 YE + 71 DL + 21 Auth + 16 QC + 33 TEL + 6 CLI)
+```
+
+## Estructura
+
+```
+services/
+├── nuclear_data_service/      # σ(E), decaimiento, registry de datasets
+├── yield_engine/              # física de producción + burnup
+├── data_lake_service/         # batches + QC + liberación + eBR (ALCOA+)
+├── auth_service/              # JWT + usuarios + roles + refresh tokens
+├── qc_engine/                 # QC físico: decay, half-life fit, aceptación
+└── telemetry_service/         # series temporales (SQLite/InfluxDB)
+pipelines/
+├── batch_cli.py               # pipeline de lote end-to-end
+├── qc_cli.py                  # pipeline QC + liberación GMP
+├── ebr_cli.py                 # emisión, firma y verificación del eBR
+└── telemetry_cli.py           # simulador de corrida + resumen de telemetría
+console/                       # consola web (React + Vite + Tailwind)
+```
+
+Clean Architecture por servicio: `domain` (entidades + física pura) ←
+`application` (casos de uso) ← `infrastructure` (ATIMA, CSV) ←
+`presentation` (FastAPI). Convenciones: snake_case, type hints, docstrings ES.
+
+## Roadmap inmediato
+
+- [x] Cliente HTTP del YE hacia el NDS (variable `NUCLEAR_DATA_URL`).
+- [x] Segunda reacción: ¹⁴N(p,α)¹¹C con blanco N₂.
+- [x] Reacciones ¹⁵N(p,n)¹⁵O y ⁶⁸Zn(p,n)⁶⁸Ga (mismo patrón, ~30 min c/u).
+- [x] Burnup Engine: depleción de blanco enriquecido (EDS cap. 16, grupo único).
+- [ ] Burnup 2D acoplado a Elmer FEM (distribución espacial del quemado).
+- [ ] Calibration Layer: K-factor por lote con datos de producción reales (cap. 17).
+- [x] Fase 1: Data Lake (PostgreSQL + MinIO), registros ALCOA+, pipeline CLI.
+- [x] Auth Service (JWT + roles) y Data Lake endurecido; Alembic scaffolding.
+- [x] Informes QC persistidos + liberación GMP (lote→QC→liberación).
+- [x] eBR (Electronic Batch Record) con firmas electrónicas 21 CFR Part 11
+      y pista de auditoría (`ebr_cli.py`).
+- [x] eBR archivable en PDF (`/ebr/pdf`, `--pdf` en `ebr_cli.py`).
+- [x] eBR en **PDF/A-2b** (ISO 19005-2): fuentes DejaVu incrustadas,
+      OutputIntent ICC sRGB, XMP `pdfaid` y validador estructural propio.
+- [x] Refresh tokens con rotación y revocación (logout, offboarding admin).
+- [x] Telemetry Service (Operational Twin F1): series por lote, backend
+      SQLite/InfluxDB, resumen estadístico, simulador CLI.
+- [x] Operational Twin F2: downsampling LTTB, detección de desviaciones de
+      proceso (packs de límites) y su registro GMP en el Data Lake
+      (`audit_events`, visibles en el eBR).
+- [x] Trending EOB: control chart de Shewhart con deriva temporal y run
+      rules (`/api/v1/analytics/eob-trend` + pestaña Tendencias).
+- [x] Consola web V1 (dashboard de solo lectura, modo vivo/demostración).
+- [x] Consola V2 (operativa: login y ciclo GMP completo desde la UI —
+      verificado e2e en navegador contra los 6 servicios).
+- [x] Consola servida en docker-compose (nginx :8080, proxy same-origin a los
+      6 servicios — verificado e2e: login + registro de lote YE→NDS→DL a
+      través del proxy).
+- [x] Conector OPC-UA (cliente industrial → Telemetry Service) con servidor
+      simulado del PLC y mapa de tags configurable — verificado e2e
+      (244 puntos adquiridos vía OPC-UA, visibles en consola y en
+      deviation-check).
+- [x] Burnup multizona 1D: perfil axial de depleción del blanco (10-50 capas),
+      endpoint `/production/burnup-multizone` + gráfica de perfil en la
+      consola (pestaña Lotes) — verificado e2e (EOB sin quemado idéntico al
+      modelo base; pérdida global < 0.5 % en ciclotrón médico típico).
+- [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
+      externo, validación veraPDF en CI del archivo documental.

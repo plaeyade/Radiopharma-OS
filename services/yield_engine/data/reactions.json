@@ -1,0 +1,30 @@
+{
+  "o18_p_n_f18": {
+    "notation": "18O(p,n)18F",
+    "threshold_mev": 2.574,
+    "q_value_mev": -2.438,
+    "dataset_id": "o18_p_n_f18_iaea2021",
+    "file": "cross_sections/o18_p_n_f18/o18_p_n_f18_iaea2021.csv"
+  },
+  "n14_p_a_c11": {
+    "notation": "14N(p,alpha)11C",
+    "threshold_mev": 3.132,
+    "q_value_mev": -2.922,
+    "dataset_id": "n14_p_a_c11_iaea2021",
+    "file": "cross_sections/n14_p_a_c11/n14_p_a_c11_iaea2021.csv"
+  },
+  "n15_p_n_o15": {
+    "notation": "15N(p,n)15O",
+    "threshold_mev": 3.77,
+    "q_value_mev": -3.54,
+    "dataset_id": "n15_p_n_o15_iaea2021",
+    "file": "cross_sections/n15_p_n_o15/n15_p_n_o15_iaea2021.csv"
+  },
+  "zn68_p_n_ga68": {
+    "notation": "68Zn(p,n)68Ga",
+    "threshold_mev": 3.76,
+    "q_value_mev": -3.7,
+    "dataset_id": "zn68_p_n_ga68_iaea2021",
+    "file": "cross_sections/zn68_p_n_ga68/zn68_p_n_ga68_iaea2021.csv"
+  }
+}

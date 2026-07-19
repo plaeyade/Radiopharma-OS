@@ -1,0 +1,33 @@
+{
+  "nuclide": "18F",
+  "Z": 9,
+  "A": 18,
+  "half_life_s": 6586.2,
+  "half_life_min": 109.77,
+  "half_life_uncertainty_min": 0.05,
+  "decay_constant_s-1": 0.00010524235227596267,
+  "decay_modes": [
+    {
+      "mode": "beta+",
+      "branching_ratio": 0.9686,
+      "endpoint_energy_keV": 633.5
+    },
+    {
+      "mode": "electron_capture",
+      "branching_ratio": 0.0314
+    }
+  ],
+  "emissions": [
+    {
+      "type": "annihilation_photon",
+      "energy_keV": 511.0,
+      "intensity_%": 193.46
+    }
+  ],
+  "provenance": {
+    "source": "IAEA LiveChart of Nuclides / DDEP recommended data (cf. NNDC NuDat)",
+    "reference": "Hermanne et al., arXiv:2006.03125 (IAEA evaluation DB-2003): T1/2 = 109.77(5) min; I(511) = 193.46(8)%",
+    "retrieved": "2026-07-17",
+    "version": "livechart-ddep-2021"
+  }
+}

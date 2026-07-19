@@ -1,0 +1,208 @@
+version: "3.9"
+
+# Radiopharma OS - MVP Physics Twin + Data Lake (Fase 1)
+
+services:
+  nuclear-data-service:
+    build: ./services/nuclear_data_service
+    container_name: rpos-nuclear-data
+    ports: ["8001:8001"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  yield-engine:
+    build: ./services/yield_engine
+    container_name: rpos-yield-engine
+    ports: ["8002:8002"]
+    environment:
+      NUCLEAR_DATA_URL: "http://nuclear-data-service:8001"
+    depends_on:
+      nuclear-data-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: rpos-postgres
+    environment:
+      POSTGRES_USER: radiopharma
+      POSTGRES_PASSWORD: radiopharma
+      POSTGRES_DB: radiopharma
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radiopharma"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: rpos-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # consola web
+    volumes:
+      - miniodata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-service:
+    build: ./services/auth_service
+    container_name: rpos-auth
+    ports: ["8004:8004"]
+    environment:
+      AUTH_DATABASE_URL: "postgresql+asyncpg://radiopharma:radiopharma@postgres:5432/radiopharma_auth"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret-change-me-in-production}"
+      JWT_TTL_MIN: "480"
+      ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin-change-me}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8004/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  qc-engine:
+    build: ./services/qc_engine
+    container_name: rpos-qc-engine
+    ports: ["8005:8005"]
+    environment:
+      NUCLEAR_DATA_URL: "http://nuclear-data-service:8001"
+    depends_on:
+      nuclear-data-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8005/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  data-lake-service:
+    build: ./services/data_lake_service
+    container_name: rpos-data-lake
+    ports: ["8003:8003"]
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://radiopharma:radiopharma@postgres:5432/radiopharma"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret-change-me-in-production}"
+      AUTH_URL: "http://auth-service:8004"
+      STORAGE_BACKEND: "minio"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "minioadmin"
+      MINIO_SECRET_KEY: "minioadmin"
+      MINIO_BUCKET: "radiopharma-batches"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8003/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: rpos-influxdb
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "admin"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "admin-change-me"
+      DOCKER_INFLUXDB_INIT_ORG: "radiopharma"
+      DOCKER_INFLUXDB_INIT_BUCKET: "telemetry"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "${INFLUX_TOKEN:-dev-token-change-me}"
+    ports: ["8086:8086"]
+    volumes:
+      - influxdata:/var/lib/influxdb2
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  telemetry-service:
+    build: ./services/telemetry_service
+    container_name: rpos-telemetry
+    ports: ["8006:8006"]
+    environment:
+      TELEMETRY_BACKEND: "influx"
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "${INFLUX_TOKEN:-dev-token-change-me}"
+      INFLUX_ORG: "radiopharma"
+      INFLUX_BUCKET: "telemetry"
+      JWT_SECRET: "${JWT_SECRET:-dev-secret-change-me-in-production}"
+    depends_on:
+      influxdb:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8006/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  console:
+    build: ./console
+    container_name: rpos-console
+    ports: ["8080:8080"]
+    depends_on:
+      nuclear-data-service:
+        condition: service_healthy
+      yield-engine:
+        condition: service_healthy
+      data-lake-service:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      qc-engine:
+        condition: service_healthy
+      telemetry-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Banco de pruebas OPC-UA (perfil "demo"): simulador del PLC del ciclotrón
+  # + conector que empuja la telemetría al Telemetry Service. El conector
+  # real corre en la red del acelerador apuntando al PLC — ver README.
+  opcua-sim:
+    image: python:3.12-slim
+    container_name: rpos-opcua-sim
+    profiles: ["demo"]
+    command: sh -c "pip install -q asyncua && python pipelines/opcua_server_sim.py --intervalo 1.0"
+    volumes: ["./pipelines:/app/pipelines:ro"]
+    working_dir: /app
+    ports: ["4840:4840"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:
+  influxdata:

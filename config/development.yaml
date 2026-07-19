@@ -1,0 +1,19 @@
+# Radiopharma OS - configuración de desarrollo (MVP)
+environment: development
+services:
+  nuclear_data_service:
+    port: 8001
+  yield_engine:
+    port: 8002
+data_policy:
+  # Jerarquía oficial de datos nucleares (Informe Maestro v2.0):
+  # EXFOR (experimental) -> TENDL (evaluado) -> TALYS (calculado) -> NNDC (referencia)
+  hierarchy: [EXFOR, TENDL, TALYS, NNDC]
+  traceability: alcoa_plus
+physics:
+  default_stopping: atima        # atima | tablas_csv (fallback)
+  integration_points: 4000
+  uncertainties:
+    stopping: 0.03
+    current: 0.01
+    sigma_floor: 0.04

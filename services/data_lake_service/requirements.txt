@@ -1,0 +1,11 @@
+fastapi==0.115.*
+uvicorn[standard]==0.30.*
+pydantic==2.*
+SQLAlchemy[asyncio]>=2.0
+asyncpg>=0.29
+aiosqlite>=0.20
+minio>=7.2
+PyJWT>=2.8
+alembic>=1.13
+reportlab>=4.0
+pikepdf>=9.0  # conversión PDF/A-2b del eBR (OutputIntent ICC + XMP pdfaid)
