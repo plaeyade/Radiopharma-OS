@@ -3,7 +3,7 @@
  * desde el navegador — registrar lote, evaluar QC, liberar, firmar eBR,
  * simular telemetría.
  */
-import type { ConsoleConfig } from "./console-data";
+import type { AlertItem, ConsoleConfig } from "./console-data";
 
 const T = 15000;
 
@@ -248,4 +248,16 @@ export async function burnupProfile(cfg: ConsoleConfig, input: {
   return req<BurnupProfileResult>(
     "POST", `${cfg.yeUrl}/api/v1/production/burnup-multizone`, undefined,
     { beam_spot_cm2: 1.0, n_zones: input.n_zones ?? 10, ...input });
+}
+
+/* ---------------------------------------------------------------- alertas */
+export async function listAlerts(cfg: ConsoleConfig, token: string,
+                                 onlyUnacked = false): Promise<AlertItem[]> {
+  return req<AlertItem[]>("GET",
+    `${cfg.dlUrl}/api/v1/alerts?limit=50${onlyUnacked ? "&only_unacked=true" : ""}`, token);
+}
+
+export async function ackAlert(cfg: ConsoleConfig, token: string,
+                               alertId: string): Promise<AlertItem> {
+  return req<AlertItem>("POST", `${cfg.dlUrl}/api/v1/alerts/${alertId}/ack`, token);
 }

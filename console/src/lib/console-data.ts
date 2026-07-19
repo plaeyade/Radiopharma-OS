@@ -63,6 +63,12 @@ export interface EobTrend {
   alerts: string[];
 }
 
+export interface AlertItem {
+  alert_id: string; timestamp: string; severity: string; rule: string;
+  batch_id: string; message: string;
+  acked_by: string | null; acked_at: string | null;
+}
+
 export interface ConsoleData {
   mode: "live" | "demo";
   fetched_at: string;
@@ -73,6 +79,7 @@ export interface ConsoleData {
   telemetry_stats: Record<string, SeriesStat[]>;
   trends: Record<string, EobTrend>;
   services: ServiceHealth[];
+  alerts: AlertItem[];
 }
 
 export interface ConsoleConfig {
@@ -199,7 +206,13 @@ export async function fetchConsole(cfg: ConsoleConfig): Promise<ConsoleData> {
         if (rt.ok) trends[rx] = await rt.json();
       } catch { /* sin trending */ }
     }));
-    return { mode: "live", fetched_at: new Date().toISOString(), batches, qc, ebr, telemetry, telemetry_stats, trends, services };
+    // alertas activas (v0.23: desviaciones, QC fail, anulaciones)
+    let alerts: AlertItem[] = [];
+    try {
+      const ra = await fetch(`${cfg.dlUrl}/api/v1/alerts?limit=50`, { headers });
+      if (ra.ok) alerts = await ra.json();
+    } catch { /* sin alertado */ }
+    return { mode: "live", fetched_at: new Date().toISOString(), batches, qc, ebr, telemetry, telemetry_stats, trends, services, alerts };
   } catch {
     return demoData(services);
   }
@@ -354,6 +367,18 @@ function demoData(services: ServiceHealth[]): ConsoleData {
   return {
     mode: "demo", fetched_at: new Date().toISOString(),
     batches, qc, ebr, telemetry, telemetry_stats, trends,
+    alerts: [
+      { alert_id: "AL-DEMO01", timestamp: "2026-07-19T13:58:00+00:00",
+        severity: "critica", rule: "desviacion_proceso",
+        batch_id: "B-20260715-DEMO0006",
+        message: "Desviación de proceso: cooling_flow_lpm bajó a 8.2 (< 10.0) durante 45 s",
+        acked_by: null, acked_at: null },
+      { alert_id: "AL-DEMO02", timestamp: "2026-07-18T11:20:00+00:00",
+        severity: "aviso", rule: "qc_warning",
+        batch_id: "B-20260714-DEMO0005",
+        message: "QC 18F con veredicto WARNING (registrado por qc.analista)",
+        acked_by: "supervisor.turno", acked_at: "2026-07-18T11:35:00+00:00" },
+    ],
     services: services.every((s) => s.status === "down")
       ? SERVICES.map((s, i) => ({ key: s.key, name: s.name, port: 0,
                                   status: "ok" as const, version: "0.1.0",

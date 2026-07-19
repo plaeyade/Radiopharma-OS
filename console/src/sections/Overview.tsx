@@ -1,7 +1,11 @@
-import { Activity, CheckCircle2, FlaskConical, ShieldCheck, XCircle, Zap } from "lucide-react";
+import { Activity, BellRing, CheckCircle2, FlaskConical, ShieldCheck, XCircle, Zap } from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ConsoleData } from "@/lib/console-data";
+import { ackAlert } from "@/lib/actions";
+import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
+import type { Session } from "@/lib/session";
 import { estadoColor, fmtTs } from "@/lib/format";
 
 function Kpi({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
@@ -19,7 +23,22 @@ function Kpi({ icon, label, value, sub }: { icon: React.ReactNode; label: string
   );
 }
 
-export default function Overview({ data, onSelectBatch }: { data: ConsoleData; onSelectBatch: (id: string) => void }) {
+export default function Overview({ data, cfg, session, onSelectBatch, onChanged }: {
+  data: ConsoleData; cfg: ConsoleConfig; session: Session | null;
+  onSelectBatch: (id: string) => void; onChanged: () => void;
+}) {
+  const pendientes = data.alerts.filter((a) => !a.acked_by).length;
+  const doAck = async (alertId: string) => {
+    if (!session) return;
+    try {
+      await ackAlert(cfg, session.token, alertId);
+      toast.success("Alerta reconocida (registro ALCOA+)");
+      onChanged();
+    } catch (e) {
+      toast.error(`No se pudo reconocer: ${(e as Error).message}`);
+    }
+  };
+
   const vivos = data.batches.filter((b) => b.status === "completed");
   const liberados = vivos.filter((b) => b.release_status === "released");
   const eobTotal = liberados.reduce((a, b) => a + b.results.eob_activity_gbq, 0);
@@ -41,6 +60,45 @@ export default function Overview({ data, onSelectBatch }: { data: ConsoleData; o
         <Kpi icon={<Activity className="h-5 w-5" />} label="Microservicios"
              value={`${serviciosOk}/6`} sub="salud de plataforma" />
       </div>
+
+      {data.alerts.length > 0 && (
+        <Card className="border-slate-800 bg-[#0d1420]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-300">
+              <BellRing className="h-4 w-4 text-amber-400" />
+              Alertas activas
+              {pendientes > 0 && (
+                <Badge className="bg-red-500/15 text-red-400 hover:bg-red-500/15">
+                  {pendientes} sin reconocer
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {data.alerts.slice(0, 6).map((a) => (
+              <div key={a.alert_id} className="flex items-center gap-3 rounded-lg border border-slate-800/70 px-3 py-2">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${a.severity === "critica" ? "bg-red-400" : "bg-amber-400"}`} />
+                <div className="flex-1">
+                  <p className="text-sm text-slate-200">{a.message}</p>
+                  <p className="text-xs text-slate-500">
+                    {a.rule} · {a.batch_id} · {fmtTs(a.timestamp)}
+                    {a.acked_by && ` · reconocida por ${a.acked_by}`}
+                  </p>
+                </div>
+                {!a.acked_by && session ? (
+                  <Button size="sm" variant="outline"
+                          className="border-slate-700 bg-transparent text-xs text-slate-300 hover:bg-slate-800"
+                          onClick={() => void doAck(a.alert_id)}>
+                    Reconocer
+                  </Button>
+                ) : a.acked_by ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                ) : null}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="border-slate-800 bg-[#0d1420] lg:col-span-2">

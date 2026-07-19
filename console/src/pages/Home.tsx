@@ -176,7 +176,8 @@ export default function Home() {
             </TabsList>
             <div className="mt-5">
               <TabsContent value="overview">
-                <Overview data={data} onSelectBatch={setBatchId} />
+                <Overview data={data} cfg={effCfg} session={session}
+                          onSelectBatch={setBatchId} onChanged={reload} />
               </TabsContent>
               <TabsContent value="batches">
                 <BatchesSection data={data} cfg={effCfg} session={session}
@@ -202,7 +203,7 @@ export default function Home() {
         )}
       </main>
       <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Radiopharma OS v0.20.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
+        Radiopharma OS v0.23.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
         {data && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString("es-MX")}`}
       </footer>
     </div>

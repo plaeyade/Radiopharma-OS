@@ -162,3 +162,15 @@ class VeraPdfOut(BaseModel):
     error: str = ""
     internal_findings: list[str] = []
     registered_in_ebr: bool = False
+
+
+class AlertOut(BaseModel):
+    """Alerta activa (persistida y reconocible)."""
+    alert_id: str
+    timestamp: datetime
+    severity: str
+    rule: str
+    batch_id: str
+    message: str
+    acked_by: str | None = None
+    acked_at: datetime | None = None

@@ -26,13 +26,16 @@ router = APIRouter(prefix="/api/v1/batches", tags=["data-lake"])
 
 _service: BatchService | None = None
 _ebr: EbrService | None = None
+_alerts = None
 _pdf = EbrPdfRenderer()
 
 
-def init(service: BatchService, ebr: EbrService | None = None) -> None:
-    global _service, _ebr
+def init(service: BatchService, ebr: EbrService | None = None,
+         alerts=None) -> None:
+    global _service, _ebr, _alerts
     _service = service
     _ebr = ebr
+    _alerts = alerts
 
 
 def _out(r) -> BatchOut:
@@ -91,13 +94,15 @@ async def get_batch(batch_id: str,
 
 @router.post("/{batch_id}/void", response_model=BatchOut)
 async def void_batch(batch_id: str, payload: VoidIn,
-                     _: Identity = Depends(require_calidad)) -> BatchOut:
+                     identity: Identity = Depends(require_calidad)) -> BatchOut:
     try:
         record = await _service.void_batch(batch_id, payload.reason)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     if record is None:
         raise HTTPException(status_code=404, detail=f"Lote no encontrado: {batch_id}")
+    if _alerts is not None:
+        await _alerts.on_void(batch_id, payload.reason, identity.username)
     return _out(record)
 
 
@@ -138,6 +143,9 @@ async def register_qc_report(batch_id: str, payload: QcReportCreateIn,
         raise HTTPException(status_code=404, detail=str(exc))
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+    if _alerts is not None:
+        await _alerts.on_qc(batch_id, record.nuclide, record.overall_status,
+                            identity.username)
     return _qc_out(record)
 
 
@@ -273,6 +281,9 @@ async def add_event(batch_id: str, payload: EventIn,
         raise HTTPException(status_code=404, detail=str(exc))
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+    if _alerts is not None:
+        await _alerts.on_event(batch_id, payload.action, payload.detail,
+                               identity.username)
     return EventOut(event_id=event.event_id, batch_id=event.batch_id,
                     timestamp=event.timestamp, actor=event.actor,
                     action=event.action, detail=event.detail)

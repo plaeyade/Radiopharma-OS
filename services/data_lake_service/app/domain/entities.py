@@ -234,3 +234,21 @@ class EbrDocument:
     signatures: tuple[dict, ...]
     audit_trail: tuple[AuditEvent, ...]
     integrity: dict
+
+
+@dataclass(frozen=True)
+class Alert:
+    """Alerta activa disparada por una regla validada del sistema.
+
+    ALCOA+: persistida con sello de tiempo, reconocimiento atribuible
+    (``acked_by``/``acked_at``) y registrada además en la pista de
+    auditoría del lote (evento ``alerta_disparada`` del eBR).
+    """
+    alert_id: str
+    timestamp: datetime
+    severity: str            # "critica" | "aviso"
+    rule: str                # id de la regla (código validado)
+    batch_id: str
+    message: str
+    acked_by: str | None = None
+    acked_at: datetime | None = None

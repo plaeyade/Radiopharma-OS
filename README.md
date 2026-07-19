@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.22.0 · Gate formal veraPDF (eBR PDF/A-2b verificado, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.23.0 · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -198,6 +198,24 @@ producción de radionúclidos PET en ciclotrón.
     (puntos coloreados por estado, líneas de media/±2σ/±3σ), tarjetas de
     rendimiento/límites y panel de alertas — verificado e2e (deriva
     −0.42 %/día + punto 3σ detectados en vivo).
+- **Alertado activo** (Data Lake v4 · `GET /api/v1/alerts`) — reglas
+  **validadas como código** (no configuración opaca) que vigilan los sucesos
+  del dominio y levantan alertas persistidas:
+  - catálogo de reglas (`GET /api/v1/alerts/rules`): `desviacion_proceso`
+    (crítica — evento declarado como desviación en la pista del lote),
+    `qc_fail` (crítica — informe QC con veredicto FAIL), `qc_warning`
+    (aviso) y `lote_anulado` (aviso — void con motivo);
+  - cada alerta queda **persistida** (tabla `alerts`, migración
+    `0005_alerts`), **registrada en la pista de auditoría del eBR**
+    (evento `alerta_disparada` con actor `sistema` — ALCOA+) y
+    **despachada a un webhook** (`ALERT_WEBHOOK_URL`; best-effort, 2
+    intentos, nunca bloquea el flujo del lote);
+  - **reconocimiento atribuible e idempotente** (`POST /alerts/{id}/ack`,
+    rol operador+): conserva el primer `acked_by`/`acked_at`;
+  - en la consola: tarjeta **Alertas activas** en Resumen con contador de
+    pendientes, severidad y botón *Reconocer* — verificado e2e (desviación
+    + QC FAIL + anulación → 3 alertas persistidas, 3 eventos en el eBR y
+    3 POST al webhook; ack desde la UI).
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -208,8 +226,9 @@ producción de radionúclidos PET en ciclotrón.
     calidad+) y **firmar el eBR con re-autenticación** (21 CFR §11.200),
   - **CORS habilitado** en los 6 microservicios (`CORS_ORIGINS`, `*` por
     defecto en dev) para consumo desde el navegador,
-  - *Resumen*: KPIs (lotes, EOB liberada, QC conforme, salud 6/6) y panel de
-    salud de los 6 microservicios con latencia,
+  - *Resumen*: KPIs (lotes, EOB liberada, QC conforme, salud 6/6), tarjeta
+    de **alertas activas** con reconocimiento y panel de salud de los 6
+    microservicios con latencia,
   - *Lotes*: tabla ALCOA+ con integridad de hash y detalle del registro,
   - *Control de calidad*: informes con reglas de aceptación evaluadas,
   - *eBR*: firmas electrónicas, pista de auditoría cronológica e integridad del
@@ -310,7 +329,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 191 tests (12 NDS + 32 YE + 71 DL + 21 Auth + 16 QC + 33 TEL + 6 CLI)
+make test     # 267 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 6 CLI)
 ```
 
 ## Estructura
@@ -387,5 +406,9 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       Incluye reparación automática de anchos de glifo (§6.2.11.5) que
       reportlab escribe mal al subsetear ciertas TTF — verificado e2e:
       eBR CONFORME 144/144 reglas con veraPDF 1.30 real.
+- [x] Alertado activo: reglas validadas (desviación crítica, QC FAIL
+      crítica, QC WARNING aviso, lote anulado aviso) → persistencia ALCOA+
+      + evento `alerta_disparada` en el eBR + webhook best-effort; ack
+      idempotente y feed en consola — verificado e2e.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.

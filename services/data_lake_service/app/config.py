@@ -19,6 +19,8 @@ class Settings:
     minio_access_key: str = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
     minio_secret_key: str = os.environ.get("MINIO_SECRET_KEY", "minioadmin")
     minio_bucket: str = os.environ.get("MINIO_BUCKET", "radiopharma-batches")
+    # Webhook de alertado activo (None = solo persistencia + eBR)
+    alert_webhook_url: str | None = os.environ.get("ALERT_WEBHOOK_URL")
 
 
 def load_settings() -> Settings:

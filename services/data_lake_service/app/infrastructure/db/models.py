@@ -84,3 +84,20 @@ class AuditEventRow(Base):
     actor: Mapped[str] = mapped_column(String(120), nullable=False)
     action: Mapped[str] = mapped_column(String(64), nullable=False)
     detail: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+
+class AlertRow(Base):
+    """Alertas activas persistidas (reconocimiento atribuible)."""
+    __tablename__ = "alerts"
+
+    alert_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    timestamp: Mapped[str] = mapped_column(DateTime(timezone=True),
+                                           nullable=False, index=True)
+    severity: Mapped[str] = mapped_column(String(16), nullable=False)
+    rule: Mapped[str] = mapped_column(String(64), nullable=False)
+    batch_id: Mapped[str] = mapped_column(String(64), nullable=False,
+                                          index=True)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    acked_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    acked_at: Mapped[str | None] = mapped_column(DateTime(timezone=True),
+                                                 nullable=True)
