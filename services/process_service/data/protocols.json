@@ -1,0 +1,52 @@
+{
+  "protocols": [
+    {
+      "id": "fdg_18f",
+      "name": "FDG (18F) - síntesis estándar",
+      "nuclide": "18F",
+      "half_life_min": 109.77,
+      "dose_per_patient_gbq": 0.37,
+      "validated": false,
+      "source": "Parámetros de protocolo pendientes de validación in-situ (honestidad de datos: valores de referencia bibliográficos, no medidos en planta).",
+      "steps": [
+        {"name": "transferencia", "duration_min": 5.0, "efficiency": 0.98},
+        {"name": "sintesis", "duration_min": 30.0, "efficiency": 0.60},
+        {"name": "purificacion", "duration_min": 20.0, "efficiency": 0.90},
+        {"name": "formulacion", "duration_min": 15.0, "efficiency": 0.95},
+        {"name": "transporte", "duration_min": 20.0, "efficiency": 1.0}
+      ]
+    },
+    {
+      "id": "met_11c",
+      "name": "MET (11C) - metionina",
+      "nuclide": "11C",
+      "half_life_min": 20.38,
+      "dose_per_patient_gbq": 0.74,
+      "validated": false,
+      "source": "Parámetros de protocolo pendientes de validación in-situ (honestidad de datos: valores de referencia bibliográficos, no medidos en planta).",
+      "steps": [
+        {"name": "transferencia", "duration_min": 3.0, "efficiency": 0.98},
+        {"name": "sintesis", "duration_min": 12.0, "efficiency": 0.55},
+        {"name": "purificacion", "duration_min": 8.0, "efficiency": 0.92},
+        {"name": "formulacion", "duration_min": 7.0, "efficiency": 0.95},
+        {"name": "transporte", "duration_min": 10.0, "efficiency": 1.0}
+      ]
+    },
+    {
+      "id": "psma_68ga",
+      "name": "PSMA (68Ga) - marcaje peptídico",
+      "nuclide": "68Ga",
+      "half_life_min": 67.71,
+      "dose_per_patient_gbq": 0.185,
+      "validated": false,
+      "source": "Parámetros de protocolo pendientes de validación in-situ (honestidad de datos: valores de referencia bibliográficos, no medidos en planta).",
+      "steps": [
+        {"name": "transferencia", "duration_min": 4.0, "efficiency": 0.98},
+        {"name": "sintesis", "duration_min": 15.0, "efficiency": 0.70},
+        {"name": "purificacion", "duration_min": 12.0, "efficiency": 0.90},
+        {"name": "formulacion", "duration_min": 10.0, "efficiency": 0.95},
+        {"name": "transporte", "duration_min": 15.0, "efficiency": 1.0}
+      ]
+    }
+  ]
+}

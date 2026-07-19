@@ -69,6 +69,12 @@ export interface AlertItem {
   acked_by: string | null; acked_at: string | null;
 }
 
+export interface ProtocolSummary {
+  protocol_id: string; name: string; nuclide: string;
+  half_life_min: number; dose_per_patient_gbq: number;
+  n_steps: number; total_time_min: number; validated: boolean;
+}
+
 export interface ConsoleData {
   mode: "live" | "demo";
   fetched_at: string;
@@ -80,14 +86,16 @@ export interface ConsoleData {
   trends: Record<string, EobTrend>;
   services: ServiceHealth[];
   alerts: AlertItem[];
+  protocols: ProtocolSummary[];
 }
 
 export interface ConsoleConfig {
   dlUrl: string; telUrl: string; token: string;
   authUrl: string; yeUrl: string; ndsUrl: string; qcUrl: string;
+  processUrl: string;
 }
 
-const CFG_VERSION = "2"; // 2 = defaults relativos (proxy nginx same-origin)
+const CFG_VERSION = "3"; // 3 = + Process Twin (/process)
 
 export function loadConfig(): ConsoleConfig {
   // Por defecto la consola usa prefijos relativos de mismo origen: en
@@ -97,7 +105,7 @@ export function loadConfig(): ConsoleConfig {
   if (localStorage.getItem("rpos.cfgver") !== CFG_VERSION) {
     // Migración v0.13 -> v0.14: descarta URLs absolutas guardadas (localhost:800X)
     // para que tomen efecto los nuevos defaults relativos; conserva token y sesión.
-    for (const k of ["dlUrl", "telUrl", "authUrl", "yeUrl", "ndsUrl", "qcUrl"])
+    for (const k of ["dlUrl", "telUrl", "authUrl", "yeUrl", "ndsUrl", "qcUrl", "processUrl"])
       localStorage.removeItem(`rpos.${k}`);
     localStorage.setItem("rpos.cfgver", CFG_VERSION);
   }
@@ -109,6 +117,7 @@ export function loadConfig(): ConsoleConfig {
     yeUrl: localStorage.getItem("rpos.yeUrl") || "/ye",
     ndsUrl: localStorage.getItem("rpos.ndsUrl") || "/nds",
     qcUrl: localStorage.getItem("rpos.qcUrl") || "/qc",
+    processUrl: localStorage.getItem("rpos.processUrl") || "/process",
   };
 }
 export function saveConfig(c: ConsoleConfig) {
@@ -119,6 +128,7 @@ export function saveConfig(c: ConsoleConfig) {
   localStorage.setItem("rpos.yeUrl", c.yeUrl);
   localStorage.setItem("rpos.ndsUrl", c.ndsUrl);
   localStorage.setItem("rpos.qcUrl", c.qcUrl);
+  localStorage.setItem("rpos.processUrl", c.processUrl);
 }
 
 /* ------------------------------------------------------------------ live */
@@ -129,6 +139,7 @@ const SERVICES = [
   { key: "auth", name: "Auth Service", cfgKey: "authUrl" },
   { key: "qc", name: "QC Engine", cfgKey: "qcUrl" },
   { key: "tel", name: "Telemetry", cfgKey: "telUrl" },
+  { key: "process", name: "Process Twin", cfgKey: "processUrl" },
 ] as const;
 
 export function serviceLabel(url: string): string {
@@ -212,7 +223,13 @@ export async function fetchConsole(cfg: ConsoleConfig): Promise<ConsoleData> {
       const ra = await fetch(`${cfg.dlUrl}/api/v1/alerts?limit=50`, { headers });
       if (ra.ok) alerts = await ra.json();
     } catch { /* sin alertado */ }
-    return { mode: "live", fetched_at: new Date().toISOString(), batches, qc, ebr, telemetry, telemetry_stats, trends, services, alerts };
+    // protocolos del Process Twin (v0.24, sin JWT)
+    let protocols: ProtocolSummary[] = [];
+    try {
+      const rp = await fetch(`${cfg.processUrl}/api/v1/process/protocols`);
+      if (rp.ok) protocols = await rp.json();
+    } catch { /* sin process twin */ }
+    return { mode: "live", fetched_at: new Date().toISOString(), batches, qc, ebr, telemetry, telemetry_stats, trends, services, alerts, protocols };
   } catch {
     return demoData(services);
   }
@@ -378,6 +395,17 @@ function demoData(services: ServiceHealth[]): ConsoleData {
         batch_id: "B-20260714-DEMO0005",
         message: "QC 18F con veredicto WARNING (registrado por qc.analista)",
         acked_by: "supervisor.turno", acked_at: "2026-07-18T11:35:00+00:00" },
+    ],
+    protocols: [
+      { protocol_id: "fdg_18f", name: "FDG (18F) - síntesis estándar", nuclide: "18F",
+        half_life_min: 109.77, dose_per_patient_gbq: 0.37, n_steps: 5,
+        total_time_min: 90, validated: false },
+      { protocol_id: "met_11c", name: "MET (11C) - metionina", nuclide: "11C",
+        half_life_min: 20.38, dose_per_patient_gbq: 0.74, n_steps: 5,
+        total_time_min: 40, validated: false },
+      { protocol_id: "psma_68ga", name: "PSMA (68Ga) - marcaje peptídico", nuclide: "68Ga",
+        half_life_min: 67.71, dose_per_patient_gbq: 0.185, n_steps: 5,
+        total_time_min: 56, validated: false },
     ],
     services: services.every((s) => s.status === "down")
       ? SERVICES.map((s, i) => ({ key: s.key, name: s.name, port: 0,

@@ -1,0 +1,44 @@
+"""
+Radiopharma OS - Process Service (Process Twin, EDS Vol. V)
+Punto de entrada FastAPI.
+
+Gemelo de proceso radioquímico: continúa donde el Physics Twin concluye
+(actividad al EOB) y simula la cascada post-proceso hasta el radiofármaco
+listo para liberación clínica (EOS): transferencia, síntesis, purificación,
+formulación, transporte — con decaimiento físico y eficiencias por paso.
+"""
+from __future__ import annotations
+
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.application.process_service import ProcessService
+from app.presentation.routers import process_api
+
+app = FastAPI(
+    title="Radiopharma OS - Process Service",
+    version="0.1.0",
+    description=(
+        "Process Twin: cascada EOB -> EOS con decaimiento por paso, "
+        "eficiencias de proceso y estimación de dosis por paciente."),
+)
+
+process_api.init(ProcessService())
+# CORS: la consola web (origen distinto) consume estas APIs desde el navegador
+_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins,
+    allow_credentials=_cors_origins != ["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(process_api.router)
+
+
+@app.get("/health", tags=["meta"])
+def health() -> dict:
+    return {"service": "process-service", "status": "ok", "version": "0.1.0"}

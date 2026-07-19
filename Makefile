@@ -1,5 +1,5 @@
 # Radiopharma OS - comandos de desarrollo
-.PHONY: test nds ye up down tel
+.PHONY: test nds ye up down tel process
 
 test:            ## corre todos los tests
 	cd services/nuclear_data_service && PYTHONPATH=. python -m pytest tests/ -q
@@ -8,6 +8,7 @@ test:            ## corre todos los tests
 	cd services/auth_service && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/qc_engine && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/telemetry_service && PYTHONPATH=. python -m pytest tests/ -q
+	cd services/process_service && PYTHONPATH=. python -m pytest tests/ -q
 	python -m pytest pipelines/test_batch_cli.py pipelines/test_opcua.py -q
 
 nds:             ## levanta Nuclear Data Service en :8001
@@ -27,6 +28,9 @@ qc:              ## levanta QC Engine en :8005
 
 tel:             ## levanta Telemetry Service en :8006 (SQLite)
 	cd services/telemetry_service && PYTHONPATH=. uvicorn app.main:app --port 8006
+
+process:         ## levanta Process Service (Process Twin) en :8007
+	cd services/process_service && PYTHONPATH=. uvicorn app.main:app --port 8007
 
 up:              ## docker compose up
 	docker compose up --build -d

@@ -58,7 +58,7 @@ export default function Overview({ data, cfg, session, onSelectBatch, onChanged 
         <Kpi icon={<ShieldCheck className="h-5 w-5" />} label="QC conforme"
              value={`${qcPass} %`} sub={`${qcReports.length} informes QC`} />
         <Kpi icon={<Activity className="h-5 w-5" />} label="Microservicios"
-             value={`${serviciosOk}/6`} sub="salud de plataforma" />
+             value={`${serviciosOk}/${data.services.length}`} sub="salud de plataforma" />
       </div>
 
       {data.alerts.length > 0 && (

@@ -261,3 +261,31 @@ export async function ackAlert(cfg: ConsoleConfig, token: string,
                                alertId: string): Promise<AlertItem> {
   return req<AlertItem>("POST", `${cfg.dlUrl}/api/v1/alerts/${alertId}/ack`, token);
 }
+
+/* ------------------------------------------------------- process twin */
+export interface ProcessStepResult {
+  name: string; duration_min: number; efficiency: number;
+  activity_in_gbq: number; activity_after_decay_gbq: number;
+  activity_out_gbq: number;
+}
+export interface ProcessSimulation {
+  protocol_id: string; nuclide: string; half_life_min: number;
+  eob_activity_gbq: number; eos_activity_gbq: number;
+  total_time_min: number; overall_decay_factor: number;
+  overall_efficiency: number; dose_per_patient_gbq: number;
+  patient_doses: number; validated: boolean;
+  steps: ProcessStepResult[];
+}
+
+export async function simulateProcess(cfg: ConsoleConfig, protocolId: string,
+                                      eobGbq: number): Promise<ProcessSimulation> {
+  return req<ProcessSimulation>(
+    "POST", `${cfg.processUrl}/api/v1/process/simulate`, undefined,
+    { protocol_id: protocolId, eob_activity_gbq: eobGbq });
+}
+
+export async function registerProcessSimEvent(cfg: ConsoleConfig, token: string,
+                                              batchId: string, detail: string): Promise<void> {
+  await req("POST", `${cfg.dlUrl}/api/v1/batches/${batchId}/events`, token,
+    { action: "proceso_simulado", detail });
+}

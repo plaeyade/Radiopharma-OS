@@ -149,6 +149,17 @@ services:
       timeout: 5s
       retries: 5
 
+  process-service:
+    build: ./services/process_service
+    container_name: rpos-process
+    ports: ["8007:8007"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8007/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
   telemetry-service:
     build: ./services/telemetry_service
     container_name: rpos-telemetry

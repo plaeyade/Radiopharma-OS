@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.23.0 · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.24.0 · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -19,6 +19,12 @@ producción de radionúclidos PET en ciclotrón.
 │   Auth Service     │  │     QC Engine      │  │ Telemetry Service  │
 │  FastAPI · :8004   │  │  FastAPI · :8005   │  │  FastAPI · :8006   │
 └────────────────────┘  └────────────────────┘  └────────────────────┘
+┌────────────────────┐
+│  Process Service   │
+│  FastAPI · :8007   │
+│  Process Twin      │
+│  EOB → EOS         │
+└────────────────────┘
 ```
 
 ## Qué calcula
@@ -216,6 +222,27 @@ producción de radionúclidos PET en ciclotrón.
     pendientes, severidad y botón *Reconocer* — verificado e2e (desviación
     + QC FAIL + anulación → 3 alertas persistidas, 3 eventos en el eBR y
     3 POST al webhook; ack desde la UI).
+- **Process Twin F1** (Process Service · :8007 · `POST /api/v1/process/simulate`)
+  — el gemelo de proceso radioquímico: comienza exactamente donde el
+  Physics Twin concluye (actividad al EOB) y continúa hasta el radiofármaco
+  listo para liberación clínica (EOS):
+  - **cascada por pasos** (transferencia → síntesis → purificación →
+    formulación → transporte): cada paso aplica decaimiento físico durante
+    su duración (`0.5^(t/T½)`) y su eficiencia de proceso η;
+    cierre analítico `EOS = EOB · Π(0.5^(t_i/T½)) · Πη_i`;
+  - **dosis por paciente**: `floor(EOS / dosis_paciente)` con dosis de
+    referencia por protocolo (0.37 GBq ¹⁸F, 0.74 GBq ¹¹C, 0.185 GBq ⁶⁸Ga);
+  - **catálogo de protocolos** (`data/protocols.json`): FDG-¹⁸F, MET-¹¹C y
+    PSMA-⁶⁸Ga, todos `validated: false` — parámetros de referencia
+    bibliográficos **pendientes de validación in-situ** (honestidad de
+    datos, misma política que el catálogo de equipos);
+  - endpoints: `GET /process/protocols`, `GET /process/protocols/{id}`,
+    `POST /process/simulate` (sin JWT — motor de cálculo como YE/NDS/QC);
+  - en la consola: pestaña **Proceso** (selector de protocolo + lote con
+    EOB autorrellenada, tarjetas EOS/decaimiento/eficiencia/dosis, tabla de
+    cascada paso a paso y **registro de la simulación en el eBR** del lote
+    como evento `proceso_simulado`) — verificado e2e (lote real
+    B-20260719-DA21A43E: EOB 108.95 GBq → EOS 31.03 GBq → 83 dosis).
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -305,7 +332,7 @@ Detalle completo en [`docs/VALIDATION.md`](docs/VALIDATION.md).
 # opción A: docker — plataforma completa en un comando
 docker compose up --build
 #   consola operativa  -> http://localhost:8080  (nginx: SPA + proxy same-origin)
-#   APIs               -> http://localhost:8001..8006/docs
+#   APIs               -> http://localhost:8001..8007/docs
 #   (usuario inicial: admin / admin-change-me — cámbiese en el primer arranque)
 
 # opción B: local
@@ -329,7 +356,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 267 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 6 CLI)
+make test     # 294 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 27 PT + 6 CLI)
 ```
 
 ## Estructura
@@ -341,7 +368,8 @@ services/
 ├── data_lake_service/         # batches + QC + liberación + eBR (ALCOA+)
 ├── auth_service/              # JWT + usuarios + roles + refresh tokens
 ├── qc_engine/                 # QC físico: decay, half-life fit, aceptación
-└── telemetry_service/         # series temporales (SQLite/InfluxDB)
+├── telemetry_service/         # series temporales (SQLite/InfluxDB)
+└── process_service/           # Process Twin: cascada EOB→EOS
 pipelines/
 ├── batch_cli.py               # pipeline de lote end-to-end
 ├── qc_cli.py                  # pipeline QC + liberación GMP
@@ -410,5 +438,16 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       crítica, QC WARNING aviso, lote anulado aviso) → persistencia ALCOA+
       + evento `alerta_disparada` en el eBR + webhook best-effort; ack
       idempotente y feed en consola — verificado e2e.
+- [x] Process Twin F1 (EDS cap. 5 / MVP caps. 22-24): cascada EOB→EOS con
+      decaimiento por paso y eficiencias, catálogo FDG/MET/PSMA
+      (`validated: false` hasta validación in-situ), dosis por paciente,
+      pestaña Proceso en consola y registro `proceso_simulado` en el eBR —
+      verificado e2e (EOB real 108.95 GBq → EOS 31.03 GBq → 83 dosis).
+- [ ] Process Twin F2: estimación de tiempos muertos desde telemetría real,
+      programación de producción (backward scheduling desde hora de dosis).
+- [ ] TALYS como segunda fuente de σ(E) tras el proveedor IAEA (cap. 13,
+      opcional — redundante para las 4 reacciones del MVP).
+- [ ] Burnup 2D acoplado a Elmer FEM (cap. 18) — tras validar Burnup 1D
+      contra EOB real del KIUBE y disponer de la geometría del blanco.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.

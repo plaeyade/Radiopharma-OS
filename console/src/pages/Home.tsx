@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Activity, Atom, FlaskConical, LineChart, LogIn, LogOut, Radio, RefreshCw, ScrollText, Settings, ShieldCheck, User, Waves } from "lucide-react";
+import { Activity, Atom, Beaker, FlaskConical, LineChart, LogIn, LogOut, Radio, RefreshCw, ScrollText, Settings, ShieldCheck, User, Waves } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import QcSection from "@/sections/QcSection";
 import EbrSection from "@/sections/EbrSection";
 import TelemetrySection from "@/sections/TelemetrySection";
 import TrendsSection from "@/sections/TrendsSection";
+import ProcesoSection from "@/sections/ProcesoSection";
 
 export default function Home() {
   const [data, setData] = useState<ConsoleData | null>(null);
@@ -145,6 +146,7 @@ export default function Home() {
                   ["authUrl", "Auth (/auth)"], ["dlUrl", "Data Lake (/dl)"],
                   ["yeUrl", "Yield Engine (/ye)"], ["ndsUrl", "Nuclear Data (/nds)"],
                   ["qcUrl", "QC Engine (/qc)"], ["telUrl", "Telemetry (/tel)"],
+                  ["processUrl", "Process Twin (/process)"],
                 ] as const).map(([key, label]) => (
                   <div key={key}>
                     <Label>{label}</Label>
@@ -173,6 +175,7 @@ export default function Home() {
               <TabsTrigger value="ebr"><ScrollText className="mr-1.5 h-4 w-4" />eBR</TabsTrigger>
               <TabsTrigger value="telemetry"><Waves className="mr-1.5 h-4 w-4" />Telemetría</TabsTrigger>
               <TabsTrigger value="trends"><LineChart className="mr-1.5 h-4 w-4" />Tendencias</TabsTrigger>
+              <TabsTrigger value="proceso"><Beaker className="mr-1.5 h-4 w-4" />Proceso</TabsTrigger>
             </TabsList>
             <div className="mt-5">
               <TabsContent value="overview">
@@ -198,12 +201,16 @@ export default function Home() {
               <TabsContent value="trends">
                 <TrendsSection data={data} />
               </TabsContent>
+              <TabsContent value="proceso">
+                <ProcesoSection data={data} cfg={effCfg} session={session}
+                                selected={batchId} onSelect={setBatchId} onChanged={reload} />
+              </TabsContent>
             </div>
           </Tabs>
         )}
       </main>
       <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Radiopharma OS v0.23.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
+        Radiopharma OS v0.24.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
         {data && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString("es-MX")}`}
       </footer>
     </div>
