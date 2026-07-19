@@ -9,3 +9,4 @@ PyJWT>=2.8
 alembic>=1.13
 reportlab>=4.0
 pikepdf>=9.0  # conversión PDF/A-2b del eBR (OutputIntent ICC + XMP pdfaid)
+fonttools>=4.50  # reparación §6.2.11.5 (anchos hmtx) del PDF/A — gate veraPDF

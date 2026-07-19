@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from app.application.batch_service import BatchService
 from app.application.ebr_service import EbrService
 from app.infrastructure.rendering.ebr_pdf import EbrPdfRenderer
-from app.infrastructure.rendering.pdfa import to_pdfa2b
+from app.infrastructure.rendering.pdfa import to_pdfa2b, validate_pdfa2b
+from app.infrastructure.rendering.verapdf import validate_with_verapdf
 from app.infrastructure.security.jwt_guard import (Identity, current_identity,
                                                    require_calidad,
                                                    require_operator)
@@ -18,7 +19,8 @@ from app.presentation.schemas import (AuditEventOut, BatchCreateIn, BatchOut,
                                       BeamIn, EbrOut, EbrVerifyOut, EventIn,
                                       EventOut, LineageIn, QcReportCreateIn,
                                       QcReportOut, ReleaseIn, ResultsIn,
-                                      SignatureIn, SignatureOut, VoidIn)
+                                      SignatureIn, SignatureOut, VeraPdfOut,
+                                      VoidIn)
 
 router = APIRouter(prefix="/api/v1/batches", tags=["data-lake"])
 
@@ -217,6 +219,40 @@ async def get_ebr_pdf(batch_id: str,
         headers={"Content-Disposition":
                  f'attachment; filename="ebr_{batch_id}.pdf"',
                  "X-PDF-Conformance": "PDF/A-2b (ISO 19005-2)"})
+
+
+@router.post("/{batch_id}/ebr/validate-pdfa", response_model=VeraPdfOut)
+async def validate_ebr_pdfa(batch_id: str,
+                            identity: Identity = Depends(require_operator)) -> VeraPdfOut:
+    """Gate formal del archivo documental: valida el eBR PDF/A-2b con el
+    validador interno (siempre) y con veraPDF si el ejecutable está
+    disponible (VERAPDF_CMD o `verapdf` en PATH). El veredicto de veraPDF
+    queda registrado en la pista de auditoría del eBR (ALCOA+)."""
+    if _ebr is None:
+        raise HTTPException(status_code=503, detail="Servicio eBR no configurado")
+    try:
+        doc = await _ebr.generate_ebr(batch_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    pdf = to_pdfa2b(_pdf.render(doc), title=f"eBR {batch_id}")
+
+    internal = validate_pdfa2b(pdf)
+    r = validate_with_verapdf(pdf)
+    registered = False
+    if r.compliant is not None:
+        veredicto = "CONFORME" if r.compliant else "NO CONFORME"
+        detail = (f"Validación formal PDF/A con veraPDF: {veredicto}. "
+                  f"{r.summary or r.error}")
+        if r.failed_rules:
+            detail += " Reglas fallidas: " + "; ".join(r.failed_rules[:5])
+        await _ebr.add_event(batch_id, identity.username,
+                             "verapdf_validado", detail)
+        registered = True
+    return VeraPdfOut(
+        batch_id=batch_id, available=r.available, compliant=r.compliant,
+        profile=r.profile, failed_rules=list(r.failed_rules),
+        summary=r.summary, error=r.error, internal_findings=internal,
+        registered_in_ebr=registered)
 
 
 @router.post("/{batch_id}/events", response_model=EventOut, status_code=201)

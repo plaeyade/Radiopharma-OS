@@ -150,3 +150,15 @@ class EbrVerifyOut(BaseModel):
     batch_id: str
     all_ok: bool
     checks: list[dict]
+
+
+class VeraPdfOut(BaseModel):
+    batch_id: str
+    available: bool
+    compliant: bool | None = None
+    profile: str = ""
+    failed_rules: list[str] = []
+    summary: str = ""
+    error: str = ""
+    internal_findings: list[str] = []
+    registered_in_ebr: bool = False

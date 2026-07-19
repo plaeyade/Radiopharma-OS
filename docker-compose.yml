@@ -202,6 +202,15 @@ services:
     ports: ["4840:4840"]
     restart: unless-stopped
 
+  # Gate formal PDF/A (archivo documental): valida cualquier eBR generado.
+  # Uso:  docker compose run --rm verapdf /data/ebr_mi_lote.pdf
+  # o bien: docker run --rm -v $(pwd)/out:/data verapdf/verapdf /data/ebr.pdf
+  verapdf:
+    image: verapdf/verapdf:1.26
+    container_name: rpos-verapdf
+    profiles: ["calidad"]
+    volumes: ["./out:/data"]
+
 volumes:
   pgdata:
   miniodata:

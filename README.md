@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.21.0 · Calibration Layer + catálogo multivendor (IBA KIUBE/Cyclone 30/70 · GE PETtrace/Qilin · Best · LBT · ikure) · MFA TOTP · Burnup multizona 1D · OPC-UA · Trending EOB GMP · eBR PDF/A-2b · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.22.0 · Gate formal veraPDF (eBR PDF/A-2b verificado, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -380,5 +380,12 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Calibration Layer: WLS + χ² con criterios GMP, modelos versionados y
       producción calibrada — verificado e2e (C=0.92 recuperado con datos
       sintéticos KIUBE; predicción calibrada = física × C).
+- [x] Gate formal veraPDF: `POST /batches/{id}/ebr/validate-pdfa` ejecuta el
+      validador de referencia ISO 19005 (VERAPDF_CMD o imagen Docker perfil
+      `calidad`), registra el veredicto en la pista de auditoría del eBR
+      (ALCOA+) y `pipelines/verapdf_check.py` sirve como gate de CI.
+      Incluye reparación automática de anchos de glifo (§6.2.11.5) que
+      reportlab escribe mal al subsetear ciertas TTF — verificado e2e:
+      eBR CONFORME 144/144 reglas con veraPDF 1.30 real.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.
