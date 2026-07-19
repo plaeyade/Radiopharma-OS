@@ -51,10 +51,42 @@ export const TARGET_ES: Record<string, string> = {
 };
 
 /* ---------------------------------------------------------------- login */
-export async function login(cfg: ConsoleConfig, username: string, password: string): Promise<string> {
-  const r = await req<{ access_token: string }>("POST", `${cfg.authUrl}/api/v1/auth/login`,
+export interface LoginTokens {
+  access_token: string; refresh_token?: string | null;
+  expires_in_min: number; refresh_expires_in_min?: number | null;
+}
+export interface LoginResult extends Partial<LoginTokens> {
+  mfa_required?: boolean; mfa_token?: string;
+}
+
+export async function login(cfg: ConsoleConfig, username: string, password: string): Promise<LoginResult> {
+  // Si el usuario tiene MFA activo devuelve {mfa_required, mfa_token}
+  return req<LoginResult>("POST", `${cfg.authUrl}/api/v1/auth/login`,
     undefined, { username, password });
-  return r.access_token;
+}
+
+/* ------------------------------------------------------- MFA TOTP ------- */
+export async function verifyMfa(cfg: ConsoleConfig, mfaToken: string,
+                                code: string): Promise<LoginTokens> {
+  return req<LoginTokens>("POST", `${cfg.authUrl}/api/v1/auth/mfa/verify`,
+    undefined, { mfa_token: mfaToken, code });
+}
+
+export interface MfaEnrollResult { secret: string; otpauth_uri: string }
+
+export async function mfaEnroll(cfg: ConsoleConfig, token: string): Promise<MfaEnrollResult> {
+  return req<MfaEnrollResult>("POST", `${cfg.authUrl}/api/v1/auth/mfa/enroll`, token);
+}
+
+export async function mfaConfirm(cfg: ConsoleConfig, token: string,
+                                 code: string): Promise<{ recovery_codes: string[] }> {
+  return req<{ recovery_codes: string[] }>(
+    "POST", `${cfg.authUrl}/api/v1/auth/mfa/confirm`, token, { code });
+}
+
+export async function mfaDisable(cfg: ConsoleConfig, token: string,
+                                 code: string): Promise<void> {
+  await req("POST", `${cfg.authUrl}/api/v1/auth/mfa/disable`, token, { code });
 }
 
 /* ----------------------------------------------------------- nuevo lote */

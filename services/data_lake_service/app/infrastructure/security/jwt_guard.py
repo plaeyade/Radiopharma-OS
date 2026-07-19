@@ -44,6 +44,11 @@ def current_identity(
                              algorithms=["HS256"], issuer="radiopharma-os")
     except jwt.PyJWTError as exc:
         raise HTTPException(status_code=401, detail=f"Token inválido: {exc}")
+    # Solo tokens de acceso: los retos MFA y los refresh tokens (claim "type")
+    # no son credenciales de API (el rol vendría vacío por omisión)
+    if payload.get("type") is not None:
+        raise HTTPException(status_code=401,
+                            detail="Solo se aceptan tokens de acceso")
     return Identity(username=payload["sub"], role=payload.get("role", ""))
 
 

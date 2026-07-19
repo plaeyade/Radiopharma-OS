@@ -40,7 +40,7 @@ NODE_PATHS = {
 class CyclotronModel:
     """Estado del proceso: meseta a `corriente` µA con rampa y ruido."""
 
-    def __init__(self, corriente: float = 40.0, energia: float = 16.5,
+    def __init__(self, corriente: float = 40.0, energia: float = 18.0,
                  excursion: bool = False, periodo_min: float = 60.0,
                  seed: int = 42) -> None:
         self.corriente = corriente
@@ -109,7 +109,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Servidor OPC-UA simulado del ciclotrón")
     ap.add_argument("--port", type=int, default=4840)
     ap.add_argument("--corriente", type=float, default=40.0)
-    ap.add_argument("--energia", type=float, default=16.5)
+    ap.add_argument("--energia", type=float, default=18.0)
     ap.add_argument("--intervalo", type=float, default=1.0,
                     help="periodo de actualización de los nodos (s)")
     ap.add_argument("--periodo-min", type=float, default=60.0,

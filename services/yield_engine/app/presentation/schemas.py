@@ -11,7 +11,7 @@ class ProductionRequest(BaseModel):
     reaction_id: str = Field(..., examples=["o18_p_n_f18"])
     target_id: str = Field(..., examples=["h2_18o"])
     beam_energy_mev: float = Field(..., gt=0, le=40, examples=[16.5])
-    current_ua: float = Field(..., gt=0, le=200, examples=[37.0])
+    current_ua: float = Field(..., gt=0, le=300, examples=[37.0])
     irradiation_time_min: float = Field(..., gt=0, le=600, examples=[60.0])
     enrichment: Optional[float] = Field(None, gt=0, le=1.0)
 
@@ -38,7 +38,7 @@ class BurnupRequest(BaseModel):
     reaction_id: str = Field(..., examples=["o18_p_n_f18"])
     target_id: str = Field(..., examples=["h2_18o"])
     beam_energy_mev: float = Field(..., gt=0, le=40)
-    current_ua: float = Field(..., gt=0, le=200)
+    current_ua: float = Field(..., gt=0, le=300)
     irradiation_time_min: float = Field(..., gt=0, le=600)
     beam_spot_cm2: float = Field(1.0, gt=0, description="Área efectiva del haz sobre el blanco")
     burnup_xs_mb: float = Field(500.0, gt=0, description="Sección eficaz efectiva de quemado")
@@ -67,7 +67,7 @@ class BurnupMultizoneRequest(BaseModel):
     reaction_id: str = Field(..., examples=["o18_p_n_f18"])
     target_id: str = Field(..., examples=["h2_18o"])
     beam_energy_mev: float = Field(..., gt=0, le=40)
-    current_ua: float = Field(..., gt=0, le=200)
+    current_ua: float = Field(..., gt=0, le=300)
     irradiation_time_min: float = Field(..., gt=0, le=600)
     beam_spot_cm2: float = Field(1.0, gt=0,
                                  description="Área efectiva del haz sobre el blanco")

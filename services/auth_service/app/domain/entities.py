@@ -37,6 +37,12 @@ class User:
     password_hash: str
     is_active: bool = True
     created_at: datetime | None = None
+    # --- MFA TOTP (RFC 6238) ---
+    mfa_enabled: bool = False
+    mfa_secret: str | None = None              # activo (tras confirmar)
+    mfa_pending_secret: str | None = None      # enrolado, pendiente de confirmar
+    mfa_recovery_hashes: tuple[str, ...] = ()  # SHA-256 de códigos de respaldo
+    mfa_last_step: int = -1                    # anti-replay: último paso aceptado
 
 
 @dataclass(frozen=True)

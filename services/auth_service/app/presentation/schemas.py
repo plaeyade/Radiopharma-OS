@@ -46,9 +46,44 @@ class UserOut(BaseModel):
     full_name: str
     role: str
     is_active: bool
+    mfa_enabled: bool = False
 
 
 class VerifyOut(BaseModel):
     sub: str
     role: str
     exp: int
+
+
+# --- MFA TOTP (RFC 6238) ---
+
+class MfaRequiredOut(BaseModel):
+    """Respuesta de /login cuando el usuario tiene MFA activo."""
+    mfa_required: bool = True
+    mfa_token: str
+    expires_in_min: int
+
+
+class MfaVerifyIn(BaseModel):
+    mfa_token: str
+    code: str = Field(..., min_length=6, max_length=9,
+                      description="TOTP de 6 dígitos o código de respaldo XXXX-XXXX")
+
+
+class MfaCodeIn(BaseModel):
+    code: str = Field(..., min_length=6, max_length=9)
+
+
+class MfaEnrollOut(BaseModel):
+    secret: str
+    otpauth_uri: str
+
+
+class MfaConfirmOut(BaseModel):
+    mfa_enabled: bool = True
+    recovery_codes: list[str]
+
+
+class MfaStatusOut(BaseModel):
+    username: str
+    mfa_enabled: bool

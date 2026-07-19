@@ -37,6 +37,9 @@ class JwtIssuer:
     def verify(self, token: str) -> TokenClaims:
         payload = jwt.decode(token, self._secret, algorithms=["HS256"],
                              issuer=_ISSUER)
+        # Solo tokens de acceso (sin "type"): rechaza refresh y retos MFA
+        if payload.get("type") is not None:
+            raise jwt.InvalidTokenError("No es un token de acceso")
         return TokenClaims(
             sub=payload["sub"],
             role=Role.from_str(payload["role"]),
@@ -69,3 +72,25 @@ class JwtIssuer:
         return RefreshClaims(
             sub=payload["sub"], jti=payload["jti"],
             exp=int(payload["exp"]), iat=int(payload["iat"]))
+
+    def issue_mfa_challenge(self, username: str, ttl_minutes: int = 5) -> str:
+        """Token parcial de vida muy corta: solo acredita haber superado la
+        contraseña; sirve únicamente para canjear el segundo factor."""
+        now = int(time.time())
+        payload = {
+            "sub": username,
+            "type": "mfa",
+            "jti": uuid4().hex,
+            "iat": now,
+            "exp": now + ttl_minutes * 60,
+            "iss": _ISSUER,
+        }
+        return jwt.encode(payload, self._secret, algorithm="HS256")
+
+    def verify_mfa_challenge(self, token: str) -> str:
+        """Verifica un challenge MFA y devuelve el username (sub)."""
+        payload = jwt.decode(token, self._secret, algorithms=["HS256"],
+                             issuer=_ISSUER)
+        if payload.get("type") != "mfa":
+            raise jwt.InvalidTokenError("No es un token de reto MFA")
+        return str(payload["sub"])

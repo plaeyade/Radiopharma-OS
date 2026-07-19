@@ -26,7 +26,7 @@ def test_modelo_rampa_y_meseta():
     assert 38.0 < ultima["beam_current_ua"] < 41.0
     assert 335.0 < ultima["target_pressure_psi"] < 355.0
     assert 10.0 < ultima["cooling_flow_lpm"] < 13.5
-    assert ultima["beam_energy_mev"] == 16.5
+    assert ultima["beam_energy_mev"] == 18.0  # KIUBE: extracción fija 18 MeV
 
 
 def test_modelo_excursion_cae_caudal():

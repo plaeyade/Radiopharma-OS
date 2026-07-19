@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.19.0 · Burnup multizona 1D (perfil axial de quemado) · Conector OPC-UA · Trending EOB GMP · eBR PDF/A-2b · plataforma completa en `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.20.0 · MFA TOTP (RFC 6238) en Auth Service · perfil IBA KIUBE (18 MeV / 300 µA) · Burnup multizona 1D · Conector OPC-UA · Trending EOB GMP · eBR PDF/A-2b · plataforma completa en `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -53,6 +53,23 @@ producción de radionúclidos PET en ciclotrón.
     (offboarding inmediato),
   - store SQL `refresh_tokens` (jti, usuario, expira, revocado); los access
     tokens siguen verificándose localmente sin red en cada servicio.
+- **MFA TOTP (RFC 6238)** — segundo factor opcional por usuario
+  (§11.10(d) 21 CFR Part 11):
+  - `/login` con MFA activo devuelve `{mfa_required, mfa_token}` (reto parcial
+    de 5 min, sin privilegios); `POST /mfa/verify` canjea reto + código TOTP
+    (o código de respaldo) por el par completo de tokens,
+  - enrolamiento autoservicio: `/mfa/enroll` (secreto base32 + URI otpauth://,
+    compatible con Google/Microsoft Authenticator, Aegis…), `/mfa/confirm`
+    (activa y entrega 8 códigos de respaldo de un solo uso, almacenados como
+    hash SHA-256), `/mfa/disable` (con código válido),
+  - **anti-replay**: cada paso TOTP de 30 s se consume (no reutilizable dentro
+    de su ventana); el reto MFA y los refresh tokens (claim `type`) son
+    rechazados como credenciales de API en todos los servicios,
+  - `POST /users/{u}/mfa/reset` (admin): reset por pérdida de dispositivo,
+  - consola: login en dos pasos + diálogo de gestión MFA (icono escudo en el
+    chip de sesión).
+- **Perfil IBA KIUBE**: validación de corriente hasta 300 µA y energía del
+  simulador OPC-UA a 18 MeV (extracción fija del KIUBE).
 - **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
   (revisión inicial `0001_batch_records`).
 - **QC Engine** (Quality Control Twin, EDS Vol. IV):
@@ -344,5 +361,9 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       endpoint `/production/burnup-multizone` + gráfica de perfil en la
       consola (pestaña Lotes) — verificado e2e (EOB sin quemado idéntico al
       modelo base; pérdida global < 0.5 % en ciclotrón médico típico).
+- [x] MFA TOTP (RFC 6238) con anti-replay, códigos de respaldo y login en dos
+      pasos en consola — verificado e2e (vectores RFC, rechazo de retos como
+      credencial de API, activación y login completos desde la UI).
+- [x] Perfil IBA KIUBE: límites de operación 18 MeV / 300 µA en validadores.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.
