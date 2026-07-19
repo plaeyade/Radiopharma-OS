@@ -31,7 +31,13 @@ def compute_production(req: ProductionRequest) -> ProductionResponse:
             irradiation_time_min=req.irradiation_time_min, enrichment=req.enrichment)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
-    return ProductionResponse(
+    return ProductionResponse(**production_response_dict(r))
+
+
+def production_response_dict(r) -> dict:
+    """Mapeo único ProductionResult → dict de respuesta (compartido con el
+    endpoint calibrado del Calibration Layer)."""
+    return dict(
         reaction_id=r.reaction_id, product_nuclide=r.product_nuclide,
         beam_energy_mev=r.beam_energy_mev, exit_energy_mev=r.exit_energy_mev,
         current_ua=r.current_ua, irradiation_time_min=r.irradiation_time_min,

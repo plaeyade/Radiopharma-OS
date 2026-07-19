@@ -14,10 +14,12 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.application.calibration_service import (CalibrationService,
+                                                 EquipmentCatalog)
 from app.application.production_service import ProductionService
 from app.infrastructure.repositories.factory import build_reaction_provider
 from app.infrastructure.stopping.factory import build_stopping_provider
-from app.presentation.routers import yield_api
+from app.presentation.routers import equipment_api, yield_api
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
@@ -34,6 +36,13 @@ service = ProductionService(
     rxn=build_reaction_provider(DATA_DIR),
 )
 yield_api.init(service)
+
+calibration = CalibrationService(
+    store_path=Path(os.environ.get("YE_CALIBRATION_STORE",
+                                   DATA_DIR / "calibrations.json")),
+    catalog=EquipmentCatalog(DATA_DIR / "equipment.json"),
+)
+equipment_api.init(service, calibration)
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -45,6 +54,7 @@ app.add_middleware(
 )
 
 app.include_router(yield_api.router)
+app.include_router(equipment_api.router)
 
 
 @app.get("/health", tags=["meta"])

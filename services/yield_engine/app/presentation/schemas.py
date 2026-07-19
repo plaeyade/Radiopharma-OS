@@ -106,3 +106,51 @@ class BurnupMultizoneResponse(BaseModel):
     eob_with_burnup_gbq: float
     loss_gbq: float
     model: str
+
+
+# ---------------- Calibration Layer (EDS v2.0, Vol. II) --------------------
+
+class EquipmentOut(BaseModel):
+    id: str
+    fabricante: str
+    modelo: str
+    energia_max_mev: Optional[float] = None
+    energia_fija_mev: bool
+    corriente_max_ua: Optional[float] = None
+    reacciones_tipicas: list[str]
+    notas: str
+
+
+class CalibrationMeasurementIn(BaseModel):
+    fecha: str = Field(..., examples=["2026-07-15"])
+    eob_predicho_gbq: float = Field(..., gt=0)
+    eob_medido_gbq: float = Field(..., gt=0)
+    incertidumbre_gbq: float = Field(0.0, ge=0)
+
+
+class CalibrationFitIn(BaseModel):
+    reaction_id: str
+    equipment_id: str
+    medidas: list[CalibrationMeasurementIn] = Field(..., min_length=2)
+
+
+class CalibrationModelOut(BaseModel):
+    model_id: str
+    reaction_id: str
+    equipment_id: str
+    version: int
+    factor: float
+    factor_uncertainty: float
+    n_points: int
+    chi2_ndf: float
+    status: str
+    fitted_at: str
+    medidas: list[dict]
+
+
+class CalibratedProductionRequest(ProductionRequest):
+    equipment_id: str = Field(..., examples=["iba_kiube"])
+
+
+class ProductionResponseCalibrated(ProductionResponse):
+    calibration: dict

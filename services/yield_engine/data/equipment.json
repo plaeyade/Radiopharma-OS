@@ -1,0 +1,95 @@
+{
+  "descripcion": "Catálogo multivendor de ciclotrones (Informe Maestro EDS v2.0). Los valores marcados como típicos deben ajustarse a la hoja de especificaciones del fabricante en el sitio; los perfiles con energia_max_mev=null son totalmente configurables.",
+  "cyclotrons": [
+    {
+      "id": "iba_kiube",
+      "fabricante": "IBA",
+      "modelo": "Cyclone KIUBE",
+      "energia_max_mev": 18.0,
+      "energia_fija_mev": true,
+      "corriente_max_ua": 300.0,
+      "reacciones_tipicas": ["o18_p_n_f18", "n14_p_a_c11", "n15_p_n_o15", "zn68_p_n_ga68"],
+      "notas": "Extracción fija a 18 MeV, doble haz simultáneo. Perfil de referencia del sitio."
+    },
+    {
+      "id": "iba_cyclone_30",
+      "fabricante": "IBA",
+      "modelo": "Cyclone 30 / 30XP",
+      "energia_max_mev": 30.0,
+      "energia_fija_mev": false,
+      "corriente_max_ua": 1200.0,
+      "reacciones_tipicas": ["o18_p_n_f18", "zn68_p_n_ga68"],
+      "notas": "Producción centralizada: también 64Cu, 89Zr, 123I según configuración (corriente típica alta; ajustar a la hoja del sitio)."
+    },
+    {
+      "id": "iba_cyclone_70",
+      "fabricante": "IBA",
+      "modelo": "Cyclone 70 / ARRONAX-class",
+      "energia_max_mev": 70.0,
+      "energia_fija_mev": false,
+      "corriente_max_ua": 750.0,
+      "reacciones_tipicas": ["zn68_p_n_ga68"],
+      "notas": "Producción de 68Ge, 82Sr y radiosótopos de alto umbral (ajustar a la hoja del sitio)."
+    },
+    {
+      "id": "ge_pettrace",
+      "fabricante": "GE Healthcare",
+      "modelo": "PETtrace 800/880",
+      "energia_max_mev": 16.5,
+      "energia_fija_mev": true,
+      "corriente_max_ua": 100.0,
+      "reacciones_tipicas": ["o18_p_n_f18", "n14_p_a_c11"],
+      "notas": "H- ~16.5 MeV fijos; corriente típica del orden de 100 µA (ajustar a la hoja del sitio)."
+    },
+    {
+      "id": "ge_qilin",
+      "fabricante": "GE Healthcare",
+      "modelo": "MINItrace Qilin",
+      "energia_max_mev": 9.6,
+      "energia_fija_mev": true,
+      "corriente_max_ua": 50.0,
+      "reacciones_tipicas": ["o18_p_n_f18"],
+      "notas": "Clase compacta para 18F in-house (especificaciones a confirmar con la hoja del fabricante)."
+    },
+    {
+      "id": "best_b15",
+      "fabricante": "Best Cyclotron Systems",
+      "modelo": "BEST 15",
+      "energia_max_mev": 15.0,
+      "energia_fija_mev": false,
+      "corriente_max_ua": 400.0,
+      "reacciones_tipicas": ["o18_p_n_f18", "n14_p_a_c11", "zn68_p_n_ga68"],
+      "notas": "Corriente configurable por modelo (ajustar a la hoja del sitio)."
+    },
+    {
+      "id": "best_b70",
+      "fabricante": "Best Cyclotron Systems",
+      "modelo": "BEST 70",
+      "energia_max_mev": 70.0,
+      "energia_fija_mev": false,
+      "corriente_max_ua": 800.0,
+      "reacciones_tipicas": ["zn68_p_n_ga68"],
+      "notas": "Clase 70 MeV para producción de alto umbral (ajustar a la hoja del sitio)."
+    },
+    {
+      "id": "lbt_beam",
+      "fabricante": "Longevous Beam Technologies (LBT)",
+      "modelo": "Perfil LBT configurable",
+      "energia_max_mev": null,
+      "energia_fija_mev": false,
+      "corriente_max_ua": null,
+      "reacciones_tipicas": ["o18_p_n_f18"],
+      "notas": "Perfil preparado para equipos LBT: completar energía/corriente según la hoja del fabricante antes de calibrar."
+    },
+    {
+      "id": "ikure",
+      "fabricante": "ikure",
+      "modelo": "Perfil ikure configurable",
+      "energia_max_mev": null,
+      "energia_fija_mev": false,
+      "corriente_max_ua": null,
+      "reacciones_tipicas": ["o18_p_n_f18"],
+      "notas": "Perfil reservado para el equipo ikure del sitio: completar especificaciones según la hoja del fabricante."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.20.0 · MFA TOTP (RFC 6238) en Auth Service · perfil IBA KIUBE (18 MeV / 300 µA) · Burnup multizona 1D · Conector OPC-UA · Trending EOB GMP · eBR PDF/A-2b · plataforma completa en `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.21.0 · Calibration Layer + catálogo multivendor (IBA KIUBE/Cyclone 30/70 · GE PETtrace/Qilin · Best · LBT · ikure) · MFA TOTP · Burnup multizona 1D · OPC-UA · Trending EOB GMP · eBR PDF/A-2b · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -70,6 +70,18 @@ producción de radionúclidos PET en ciclotrón.
     chip de sesión).
 - **Perfil IBA KIUBE**: validación de corriente hasta 300 µA y energía del
   simulador OPC-UA a 18 MeV (extracción fija del KIUBE).
+- **Catálogo multivendor de ciclotrones** (`GET /api/v1/equipment`): perfiles
+  configurables para IBA KIUBE, Cyclone 30 y 70, GE PETtrace y MINItrace
+  Qilin, Best Cyclotron Systems (B15/B70), LBT e ikure; las especificaciones
+  se ajustan a la hoja del fabricante de cada sitio (`data/equipment.json`).
+- **Calibration Layer** (Physics Twin calibrado con producción real, EDS
+  Vol. II): factor multiplicativo C = EOB_real / EOB_predicho por
+  (reacción, equipo), ajustado por **WLS con χ²** y estado GMP
+  (vigente/observado/investigar); modelos **versionados** con trazabilidad
+  (`POST /calibration/fit`, `GET /calibration/models`,
+  `GET /calibration/{reacción}/{equipo}`); `POST /production/calibrated`
+  devuelve la predicción física con el factor vigente aplicado y su
+  metadato de calibración (o `calibrated=false` si no hay modelo).
 - **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
   (revisión inicial `0001_batch_records`).
 - **QC Engine** (Quality Control Twin, EDS Vol. IV):
@@ -365,5 +377,8 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       pasos en consola — verificado e2e (vectores RFC, rechazo de retos como
       credencial de API, activación y login completos desde la UI).
 - [x] Perfil IBA KIUBE: límites de operación 18 MeV / 300 µA en validadores.
+- [x] Calibration Layer: WLS + χ² con criterios GMP, modelos versionados y
+      producción calibrada — verificado e2e (C=0.92 recuperado con datos
+      sintéticos KIUBE; predicción calibrada = física × C).
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.
