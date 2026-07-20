@@ -7,14 +7,17 @@ from fastapi import APIRouter, HTTPException
 
 from app.application.process_service import ProcessService
 from app.domain.bottleneck import BottleneckResult
+from app.domain.dose_calendar import Appointment, CalendarResult
 from app.domain.entities import ChainResult, Protocol
 from app.domain.scheduling import ScheduleResult
 from app.presentation.schemas import (BottleneckIn, BottleneckOut,
-                                      ProtocolOut, ProtocolStepOut,
-                                      ProtocolSummaryOut, ScheduleIn,
-                                      ScheduleOut, ScheduledStepOut,
-                                      SimulateIn, SimulateOut,
-                                      StepBottleneckOut, StepResultOut)
+                                      DoseCalendarIn, DoseCalendarOut,
+                                      DoseSlotOut, ProtocolOut,
+                                      ProtocolStepOut, ProtocolSummaryOut,
+                                      ScheduleIn, ScheduleOut,
+                                      ScheduledStepOut, SimulateIn,
+                                      SimulateOut, StepBottleneckOut,
+                                      StepResultOut)
 
 router = APIRouter(prefix="/api/v1/process", tags=["process-twin"])
 
@@ -158,3 +161,45 @@ def bottleneck(payload: BottleneckIn) -> BottleneckOut:
             eos_gain_1min_faster_gbq=round(s.eos_gain_1min_faster_gbq, 4),
             eos_gain_1pp_efficiency_gbq=round(
                 s.eos_gain_1pp_efficiency_gbq, 4)) for s in r.steps])
+
+
+def _calendar_out(r: CalendarResult) -> DoseCalendarOut:
+    return DoseCalendarOut(
+        protocol_id=r.protocol_id,
+        nuclide=r.nuclide,
+        half_life_min=r.half_life_min,
+        eos_activity_gbq=round(r.eos_activity_gbq, 4),
+        eos_time=r.eos_time,
+        required_eos_gbq=round(r.required_eos_gbq, 4),
+        patients_served=r.patients_served,
+        patients_total=r.patients_total,
+        total_drawn_gbq=round(r.total_drawn_gbq, 4),
+        remaining_after_last_gbq=round(r.remaining_after_last_gbq, 4),
+        validated=r.validated,
+        slots=[DoseSlotOut(
+            label=s.label, time=s.time, dose_gbq=s.dose_gbq,
+            inventory_before_gbq=round(s.inventory_before_gbq, 4),
+            feasible=s.feasible,
+            inventory_after_gbq=round(s.inventory_after_gbq, 4))
+            for s in r.slots])
+
+
+@router.post("/dose-calendar", response_model=DoseCalendarOut)
+def calendar(payload: DoseCalendarIn) -> DoseCalendarOut:
+    try:
+        proto = _service.get_protocol(payload.protocol_id)
+        appts = [Appointment(
+            time=a.time,
+            dose_gbq=(a.dose_gbq if a.dose_gbq is not None
+                      else proto.dose_per_patient_gbq),
+            label=a.label) for a in payload.appointments]
+        result = _service.dose_calendar(
+            payload.protocol_id, payload.eos_activity_gbq,
+            payload.eos_time, appts)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"protocolo '{payload.protocol_id}' no encontrado")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _calendar_out(result)

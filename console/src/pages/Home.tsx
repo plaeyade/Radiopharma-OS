@@ -210,7 +210,7 @@ export default function Home() {
         )}
       </main>
       <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Radiopharma OS v0.25.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
+        Radiopharma OS v0.26.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
         {data && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString("es-MX")}`}
       </footer>
     </div>

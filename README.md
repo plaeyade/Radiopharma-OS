@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.25.0 · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.26.0 · Process Twin F3 (calendario multi-paciente: fraccionamiento EOS con decaimiento entre administraciones) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -262,6 +262,19 @@ producción de radionúclidos PET en ciclotrón.
     180 dosis a las 14:00 → haz a las 11:20, EOB requerida 233.85 GBq
     (lote real: 234.22 GBq ✓), paso dominante síntesis (73.6 GBq de
     pérdida por eficiencia), tiempo muerto medido 6 min.
+- **Process Twin F3** (Process Service v0.3 · `POST /process/dose-calendar`)
+  — calendario multi-paciente: fracciona la actividad EOS en dosis
+  individuales con decaimiento continuo entre administraciones:
+  - por cita: inventario disponible en su instante, viabilidad (la dosis
+    no viable no descuenta actividad) y remanente tras la administración;
+    citas desordenadas se ordenan; dosis por defecto = la del protocolo;
+  - **inversa exacta**: EOS mínima que serviría TODAS las citas
+    (propagación hacia atrás desde la última dosis);
+  - en la consola: tarjeta **Calendario de pacientes** (filas dinámicas
+    paciente/hora/dosis, tabla de viabilidad, servidos/total, extraído,
+    remanente y EOS mínima) — verificado e2e en vivo (EOS real 66.7 GBq:
+    3/3 pacientes servidos entre 14:00 y 18:00; EOS mínima 2.71 GBq —
+    el lote está sobredimensionado para esa agenda).
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -375,7 +388,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 312 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 45 PT + 6 CLI)
+make test     # 325 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 58 PT + 6 CLI)
 ```
 
 ## Estructura
@@ -466,9 +479,11 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       exacta de la cascada + línea temporal completa), análisis de cuello de
       botella (pérdidas decaimiento/eficiencia y sensibilidades por paso) y
       tiempo muerto medido desde telemetría real — verificado e2e.
-- [ ] Process Twin F3: calendario multi-paciente (fraccionamiento del EOS en
-      dosis con decaimiento entre administraciones) y protocolos validados
-      con datos in-situ.
+- [x] Process Twin F3: calendario multi-paciente (fraccionamiento del EOS
+      con decaimiento entre administraciones, viabilidad por cita e inversa
+      exacta de EOS requerida) — verificado e2e.
+- [ ] Protocolos del Process Twin validados con datos in-situ (bloqueado:
+      requiere rendimientos y tiempos medidos en planta).
 - [ ] TALYS como segunda fuente de σ(E) tras el proveedor IAEA (cap. 13,
       opcional — redundante para las 4 reacciones del MVP).
 - [ ] Burnup 2D acoplado a Elmer FEM (cap. 18) — tras validar Burnup 1D

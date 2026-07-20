@@ -328,3 +328,26 @@ export async function bottleneckProcess(cfg: ConsoleConfig, protocolId: string,
     "POST", `${cfg.processUrl}/api/v1/process/bottleneck`, undefined,
     { protocol_id: protocolId, eob_activity_gbq: eobGbq });
 }
+
+/* ---------------------------------------------------- process twin F3 */
+export interface DoseSlot {
+  label: string; time: string; dose_gbq: number;
+  inventory_before_gbq: number; feasible: boolean;
+  inventory_after_gbq: number;
+}
+export interface DoseCalendar {
+  protocol_id: string; nuclide: string; half_life_min: number;
+  eos_activity_gbq: number; eos_time: string;
+  required_eos_gbq: number; patients_served: number;
+  patients_total: number; total_drawn_gbq: number;
+  remaining_after_last_gbq: number; validated: boolean;
+  slots: DoseSlot[];
+}
+
+export async function doseCalendar(cfg: ConsoleConfig, input: {
+  protocol_id: string; eos_activity_gbq: number; eos_time: string;
+  appointments: Array<{ time: string; dose_gbq?: number; label?: string }>;
+}): Promise<DoseCalendar> {
+  return req<DoseCalendar>(
+    "POST", `${cfg.processUrl}/api/v1/process/dose-calendar`, undefined, input);
+}

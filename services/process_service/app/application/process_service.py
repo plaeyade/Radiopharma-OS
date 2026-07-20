@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 
 from app.domain.bottleneck import BottleneckResult, bottleneck_analysis
+from app.domain.dose_calendar import (Appointment, CalendarResult,
+                                      dose_calendar)
 from app.domain.entities import ChainResult, Protocol, ProtocolStep
 from app.domain.process_chain import simulate_chain
 from app.domain.scheduling import ScheduleResult, backward_schedule
@@ -105,3 +107,11 @@ class ProcessService:
                    eob_activity_gbq: float) -> BottleneckResult:
         proto = self._catalog.get(protocol_id)
         return bottleneck_analysis(proto, eob_activity_gbq)
+
+    def dose_calendar(self, protocol_id: str,
+                      eos_activity_gbq: float,
+                      eos_time: datetime,
+                      appointments: list[Appointment]) -> CalendarResult:
+        """Calendario multi-paciente con decaimiento entre administraciones."""
+        proto = self._catalog.get(protocol_id)
+        return dose_calendar(proto, eos_activity_gbq, eos_time, appointments)

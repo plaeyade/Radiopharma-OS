@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Beaker, CalendarClock, ClipboardCheck, Gauge, Users } from "lucide-react";
+import { ArrowRight, Beaker, CalendarClock, ClipboardCheck, Gauge, Plus, Trash2, Users, XCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
 import type { Session } from "@/lib/session";
-import { bottleneckProcess, registerProcessSimEvent, scheduleProcess, simulateProcess,
-         type ProcessBottleneck, type ProcessSchedule, type ProcessSimulation } from "@/lib/actions";
+import { bottleneckProcess, doseCalendar, registerProcessSimEvent, scheduleProcess, simulateProcess,
+         type DoseCalendar, type ProcessBottleneck, type ProcessSchedule, type ProcessSimulation } from "@/lib/actions";
 
 interface Props {
   data: ConsoleData;
@@ -37,6 +37,14 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
   const [plan, setPlan] = useState<ProcessSchedule | null>(null);
   // F2: cuello de botella
   const [cuello, setCuello] = useState<ProcessBottleneck | null>(null);
+  // F3: calendario multi-paciente
+  interface CitaForm { label: string; time: string; dose: string }
+  const [citas, setCitas] = useState<CitaForm[]>([
+    { label: "P1", time: "", dose: "" },
+    { label: "P2", time: "", dose: "" },
+    { label: "P3", time: "", dose: "" },
+  ]);
+  const [cal, setCal] = useState<DoseCalendar | null>(null);
 
   const batch = data.batches.find((b) => b.batch_id === selected);
   const proto = data.protocols.find((p) => p.protocol_id === protocolId)
@@ -119,6 +127,50 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
       setBusy(false);
     }
   };
+
+  // F3: calcula el calendario de pacientes (EOS de la simulación)
+  const doCalendar = async () => {
+    if (!proto) return;
+    const eosAct = sim?.eos_activity_gbq ?? 0;
+    if (!(eosAct > 0)) {
+      toast.error("Simula la cascada primero (EOS necesaria)");
+      return;
+    }
+    const appts = citas
+      .filter((c) => c.time)
+      .map((c) => ({
+        time: new Date(c.time).toISOString(),
+        label: c.label || undefined,
+        dose_gbq: c.dose ? parseFloat(c.dose) : undefined,
+      }));
+    if (!appts.length) {
+      toast.error("Define al menos una cita con hora");
+      return;
+    }
+    // EOS lista al final de la cascada: dose_time del plan si existe;
+    // si no, se asume disponible en la primera cita
+    const eosIso = plan
+      ? plan.dose_time
+      : appts.map((a) => a.time).sort()[0];
+    setBusy(true);
+    try {
+      const r = await doseCalendar(cfg, {
+        protocol_id: proto.protocol_id,
+        eos_activity_gbq: eosAct,
+        eos_time: eosIso,
+        appointments: appts,
+      });
+      setCal(r);
+      toast.success(`Calendario: ${r.patients_served}/${r.patients_total} pacientes servidos`);
+    } catch (e) {
+      toast.error(`Calendario falló: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const setCita = (i: number, patch: Partial<{ label: string; time: string; dose: string }>) =>
+    setCitas((prev) => prev.map((c, j) => (j === i ? { ...c, ...patch } : c)));
 
   const doRegister = async () => {
     if (!sim || !batch || !session) return;
@@ -436,6 +488,110 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-slate-800 bg-slate-900/60">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm text-slate-200">
+            <Users className="h-4 w-4 text-violet-400" />
+            Calendario de pacientes (fraccionamiento del EOS)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            {citas.map((c, i) => (
+              <div key={i} className="grid grid-cols-[64px_1fr_96px_32px] items-end gap-2">
+                <div>
+                  <Label className="text-xs text-slate-400">Paciente</Label>
+                  <Input value={c.label} onChange={(e) => setCita(i, { label: e.target.value })}
+                         className="h-8 border-slate-700 bg-slate-900 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-400">Hora de administración</Label>
+                  <Input type="datetime-local" value={c.time}
+                         onChange={(e) => setCita(i, { time: e.target.value })}
+                         className="h-8 border-slate-700 bg-slate-900 text-xs" />
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-400">Dosis (GBq)</Label>
+                  <Input value={c.dose} onChange={(e) => setCita(i, { dose: e.target.value })}
+                         placeholder={proto ? String(proto.dose_per_patient_gbq) : "0.37"}
+                         className="h-8 border-slate-700 bg-slate-900 text-xs" />
+                </div>
+                <Button size="sm" variant="ghost"
+                        onClick={() => setCitas((p) => p.filter((_, j) => j !== i))}
+                        disabled={citas.length <= 1}
+                        className="h-8 w-8 p-0 text-slate-500 hover:text-red-400">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline"
+                    onClick={() => setCitas((p) => [...p, { label: `P${p.length + 1}`, time: "", dose: "" }])}
+                    className="h-8 border-slate-700 text-xs">
+              <Plus className="mr-1 h-3.5 w-3.5" />Cita
+            </Button>
+            <Button size="sm" onClick={doCalendar} disabled={busy || !proto || !sim}
+                    className="h-8 bg-violet-700 hover:bg-violet-600">
+              Calcular calendario
+            </Button>
+            {!sim && (
+              <span className="self-center text-xs text-slate-500">
+                (simula la cascada primero)
+              </span>
+            )}
+          </div>
+          {cal && (
+            <div className="space-y-2">
+              <p className="text-xs text-slate-400">
+                Servidos <span className="text-emerald-300">{cal.patients_served}/{cal.patients_total}</span>
+                {" · "}extraído {cal.total_drawn_gbq.toFixed(2)} GBq
+                {" · "}remanente {cal.remaining_after_last_gbq.toFixed(2)} GBq
+                {" · "}EOS mínima para todos:{" "}
+                <span className={cal.required_eos_gbq <= cal.eos_activity_gbq
+                  ? "text-emerald-300" : "text-red-400"}>
+                  {cal.required_eos_gbq.toFixed(2)} GBq
+                </span>
+              </p>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-left text-slate-500">
+                    <th className="py-1 pr-2">Paciente</th>
+                    <th className="py-1 pr-2 text-right">Hora</th>
+                    <th className="py-1 pr-2 text-right">Dosis</th>
+                    <th className="py-1 pr-2 text-right">Inventario</th>
+                    <th className="py-1 pr-2 text-right">Viable</th>
+                    <th className="py-1 text-right">Restante</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cal.slots.map((s, i) => (
+                    <tr key={i} className="border-b border-slate-800/60 text-slate-300">
+                      <td className="py-1 pr-2">{s.label || `P${i + 1}`}</td>
+                      <td className="py-1 pr-2 text-right">{fmtHora(s.time)}</td>
+                      <td className="py-1 pr-2 text-right">{s.dose_gbq.toFixed(3)}</td>
+                      <td className="py-1 pr-2 text-right">{s.inventory_before_gbq.toFixed(2)}</td>
+                      <td className="py-1 pr-2 text-right">
+                        {s.feasible
+                          ? <CheckCircle2 className="ml-auto h-3.5 w-3.5 text-emerald-400" />
+                          : <XCircle className="ml-auto h-3.5 w-3.5 text-red-400" />}
+                      </td>
+                      <td className="py-1 text-right text-cyan-300">
+                        {s.inventory_after_gbq.toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-slate-500">
+                El inventario decae entre administraciones (T½ {cal.half_life_min} min);
+                una cita no viable no descuenta actividad.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

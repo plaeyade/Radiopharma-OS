@@ -114,3 +114,39 @@ class BottleneckOut(BaseModel):
     total_loss_gbq: float
     dominant_loss_step: str
     steps: list[StepBottleneckOut]
+
+class AppointmentIn(BaseModel):
+    time: datetime = Field(..., examples=["2026-07-20T14:00:00Z"])
+    dose_gbq: Optional[float] = Field(None, gt=0, examples=[0.37])
+    label: str = ""
+
+
+class DoseCalendarIn(BaseModel):
+    protocol_id: str = Field(..., examples=["fdg_18f"])
+    eos_activity_gbq: float = Field(..., gt=0, examples=[66.7])
+    eos_time: datetime = Field(..., examples=["2026-07-20T12:30:00Z"])
+    appointments: list[AppointmentIn] = Field(..., min_length=1)
+
+
+class DoseSlotOut(BaseModel):
+    label: str
+    time: datetime
+    dose_gbq: float
+    inventory_before_gbq: float
+    feasible: bool
+    inventory_after_gbq: float
+
+
+class DoseCalendarOut(BaseModel):
+    protocol_id: str
+    nuclide: str
+    half_life_min: float
+    eos_activity_gbq: float
+    eos_time: datetime
+    required_eos_gbq: float
+    patients_served: int
+    patients_total: int
+    total_drawn_gbq: float
+    remaining_after_last_gbq: float
+    validated: bool
+    slots: list[DoseSlotOut]
