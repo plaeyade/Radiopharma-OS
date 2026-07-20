@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -67,9 +67,13 @@ producción de radionúclidos PET en ciclotrón.
   TALYS_CMD/VERAPDF_CMD) y parser tolerante de SaveScalars. Endpoints
   `GET /api/v1/elmer/status` (honesto) y
   `POST /api/v1/elmer/thermal/compare` (FEM 2D vs reducido; **503 si el
-  binario no está instalado — nunca se simula un resultado FEM**;
-  elmerfem no está en conda-forge y su compilación requiere red externa,
-  por lo que en el sandbox el estado es `available: false`).
+  binario no está instalado — nunca se simula un resultado FEM**).
+  **Puerta canónica (v0.33.0, cap. 8.11: «No se permite ejecutar Elmer
+  sin disponer previamente del cálculo de Yield y Burnup»)**: el compare
+  exige reacción/blanco y calcula Yield + Burnup con los mismos
+  parámetros antes de generar el caso FEM; la respuesta lleva el linaje
+  (`pipeline: yield→burnup→elmer`, EOB y pérdida por quemado) — sin
+  Yield/Burnup válidos responde 422 antes de tocar el solver.
 - **Data Lake (Fase 1)**: registros de lote inmutables ALCOA+ con hash SHA-256
   de integridad, anulación controlada (sin borrado), artefactos JSON en object
   store (MinIO/S3 en despliegue, filesystem en dev) y metadatos en PostgreSQL.
@@ -125,6 +129,17 @@ producción de radionúclidos PET en ciclotrón.
     tolerancia configurable) y **detección de impurezas** por χ² reducido,
   - motor de reglas de aceptación: packs `fdg` y `generic_pet` precargados
     (referencias generales USP <823>/Ph. Eur. — verificar monografía vigente),
+  - **SPC / trending GMP** (v0.33.0, caps. 25.17/26.19 — `POST /qc/spc`):
+    carta de individuales de Shewhart (μ ± 3σ) con reglas **Western
+    Electric/Nelson** (WE1 ±3σ, WE2 2/3 ±2σ, WE3 4/5 ±1σ, WE4 8 mismo lado,
+    TREND 6 consecutivos) y **capacidad de proceso Cp/Cpk** al aportar
+    límites de especificación. Detecta deriva del proceso antes del OOS;
+    el resultado es apoyo a la decisión y nunca sustituye la evaluación
+    técnica (nota explícita en la respuesta). En la consola: tarjeta
+    «Carta de control SPC» en QC — historia del parámetro entre lotes,
+    líneas CL/UCL/LCL y de especificación, puntos violadores marcados —
+    verificado e2e (serie pH en control, Cpk 7.67; pureza decreciente →
+    TREND detectado antes del OOS),
   - vidas medias resueltas desde el NDS (fallback DDEP local).
 - **Ciclo GMP completo** (Data Lake v2 + `pipelines/qc_cli.py`):
   - informes QC inmutables ligados al lote (`qc_reports`, hash SHA-256),
@@ -459,10 +474,37 @@ Detalle completo en [`docs/VALIDATION.md`](docs/VALIDATION.md).
      supera el 5 % de su pico, para no amplificar ruido de umbral);
    - binario localizado con `TALYS_CMD` (patrón VERAPDF_CMD); sin binario,
      `/talys/status` responde `available: false` y la comparación 503 —
-     honesto, nunca simulado. Instalación en planta:
-     `apt install gfortran && make -C talys/source && export TALYS_CMD=...`
-     (compilación validada con gfortran 15 en este repo; el binario no se
-     distribuye por licencia/tamaño).
+     honesto, nunca simulado.
+
+### Instalación de los binarios científicos (TALYS y Elmer)
+
+Ambos acoplamientos son **externos por diseño canónico** (EDS caps. 11.10 y
+7.11/8.11: códigos de terceros detrás de interfaces, resultados siempre
+identificados como modelados o FEM). Alternativas reales de instalación:
+
+**TALYS** (actual: **TALYS-2.2**, licencia MIT, nds.iaea.org/talys):
+
+| # | Vía | Comandos clave | Notas |
+|---|-----|----------------|-------|
+| 1 | **Tarball oficial IAEA** (recomendada) | `curl -O https://nds.iaea.org/talys/talys2.0.tar` (o 2.2), `tar xf`, `make` con gfortran ≥ 9 | ~1.6 GB (incluye librerías); compilación validada con gfortran 15 (conda) en este repo |
+| 2 | **GitHub IAEA-NDS/talys** | `git clone --depth 1 https://github.com/IAEA-NDS/talys` + `make` | fuente viva; en el sandbox la red a github está bloqueada, en planta funciona |
+| 3 | **Contenedor propio** | `Dockerfile`: `FROM debian + gfortran`, copia del tarball, `make`; montar el binario y `TALYS_CMD=/opt/talys/bin/talys` | reproducible y aislado; encaja con el `docker compose` del MVP |
+
+**Elmer FEM** (actual: Elmer 9.x, GPL/LGPL, ElmerCSC):
+
+| # | Vía | Comandos clave | Notas |
+|---|-----|----------------|-------|
+| 1 | **PPA oficial Ubuntu/Debian** (recomendada) | `apt-add-repository ppa:elmer-csc-ubuntu/elmer-csc-ppa && apt install elmerfem-csc` | binarios firmados, `ElmerSolver` en PATH → `ELMER_CMD` innecesaria |
+| 2 | **Binarios precompilados / VM** | elmerfem.org: WSL, instalador Windows, VirtualBox VM | útil para puestos de ingeniería, no para el servicio |
+| 3 | **Docker oficial** (ElmerCSC/elmerfem-docker) | imagen MPI-enabled: `docker run -v $PWD:/home elmer-runenv /usr/local/elmer/bin/ElmerSolver case.sif` | camino natural en el compose del MVP; `ELMER_CMD` apuntando a un wrapper |
+| 4 | **Compilar desde fuente** | `git clone ElmerCSC/elmerfem` + CMake (+MPI/LAPACK) | control total; pesado (Fortran+C, ~30 min) |
+| ❌ | conda-forge | — | **no existe paquete elmerfem** (verificado 2026-07) |
+
+En todos los casos: `export TALYS_CMD=/ruta/talys` /
+`export ELMER_CMD=/ruta/ElmerSolver` y los endpoints pasan de 503 honesto
+a funcionales **sin tocar código**. Los resultados FEM se organizan según
+la estructura canónica del Data Lake (`simulation/elmer/`, cap. 4.9) y
+las curvas TALYS como «datos modelados» (cap. 11.10).
 
 ## Arranque rápido
 
@@ -494,7 +536,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 429 tests (25 NDS + 94 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 447 tests (25 NDS + 96 YE + 100 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -592,6 +634,11 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Process Twin F4: plan de campaña (demanda → mínimo nº de lotes con
       inversa exacta por lote, turnaround y citas no servidas honestas) —
       verificado e2e.
+- [x] QC SPC: trending GMP (Shewhart I + WE/Nelson + Cp/Cpk) como apoyo a
+      la decisión (caps. 25.17/26.19) con carta de control en consola —
+      verificado e2e.
+- [x] Puerta canónica Yield→Burnup→Elmer (cap. 8.11) con linaje en la
+      respuesta FEM — verificado e2e (503 sin binario, 422 sin puerta).
 - [x] Logistics Twin F1: rutas terrestre (interfaz OSMnx-ready) y aérea
       (OpenFlights + buffer TDG) con decaimiento en tránsito,
       alcanzabilidad por presupuesto de dosis — verificado e2e.

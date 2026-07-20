@@ -136,6 +136,8 @@ def elmer_thermal_compare(req: ElmerCompareRequest) -> ElmerCompareResponse:
     el modelo reducido analítico para el mismo caso físico."""
     try:
         r = _service.elmer_thermal_compare(
+            reaction_id=req.reaction_id, target_id=req.target_id,
+            irradiation_time_min=req.irradiation_time_min,
             beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
             beam_spot_cm2=req.beam_spot_cm2,
             target_thickness_cm=req.target_thickness_cm,

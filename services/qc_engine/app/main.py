@@ -17,7 +17,7 @@ from app.presentation.routers import qc_api
 
 app = FastAPI(
     title="Radiopharma OS - QC Engine",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Control de calidad físico: decay correction, half-life fit "
         "(pureza radionuclídica) y reglas de aceptación."),
@@ -39,4 +39,4 @@ app.include_router(qc_api.router)
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
-    return {"service": "qc-engine", "status": "ok", "version": "0.1.0"}
+    return {"service": "qc-engine", "status": "ok", "version": "0.2.0"}

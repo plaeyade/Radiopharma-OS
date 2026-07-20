@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException
 from app.application.qc_service import QcService
 from app.domain.entities import ActivityMeasurement
 from app.presentation.schemas import (DecayCorrectionIn, DecayCorrectionOut,
+                                      SpcIn, SpcOut, SpcPointOut,
                                       HalfLifeFitIn, HalfLifeFitOut,
                                       QcEvaluateIn, QcReportOut, RuleEvalOut)
 
@@ -80,6 +81,27 @@ def evaluate(payload: QcEvaluateIn) -> QcReportOut:
                 source=ev.rule.source)
             for ev in report.rule_evaluations],
         half_life_fit=_fit_out(report.half_life_fit) if report.half_life_fit else None)
+
+
+@router.post("/spc", response_model=SpcOut)
+def spc(payload: SpcIn) -> SpcOut:
+    """Carta de control de individuales (Shewhart) con reglas WE/Nelson.
+
+    Trending GMP de un parámetro QC a lo largo de la historia de lotes:
+    detecta deriva del proceso antes del OOS. Resultado de apoyo a la
+    decisión — nunca sustituye la evaluación técnica (EDS 25.17/26.19).
+    """
+    try:
+        r = _service.spc(payload.values, labels=payload.labels,
+                         spec_low=payload.spec_low, spec_high=payload.spec_high)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return SpcOut(
+        n=r.n, mean=r.mean, sigma=r.sigma, ucl=r.ucl, lcl=r.lcl,
+        points=[SpcPointOut(index=p.index, label=p.label, value=p.value,
+                            violations=list(p.violations)) for p in r.points],
+        in_control=r.in_control, spec_low=r.spec_low, spec_high=r.spec_high,
+        cp=r.cp, cpk=r.cpk)
 
 
 @router.get("/rules")

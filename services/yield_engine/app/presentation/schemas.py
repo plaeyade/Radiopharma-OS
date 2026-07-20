@@ -200,6 +200,11 @@ class ThermalTargetResponse(BaseModel):
 
 
 class ElmerCompareRequest(BaseModel):
+    reaction_id: str = Field(..., examples=["o18_p_n_f18"],
+                             description="Puerta canónica cap. 8.11: Yield+Burnup primero")
+    target_id: str = Field(..., examples=["h2_18o"])
+    irradiation_time_min: float = Field(..., gt=0, le=600,
+                                        description="Para la etapa Burnup previa")
     beam_energy_mev: float = Field(..., gt=0, le=40)
     current_ua: float = Field(..., gt=0, le=300)
     beam_spot_cm2: float = Field(1.0, gt=0)
@@ -211,6 +216,13 @@ class ElmerCompareRequest(BaseModel):
 
 
 class ElmerCompareResponse(BaseModel):
+    pipeline: str
+    reaction_id: str
+    target_id: str
+    irradiation_time_min: float
+    yield_eob_gbq: float
+    burnup_eob_gbq: float
+    burnup_loss_gbq: float
     t_peak_fem_k: float
     t_mean_fem_k: float
     t_peak_reduced_k: float

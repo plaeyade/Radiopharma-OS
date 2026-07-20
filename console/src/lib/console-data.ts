@@ -284,6 +284,10 @@ function demoData(services: ServiceHealth[]): ConsoleData {
   });
 
   const batches = [
+    mkBatch("B-20260714-1A2B3C4D", "18F", "o18_p_n_f18", "h2_18o", 16.5, 36, 60, 105.2, 8.0, "completed", "released", "qa.jefe", "2026-07-14"),
+    mkBatch("B-20260715-5E6F7A8B", "18F", "o18_p_n_f18", "h2_18o", 16.5, 37, 60, 106.8, 8.0, "completed", "released", "qa.jefe", "2026-07-15"),
+    mkBatch("B-20260716-9C0D1E2F", "18F", "o18_p_n_f18", "h2_18o", 16.5, 36, 60, 107.9, 8.1, "completed", "released", "qa.jefe", "2026-07-16"),
+    mkBatch("B-20260717-3B4C5D6E", "18F", "o18_p_n_f18", "h2_18o", 16.5, 37, 60, 108.4, 8.1, "completed", "released", "qa.jefe", "2026-07-17"),
     mkBatch("B-20260718-215B7A9F", "18F", "o18_p_n_f18", "h2_18o", 16.5, 37, 60, 108.95, 8.1, "completed", "released", "qa.jefe", "2026-07-18"),
     mkBatch("B-20260719-C8DF8D6C", "11C", "n14_p_a_c11", "n2_gas", 16.0, 40, 30, 188.69, 18.5, "completed", "released", "qa.jefe", "2026-07-19"),
     mkBatch("B-20260719-7F3E21AA", "68Ga", "zn68_p_n_ga68", "zn68", 14.5, 25, 60, 146.12, 10.0, "completed", "pending", null, "2026-07-19"),
@@ -291,6 +295,62 @@ function demoData(services: ServiceHealth[]): ConsoleData {
   ];
 
   const qc: ConsoleData["qc"] = {
+    "B-20260714-1A2B3C4D": [{
+      qc_id: "QC-20260714-0F1A2B3C", batch_id: "B-20260714-1A2B3C4D",
+      created_at: "2026-07-14T00:18:05+00:00", created_by: "operador.ciclotron",
+      product: "fdg", nuclide: "18F", overall_status: "pass",
+      rules: [
+        { parameter: "ph", measured: 6.62, status: "pass", limits: "[4.5, 8.5]" },
+        { parameter: "radiochemical_purity", measured: 0.987, status: "pass", limits: "≥ 0.95" },
+        { parameter: "radionuclidic_purity", measured: 0.99995, status: "pass", limits: "≥ 0.999" },
+        { parameter: "kryptofix_222", measured: 1.7, status: "pass", limits: "≤ 2.2 g/L" },
+        { parameter: "endotoxins_eu_ml", measured: 4.8, status: "pass", limits: "≤ 17.5 EU/mL" },
+        { parameter: "acetonitrile_mg_dose", measured: 1.9, status: "pass", limits: "≤ 4.1 mg/dosis" },
+      ],
+      record_hash: "d41a8cd98f00b204".padEnd(64, "0"), integrity_ok: true,
+    }],
+    "B-20260715-5E6F7A8B": [{
+      qc_id: "QC-20260715-4D5E6F7A", batch_id: "B-20260715-5E6F7A8B",
+      created_at: "2026-07-15T00:16:42+00:00", created_by: "operador.ciclotron",
+      product: "fdg", nuclide: "18F", overall_status: "pass",
+      rules: [
+        { parameter: "ph", measured: 6.70, status: "pass", limits: "[4.5, 8.5]" },
+        { parameter: "radiochemical_purity", measured: 0.986, status: "pass", limits: "≥ 0.95" },
+        { parameter: "radionuclidic_purity", measured: 0.99996, status: "pass", limits: "≥ 0.999" },
+        { parameter: "kryptofix_222", measured: 1.8, status: "pass", limits: "≤ 2.2 g/L" },
+        { parameter: "endotoxins_eu_ml", measured: 5.1, status: "pass", limits: "≤ 17.5 EU/mL" },
+        { parameter: "acetonitrile_mg_dose", measured: 2.0, status: "pass", limits: "≤ 4.1 mg/dosis" },
+      ],
+      record_hash: "e807f1fcf82d132f".padEnd(64, "0"), integrity_ok: true,
+    }],
+    "B-20260716-9C0D1E2F": [{
+      qc_id: "QC-20260716-8B9C0D1E", batch_id: "B-20260716-9C0D1E2F",
+      created_at: "2026-07-16T00:19:31+00:00", created_by: "operador.ciclotron",
+      product: "fdg", nuclide: "18F", overall_status: "pass",
+      rules: [
+        { parameter: "ph", measured: 6.76, status: "pass", limits: "[4.5, 8.5]" },
+        { parameter: "radiochemical_purity", measured: 0.984, status: "pass", limits: "≥ 0.95" },
+        { parameter: "radionuclidic_purity", measured: 0.99994, status: "pass", limits: "≥ 0.999" },
+        { parameter: "kryptofix_222", measured: 1.8, status: "pass", limits: "≤ 2.2 g/L" },
+        { parameter: "endotoxins_eu_ml", measured: 5.2, status: "pass", limits: "≤ 17.5 EU/mL" },
+        { parameter: "acetonitrile_mg_dose", measured: 2.1, status: "pass", limits: "≤ 4.1 mg/dosis" },
+      ],
+      record_hash: "f457c545a9ded88f".padEnd(64, "0"), integrity_ok: true,
+    }],
+    "B-20260717-3B4C5D6E": [{
+      qc_id: "QC-20260717-2A3B4C5D", batch_id: "B-20260717-3B4C5D6E",
+      created_at: "2026-07-17T00:15:58+00:00", created_by: "operador.ciclotron",
+      product: "fdg", nuclide: "18F", overall_status: "pass",
+      rules: [
+        { parameter: "ph", measured: 6.80, status: "pass", limits: "[4.5, 8.5]" },
+        { parameter: "radiochemical_purity", measured: 0.983, status: "pass", limits: "≥ 0.95" },
+        { parameter: "radionuclidic_purity", measured: 0.99993, status: "pass", limits: "≥ 0.999" },
+        { parameter: "kryptofix_222", measured: 1.9, status: "pass", limits: "≤ 2.2 g/L" },
+        { parameter: "endotoxins_eu_ml", measured: 5.3, status: "pass", limits: "≤ 17.5 EU/mL" },
+        { parameter: "acetonitrile_mg_dose", measured: 2.0, status: "pass", limits: "≤ 4.1 mg/dosis" },
+      ],
+      record_hash: "a87ff679a2f3e71d".padEnd(64, "0"), integrity_ok: true,
+    }],
     "B-20260718-215B7A9F": [{
       qc_id: "QC-20260718-9A344701", batch_id: "B-20260718-215B7A9F",
       created_at: "2026-07-18T00:14:10+00:00", created_by: "operador.ciclotron",

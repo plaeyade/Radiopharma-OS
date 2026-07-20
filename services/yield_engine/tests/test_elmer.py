@@ -162,6 +162,8 @@ def test_api_elmer_compare_503_sin_binario():
     if client.get("/api/v1/elmer/status").json()["available"]:
         pytest.skip("ElmerSolver instalado: el 503 no aplica")
     resp = client.post("/api/v1/elmer/thermal/compare", json={
+        "reaction_id": "o18_p_n_f18", "target_id": "h2_18o",
+        "irradiation_time_min": 60.0,
         "beam_energy_mev": 18.0, "current_ua": 40.0, "beam_spot_cm2": 1.0,
         "target_thickness_cm": 0.5, "conductivity_w_cm_k": 0.006,
         "film_coeff_w_cm2_k": 0.5, "coolant_temp_k": 293.15,
@@ -172,7 +174,52 @@ def test_api_elmer_compare_503_sin_binario():
 
 def test_api_elmer_compare_validacion():
     resp = client.post("/api/v1/elmer/thermal/compare", json={
+        "reaction_id": "o18_p_n_f18", "target_id": "h2_18o",
+        "irradiation_time_min": 60.0,
         "beam_energy_mev": 18.0, "current_ua": 40.0, "beam_spot_cm2": -1.0,
         "target_thickness_cm": 0.5, "conductivity_w_cm_k": 0.006,
         "film_coeff_w_cm2_k": 0.5, "coolant_temp_k": 293.15})
     assert resp.status_code == 422
+
+
+def test_api_elmer_compare_puerta_canonica_reaccion_desconocida():
+    # cap. 8.11: sin Yield+Burnup previos no hay caso FEM — reacción
+    # desconocida → 422 antes de tocar el solver
+    resp = client.post("/api/v1/elmer/thermal/compare", json={
+        "reaction_id": "inexistente", "target_id": "h2_18o",
+        "irradiation_time_min": 60.0,
+        "beam_energy_mev": 18.0, "current_ua": 40.0, "beam_spot_cm2": 1.0,
+        "target_thickness_cm": 0.5, "conductivity_w_cm_k": 0.006,
+        "film_coeff_w_cm2_k": 0.5, "coolant_temp_k": 293.15})
+    assert resp.status_code == 422
+
+
+# --- puerta Yield→Burnup→Elmer (cap. 8.11) con runner falso -----------------
+
+def test_compare_linaje_yield_burnup(tmp_path: Path):
+    from app.application.production_service import ProductionService
+    from app.infrastructure.repositories.local_reaction_data import \
+        LocalReactionDataProvider
+    from app.infrastructure.stopping.factory import build_stopping_provider
+    from app.main import DATA_DIR
+
+    fake = tmp_path / "fake_elmer.sh"
+    fake.write_text("#!/bin/sh\necho '1 350.0 310.0' > scalars.dat\nexit 0\n")
+    fake.chmod(0o755)
+    svc = ProductionService(
+        stopping=build_stopping_provider(DATA_DIR / "stopping"),
+        rxn=LocalReactionDataProvider(DATA_DIR),
+        elmer=ElmerRunner(cmd=str(fake)))
+    r = svc.elmer_thermal_compare(
+        reaction_id="o18_p_n_f18", target_id="h2_18o",
+        beam_energy_mev=18.0, current_ua=40.0, irradiation_time_min=60.0,
+        beam_spot_cm2=1.0, target_thickness_cm=0.5,
+        conductivity_w_cm_k=0.006, film_coeff_w_cm2_k=0.5,
+        coolant_temp_k=293.15, work_dir=str(tmp_path / "case"))
+    assert r["pipeline"] == "yield→burnup→elmer"
+    assert r["yield_eob_gbq"] > 0.0
+    assert 0.0 < r["burnup_eob_gbq"] <= r["yield_eob_gbq"]
+    assert r["burnup_loss_gbq"] >= 0.0
+    # cota conservadora: el FEM no supera al reducido 1D
+    assert r["fem_conservative_bound_ok"]
+    assert r["t_peak_fem_k"] == 350.0

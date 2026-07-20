@@ -512,3 +512,23 @@ export async function campaignProcess(cfg: ConsoleConfig, input: {
   return req<CampaignPlan>(
     "POST", `${cfg.processUrl}/api/v1/process/campaign`, undefined, input);
 }
+
+/* ------------------------------------------------------- SPC / trending QC */
+export interface SpcPointItem {
+  index: number; label: string; value: number; violations: string[];
+}
+export interface SpcChartResult {
+  n: number; mean: number; sigma: number; ucl: number; lcl: number;
+  points: SpcPointItem[];
+  in_control: boolean;
+  spec_low: number | null; spec_high: number | null;
+  cp: number | null; cpk: number | null;
+  note: string;
+}
+
+export async function qcSpc(cfg: ConsoleConfig, input: {
+  values: number[]; labels?: string[];
+  spec_low?: number | null; spec_high?: number | null;
+}): Promise<SpcChartResult> {
+  return req<SpcChartResult>("POST", `${cfg.qcUrl}/api/v1/qc/spc`, undefined, input);
+}

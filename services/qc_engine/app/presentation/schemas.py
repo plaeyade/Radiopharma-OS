@@ -76,3 +76,38 @@ class QcReportOut(BaseModel):
     overall_status: str
     rule_evaluations: list[RuleEvalOut]
     half_life_fit: Optional[HalfLifeFitOut] = None
+
+
+# ------------------------- SPC / trending (caps. 25.17 / 26.19) --------------
+
+class SpcIn(BaseModel):
+    values: list[float] = Field(..., min_length=2,
+                                description="Serie histórica del parámetro (orden cronológico)")
+    labels: Optional[list[str]] = Field(
+        None, description="Etiqueta por punto (p.ej. lote); por defecto #1..#n")
+    spec_low: Optional[float] = Field(
+        None, description="Límite de especificación inferior (habilita Cp/Cpk)")
+    spec_high: Optional[float] = Field(
+        None, description="Límite de especificación superior (habilita Cp/Cpk)")
+
+
+class SpcPointOut(BaseModel):
+    index: int
+    label: str
+    value: float
+    violations: list[str]
+
+
+class SpcOut(BaseModel):
+    n: int
+    mean: float
+    sigma: float
+    ucl: float
+    lcl: float
+    points: list[SpcPointOut]
+    in_control: bool
+    spec_low: Optional[float]
+    spec_high: Optional[float]
+    cp: Optional[float]
+    cpk: Optional[float]
+    note: str = "Trending como apoyo a la decisión: no sustituye la evaluación técnica (EDS 25.17)."

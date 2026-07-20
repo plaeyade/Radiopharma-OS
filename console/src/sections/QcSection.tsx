@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ClipboardCheck, Gavel } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Activity, ClipboardCheck, Gavel } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Textarea } from "@/components/ui/textarea";
-import { evaluateQc, releaseBatch } from "@/lib/actions";
+import { evaluateQc, qcSpc, releaseBatch, type SpcChartResult } from "@/lib/actions";
 import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
 import { badgeVariant, estadoColor, fmtTs, shortHash } from "@/lib/format";
 import { roleRank, type Session } from "@/lib/session";
@@ -71,6 +72,8 @@ export default function QcSection({ data, cfg, session, selected, onSelect, onCh
           </>
         )}
       </div>
+
+      <SpcCard data={data} cfg={cfg} />
 
       {reports.length === 0 ? (
         <Card className="border-slate-800 bg-[#0d1420]">
@@ -236,5 +239,156 @@ function ReleaseDialog({ cfg, batchId, disabled, onDone }:
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+
+/* ------------------------------------------------- carta de control SPC ---
+ * Trending GMP (EDS 25.17/26.19): historia de un parámetro QC a lo largo
+ * de los lotes → Shewhart I + reglas WE/Nelson. Apoyo a la decisión; no
+ * sustituye la evaluación técnica. */
+
+const SPC_PARAMS = [
+  { id: "ph", label: "pH" },
+  { id: "radiochemical_purity", label: "Pureza radioquímica" },
+  { id: "radionuclidic_purity", label: "Pureza radionuclídica" },
+  { id: "kryptofix_222", label: "Kryptofix 2.2.2" },
+  { id: "endotoxins_eu_ml", label: "Endotoxinas" },
+  { id: "acetonitrile_mg_dose", label: "Acetonitrilo" },
+];
+
+function parseSpec(limits?: string): { low: number | null; high: number | null } {
+  if (!limits) return { low: null, high: null };
+  const m = limits.match(/\[([^\]]+)\]/);
+  if (!m) return { low: null, high: null };
+  const [a, b] = m[1].split(",").map((x) => x.trim());
+  const num = (x: string) => (x === "None" || x === "" ? null : parseFloat(x));
+  return { low: num(a), high: num(b) };
+}
+
+function SpcCard({ data, cfg }: { data: ConsoleData; cfg: ConsoleConfig }) {
+  const [param, setParam] = useState("ph");
+  const [spc, setSpc] = useState<SpcChartResult | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  // historia del parámetro a lo largo de todos los lotes con QC
+  const history = useMemo(() => {
+    const rows: { label: string; value: number; spec?: string }[] = [];
+    const sorted = [...data.batches].sort(
+      (a, b) => a.created_at.localeCompare(b.created_at));
+    for (const b of sorted) {
+      for (const r of data.qc[b.batch_id] ?? []) {
+        for (const rule of r.rules) {
+          if (rule.parameter === param && typeof rule.measured === "number") {
+            rows.push({ label: b.batch_id.replace(/^BATCH-/, ""),
+                        value: rule.measured, spec: rule.limits });
+          }
+        }
+      }
+    }
+    return rows;
+  }, [data, param]);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const spec = parseSpec(history.find((h) => h.spec)?.spec);
+      const r = await qcSpc(cfg, {
+        values: history.map((h) => h.value),
+        labels: history.map((h) => h.label),
+        spec_low: spec.low, spec_high: spec.high,
+      });
+      setSpc(r);
+    } catch (e) {
+      toast.error(`SPC: ${(e as Error).message}`);
+      setSpc(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const chartData = (spc?.points ?? []).map((p) => ({
+    label: p.label, value: p.value,
+    viol: p.violations.length > 0 ? p.value : null,
+    violations: p.violations,
+  }));
+
+  return (
+    <Card className="border-slate-800 bg-[#0d1420]">
+      <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
+        <CardTitle className="flex items-center gap-2 text-sm text-slate-200">
+          <Activity className="h-4 w-4 text-violet-400" />
+          Carta de control SPC — trending entre lotes
+          <Badge variant="outline" className="text-[10px]">GMP</Badge>
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          <Select value={param} onValueChange={(v) => { setParam(v); setSpc(null); }}>
+            <SelectTrigger className="h-8 w-52 border-slate-700 bg-slate-900 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="border-slate-700 bg-[#0d1420]">
+              {SPC_PARAMS.map((p) => (
+                <SelectItem key={p.id} value={p.id} className="text-xs">{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={run} disabled={busy || history.length < 2}
+                  className="h-8 bg-violet-700 hover:bg-violet-600">
+            {busy ? "Calculando…" : `Analizar (${history.length} puntos)`}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {history.length < 2 && (
+          <p className="text-xs text-slate-500">
+            Se necesitan informes QC de al menos 2 lotes para la carta de control
+            (este parámetro tiene {history.length}).
+          </p>
+        )}
+        {spc && (
+          <>
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-400">
+              <span>μ = <b className="text-slate-200">{spc.mean.toPrecision(4)}</b></span>
+              <span>σ = <b className="text-slate-200">{spc.sigma.toPrecision(3)}</b></span>
+              <span>UCL = <b className="text-amber-300">{spc.ucl.toPrecision(4)}</b></span>
+              <span>LCL = <b className="text-amber-300">{spc.lcl.toPrecision(4)}</b></span>
+              {spc.cpk !== null && (
+                <span>Cpk = <b className={spc.cpk >= 1.33 ? "text-emerald-300" : "text-amber-300"}>
+                  {spc.cpk.toFixed(2)}</b></span>)}
+              <span className={spc.in_control ? "text-emerald-400" : "text-red-400"}>
+                {spc.in_control ? "Proceso en control" : "Deriva detectada — revisar puntos marcados"}
+              </span>
+            </div>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 8, right: 12, left: -8, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="label" tick={{ fontSize: 9, fill: "#64748b" }} />
+                  <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={["auto", "auto"]} />
+                  <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", fontSize: 11 }}
+                           formatter={(v: number, _n, item) =>
+                             [v, (item?.payload?.violations ?? []).join(" ") || "en control"]} />
+                  <ReferenceLine y={spc.mean} stroke="#38bdf8" strokeDasharray="6 3" />
+                  <ReferenceLine y={spc.ucl} stroke="#f59e0b" strokeDasharray="4 4" />
+                  <ReferenceLine y={spc.lcl} stroke="#f59e0b" strokeDasharray="4 4" />
+                  {spc.spec_high !== null && (
+                    <ReferenceLine y={spc.spec_high} stroke="#ef4444" strokeWidth={1.5} />)}
+                  {spc.spec_low !== null && (
+                    <ReferenceLine y={spc.spec_low} stroke="#ef4444" strokeWidth={1.5} />)}
+                  <Line type="linear" dataKey="value" stroke="#a78bfa" strokeWidth={1.5}
+                        dot={{ r: 3, fill: "#a78bfa" }} connectNulls />
+                  <Line type="linear" dataKey="viol" stroke="none"
+                        dot={{ r: 5, fill: "#ef4444" }} connectNulls={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[10px] text-slate-500">
+              Reglas WE/Nelson (WE1 ±3σ, WE2 2/3 ±2σ, WE3 4/5 ±1σ, WE4 8 mismo lado, TREND 6) ·
+              líneas rojas: límites de especificación · {spc.note}
+            </p>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

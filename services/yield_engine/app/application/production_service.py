@@ -185,8 +185,11 @@ class ProductionService:
 
     def elmer_thermal_compare(
         self,
+        reaction_id: str,
+        target_id: str,
         beam_energy_mev: float,
         current_ua: float,
+        irradiation_time_min: float,
         beam_spot_cm2: float,
         target_thickness_cm: float,
         conductivity_w_cm_k: float,
@@ -197,9 +200,13 @@ class ProductionService:
     ) -> dict:
         """Comparación FEM (Elmer) vs modelo reducido para el mismo caso.
 
-        Elmer resuelve la ecuación del calor 2D axisimétrica; el modelo
-        reducido es la solución analítica 1D (cota conservadora: la
-        difusión radial del FEM solo puede reducir el pico). Si el
+        Puerta canónica (EDS v2.0 cap. 8.11): **no se permite ejecutar
+        Elmer sin disponer previamente del cálculo de Yield y Burnup** —
+        por eso el caso FEM se deriva siempre de una producción + quemado
+        calculados aquí con los mismos parámetros, y la respuesta lleva
+        su linaje. Elmer resuelve la ecuación del calor 2D axisimétrica;
+        el modelo reducido es la solución analítica 1D (cota conservadora:
+        la difusión radial del FEM solo puede reducir el pico). Si el
         binario no está disponible, ElmerUnavailable → 503."""
         import math
         import tempfile
@@ -207,6 +214,16 @@ class ProductionService:
 
         from app.domain.thermal_reduced import beam_power_w
 
+        # Puerta Yield → Burnup (cap. 8.11) con los mismos parámetros
+        y = self.compute(reaction_id=reaction_id, target_id=target_id,
+                         beam_energy_mev=beam_energy_mev,
+                         current_ua=current_ua,
+                         irradiation_time_min=irradiation_time_min)
+        b = self.burnup_multizone(reaction_id=reaction_id, target_id=target_id,
+                                  beam_energy_mev=beam_energy_mev,
+                                  current_ua=current_ua,
+                                  irradiation_time_min=irradiation_time_min,
+                                  beam_spot_cm2=beam_spot_cm2, n_zones=10)
         power = beam_power_w(beam_energy_mev, current_ua)
         reduced = thermal_reduced(
             beam_energy_mev=beam_energy_mev, current_ua=current_ua,
@@ -233,6 +250,13 @@ class ProductionService:
                 scalars = self._elmer.run(Path(tmp))
         t_max_fem, t_mean_fem = scalars[0], scalars[1]
         return {
+            "pipeline": "yield→burnup→elmer",
+            "reaction_id": reaction_id,
+            "target_id": target_id,
+            "irradiation_time_min": irradiation_time_min,
+            "yield_eob_gbq": y.eob_activity_gbq,
+            "burnup_eob_gbq": b["eob_with_burnup_gbq"],
+            "burnup_loss_gbq": b["loss_gbq"],
             "t_peak_fem_k": t_max_fem,
             "t_mean_fem_k": t_mean_fem,
             "t_peak_reduced_k": reduced.t_peak_k,

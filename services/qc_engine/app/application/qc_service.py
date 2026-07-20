@@ -12,6 +12,7 @@ from app.domain.acceptance_rules import RULE_PACKS, evaluate_rules
 from app.domain.decay_physics import (decay_correction,
                                       decay_correction_uncertainty,
                                       fit_half_life)
+from app.domain.spc import SpcResult, shewhart_spc
 from app.domain.entities import (ActivityMeasurement, HalfLifeFitResult,
                                  QcReport)
 
@@ -76,6 +77,14 @@ class QcService:
                 from app.domain.entities import QcStatus
                 report = replace(report, overall_status=QcStatus.FAIL)
         return report
+
+    def spc(self, values: list[float],
+            labels: Optional[list[str]] = None,
+            spec_low: Optional[float] = None,
+            spec_high: Optional[float] = None) -> SpcResult:
+        """Carta de control Shewhart + reglas WE/Nelson (trending GMP)."""
+        return shewhart_spc(values, labels=labels,
+                            spec_low=spec_low, spec_high=spec_high)
 
     @staticmethod
     def rule_packs() -> dict:
