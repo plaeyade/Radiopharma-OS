@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.28.0 · TALYS como segunda fuente σ(E) (verificación cruzada IAEA vs teórico) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -379,6 +379,23 @@ Detalle completo en [`docs/VALIDATION.md`](docs/VALIDATION.md).
    descargan en runtime.
 3. **Datos 100 % abiertos**: IAEA-NDS Medical Portal (Padé fit, May-2021),
    LiveChart/DDEP, CATIMA. Sin licencias comerciales.
+4. **Segunda fuente σ(E): TALYS** (NDS v0.2 · `GET /nds/talys/status` +
+   `GET /nds/cross-sections/compare/{id}`) — verificación cruzada de las
+   funciones de excitación IAEA (experimentales) contra el código teórico
+   TALYS, sin necesidad de datos de planta:
+   - mismo puerto `CrossSectionRepository`: `TalysCrossSectionRepository`
+     ejecuta TALYS (input generado por reacción), parsea la salida real
+     `rp*.tot` y cachea con procedencia ALCOA+ (input, salida cruda, CSV
+     parseado, `meta.json` con versión/fecha/SHA-256);
+   - comparación: resúmenes de pico de cada fuente + desviación relativa
+     máxima y RMS sobre el rango solapado (solo donde la referencia IAEA
+     supera el 5 % de su pico, para no amplificar ruido de umbral);
+   - binario localizado con `TALYS_CMD` (patrón VERAPDF_CMD); sin binario,
+     `/talys/status` responde `available: false` y la comparación 503 —
+     honesto, nunca simulado. Instalación en planta:
+     `apt install gfortran && make -C talys/source && export TALYS_CMD=...`
+     (compilación validada con gfortran 15 en este repo; el binario no se
+     distribuye por licencia/tamaño).
 
 ## Arranque rápido
 
@@ -410,7 +427,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 353 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 86 PT/LOG + 6 CLI)
+make test     # 366 tests (25 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 86 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -514,8 +531,10 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       rango/payload y marco EASA/IAEA Clase 7 — opciones documentadas.
 - [ ] Protocolos del Process Twin validados con datos in-situ (bloqueado:
       requiere rendimientos y tiempos medidos en planta).
-- [ ] TALYS como segunda fuente de σ(E) tras el proveedor IAEA (cap. 13,
-      opcional — redundante para las 4 reacciones del MVP).
+- [x] TALYS como segunda fuente de σ(E) (cap. 13): proveedor tras el mismo
+      puerto del NDS, caché ALCOA+, verificación cruzada con métricas y
+      endpoints /talys/status + /cross-sections/compare — binario vía
+      TALYS_CMD (patrón VERAPDF_CMD).
 - [ ] Burnup 2D acoplado a Elmer FEM (cap. 18) — tras validar Burnup 1D
       contra EOB real del KIUBE y disponer de la geometría del blanco.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC

@@ -24,7 +24,7 @@ DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 app = FastAPI(
     title="Radiopharma OS - Nuclear Data Service",
-    version="0.1.0",
+    version="0.2.0",
     description=(
         "Datos nucleares abiertos y versionados para el Physics Twin: "
         "secciones eficaces (IAEA/EXFOR) y decaimiento (LiveChart/DDEP)."),
@@ -34,7 +34,11 @@ queries = NuclearDataQueries(
     xs_repo=CsvCrossSectionRepository(DATA_DIR),
     decay_repo=JsonDecayRepository(DATA_DIR),
 )
-nuclear_data.init(queries, DATA_DIR)
+from app.infrastructure.talys.talys_cross_section_repository import (
+    TalysCrossSectionRepository)
+
+nuclear_data.init(queries, DATA_DIR,
+                  talys=TalysCrossSectionRepository(DATA_DIR / "talys"))
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -50,4 +54,4 @@ app.include_router(nuclear_data.router)
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
-    return {"service": "nuclear-data-service", "status": "ok", "version": "0.1.0"}
+    return {"service": "nuclear-data-service", "status": "ok", "version": "0.2.0"}

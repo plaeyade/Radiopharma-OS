@@ -9,19 +9,26 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 
 from app.application.queries import NuclearDataQueries
+from app.application.talys_compare import compare
+from app.infrastructure.talys.talys_cross_section_repository import (
+    TalysCrossSectionRepository)
+from app.infrastructure.talys.talys_runner import TalysUnavailable
 from app.presentation.schemas import (
-    CrossSectionPointOut, DatasetOut, DecayModeOut, DecayOut, EmissionOut, ReactionOut)
+    CompareOut, CrossSectionPointOut, DatasetOut, DecayModeOut, DecayOut,
+    EmissionOut, ReactionOut, SourceSummaryOut, TalysStatusOut)
 
 router = APIRouter(prefix="/api/v1", tags=["nuclear-data"])
 
 _queries: NuclearDataQueries | None = None
 _data_dir: Path | None = None
+_talys: TalysCrossSectionRepository | None = None
 
 
-def init(queries: NuclearDataQueries, data_dir: Path) -> None:
+def init(queries: NuclearDataQueries, data_dir: Path,
+         talys: TalysCrossSectionRepository | None = None) -> None:
     """Inyección de dependencias desde main.py."""
-    global _queries, _data_dir
-    _queries, _data_dir = queries, data_dir
+    global _queries, _data_dir, _talys
+    _queries, _data_dir, _talys = queries, data_dir, talys
 
 
 def _reaction_out(r) -> ReactionOut:
@@ -78,3 +85,55 @@ def get_decay(nuclide: str) -> DecayOut:
 def list_datasets() -> list[DatasetOut]:
     registry = json.loads((_data_dir / "datasets.json").read_text())
     return [DatasetOut(**d) for d in registry["datasets"]]
+
+
+# ------------------------------------------------------------ TALYS
+def _summary_out(s) -> SourceSummaryOut:
+    return SourceSummaryOut(
+        dataset_id=s.dataset_id, n_points=s.n_points,
+        e_min_mev=s.e_min_mev, e_max_mev=s.e_max_mev,
+        peak_energy_mev=s.peak_energy_mev, peak_sigma_mb=s.peak_sigma_mb)
+
+
+@router.get("/talys/status", response_model=TalysStatusOut)
+def talys_status() -> TalysStatusOut:
+    if _talys is None:
+        return TalysStatusOut(available=False, reactions_cached=[])
+    cached = sorted(p.parent.name
+                    for p in (_data_dir / "talys").glob("*/meta.json")) \
+        if (_data_dir / "talys").is_dir() else []
+    return TalysStatusOut(
+        available=_talys.runner.available(),
+        cmd=_talys.runner.cmd,
+        version=_talys.runner.version(),
+        reactions_cached=cached)
+
+
+@router.get("/cross-sections/compare/{reaction_id}",
+            response_model=CompareOut)
+def compare_cross_sections(reaction_id: str) -> CompareOut:
+    iaea = _queries.get_reaction(reaction_id)
+    if iaea is None:
+        raise HTTPException(
+            status_code=404, detail=f"reacción no encontrada: {reaction_id}")
+    if _talys is None:
+        raise HTTPException(
+            status_code=503,
+            detail="proveedor TALYS no configurado en este despliegue")
+    try:
+        talys = _talys.compute(reaction_id)
+    except TalysUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except KeyError:
+        raise HTTPException(
+            status_code=404, detail=f"reacción no soportada: {reaction_id}")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=f"fallo ejecutando TALYS: {exc}")
+    result = compare(iaea, talys)
+    return CompareOut(
+        reaction_id=result.reaction_id,
+        iaea=_summary_out(result.iaea), talys=_summary_out(result.talys),
+        n_compared=result.n_compared,
+        max_rel_deviation=round(result.max_rel_deviation, 4),
+        rms_rel_deviation=round(result.rms_rel_deviation, 4))

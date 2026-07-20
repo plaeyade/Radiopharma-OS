@@ -56,3 +56,28 @@ class DatasetOut(BaseModel):
     retrieved: str
     sha256: Optional[str] = None
     license: str
+
+
+class TalysStatusOut(BaseModel):
+    available: bool
+    cmd: Optional[str] = None
+    version: Optional[str] = None
+    reactions_cached: list[str]
+
+
+class SourceSummaryOut(BaseModel):
+    dataset_id: str
+    n_points: int
+    e_min_mev: float
+    e_max_mev: float
+    peak_energy_mev: float
+    peak_sigma_mb: float
+
+
+class CompareOut(BaseModel):
+    reaction_id: str
+    iaea: SourceSummaryOut
+    talys: SourceSummaryOut
+    n_compared: int
+    max_rel_deviation: float
+    rms_rel_deviation: float
