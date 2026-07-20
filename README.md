@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.26.0 · Process Twin F3 (calendario multi-paciente: fraccionamiento EOS con decaimiento entre administraciones) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -275,6 +275,28 @@ producción de radionúclidos PET en ciclotrón.
     remanente y EOS mínima) — verificado e2e en vivo (EOS real 66.7 GBq:
     3/3 pacientes servidos entre 14:00 y 18:00; EOS mínima 2.71 GBq —
     el lote está sobredimensionado para esa agenda).
+- **Logistics Twin F1** (Process Service v0.4 · `POST /process/logistics/route`
+  + `/reachability`) — la distribución del radiofármaco con decaimiento
+  en tránsito:
+  - **terrestre**: proveedor de routing intercambiable tras interfaz
+    (`RoutingProvider`): local determinista (haversine × factor vial,
+    por defecto y en tests) u **OSMnx/OpenStreetMap** real en producción
+    (import perezoso; cuando haya red Overpass). La capa GNN
+    (city2graph) para tiempos aprendidos con GPS real de transportistas
+    queda como Logistics F2 documentado en el código;
+  - **aéreo**: cadena completa carretera → **buffer TDG Clase 7**
+    (90 min, configurable) → **vuelo** (haversine/800 km/h + overhead)
+    → mensajería destino, sobre el catálogo **OpenFlights real**
+    (1.484 aeropuertos con ≥10 rutas comerciales, dominio público);
+    mismo aeropuerto origen/destino → 422 con consejo de modo terrestre;
+  - **alcanzabilidad**: presupuesto de tiempo para llegar con 1 dosis
+    (`T½·log2(EOS/dosis)`), bandas-isócronas (radio + actividad a esa
+    hora) y viabilidad por hospital;
+  - instalaciones `validated: false` (coordenadas demo honestas);
+  - en la consola: pestaña **Logística** (calculadora de ruta con las 4
+    piernas, tarjetas de llegada/dosis, alcanzabilidad por hospital y
+    bandas) — verificado e2e en vivo (lote 234.2 GBq: aéreo MAD→VLC
+    192 min → 69.6 GBq/187 dosis vs terrestre 472 min → 24.9 GBq).
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -388,7 +410,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 325 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 58 PT + 6 CLI)
+make test     # 353 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 86 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -482,6 +504,14 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Process Twin F3: calendario multi-paciente (fraccionamiento del EOS
       con decaimiento entre administraciones, viabilidad por cita e inversa
       exacta de EOS requerida) — verificado e2e.
+- [x] Logistics Twin F1: rutas terrestre (interfaz OSMnx-ready) y aérea
+      (OpenFlights + buffer TDG) con decaimiento en tránsito,
+      alcanzabilidad por presupuesto de dosis — verificado e2e.
+- [ ] Logistics Twin F2: OSRM/Valhalla self-hosted como proveedor de
+      routing en producción, y capa GNN (city2graph) para predicción de
+      tiempos con GPS real de transportistas (cuando exista telemetría).
+- [ ] Pierna con dron (VTOL ala fija, blindaje 15-30 kg): modelo de
+      rango/payload y marco EASA/IAEA Clase 7 — opciones documentadas.
 - [ ] Protocolos del Process Twin validados con datos in-situ (bloqueado:
       requiere rendimientos y tiempos medidos en planta).
 - [ ] TALYS como segunda fuente de σ(E) tras el proveedor IAEA (cap. 13,

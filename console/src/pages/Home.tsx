@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Activity, Atom, Beaker, FlaskConical, LineChart, LogIn, LogOut, Radio, RefreshCw, ScrollText, Settings, ShieldCheck, User, Waves } from "lucide-react";
+import { Activity, Atom, Beaker, FlaskConical, LineChart, LogIn, LogOut, Radio, RefreshCw, Route, ScrollText, Settings, ShieldCheck, User, Waves } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import EbrSection from "@/sections/EbrSection";
 import TelemetrySection from "@/sections/TelemetrySection";
 import TrendsSection from "@/sections/TrendsSection";
 import ProcesoSection from "@/sections/ProcesoSection";
+import LogisticaSection from "@/sections/LogisticaSection";
 
 export default function Home() {
   const [data, setData] = useState<ConsoleData | null>(null);
@@ -176,6 +177,7 @@ export default function Home() {
               <TabsTrigger value="telemetry"><Waves className="mr-1.5 h-4 w-4" />Telemetría</TabsTrigger>
               <TabsTrigger value="trends"><LineChart className="mr-1.5 h-4 w-4" />Tendencias</TabsTrigger>
               <TabsTrigger value="proceso"><Beaker className="mr-1.5 h-4 w-4" />Proceso</TabsTrigger>
+              <TabsTrigger value="logistica"><Route className="mr-1.5 h-4 w-4" />Logística</TabsTrigger>
             </TabsList>
             <div className="mt-5">
               <TabsContent value="overview">
@@ -205,12 +207,15 @@ export default function Home() {
                 <ProcesoSection data={data} cfg={effCfg} session={session}
                                 selected={batchId} onSelect={setBatchId} onChanged={reload} />
               </TabsContent>
+              <TabsContent value="logistica">
+                <LogisticaSection data={data} cfg={effCfg} selected={batchId} />
+              </TabsContent>
             </div>
           </Tabs>
         )}
       </main>
       <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Radiopharma OS v0.26.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
+        Radiopharma OS v0.27.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
         {data && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString("es-MX")}`}
       </footer>
     </div>

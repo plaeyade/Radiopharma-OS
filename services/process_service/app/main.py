@@ -14,18 +14,21 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
-from app.presentation.routers import process_api
+from app.presentation.routers import logistics_api, process_api
 
 app = FastAPI(
     title="Radiopharma OS - Process Service",
-    version="0.3.0",
+    version="0.4.0",
     description=(
         "Process Twin: cascada EOB -> EOS con decaimiento por paso, "
-        "eficiencias de proceso y estimación de dosis por paciente."),
+        "eficiencias de proceso y estimación de dosis por paciente. "
+        "Logistics Twin: rutas terrestres/aéreas con decaimiento en tránsito."),
 )
 
 process_api.init(ProcessService())
+logistics_api.init(LogisticsService())
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -37,8 +40,9 @@ app.add_middleware(
 )
 
 app.include_router(process_api.router)
+app.include_router(logistics_api.router)
 
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
-    return {"service": "process-service", "status": "ok", "version": "0.3.0"}
+    return {"service": "process-service", "status": "ok", "version": "0.4.0"}

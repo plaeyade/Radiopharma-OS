@@ -351,3 +351,55 @@ export async function doseCalendar(cfg: ConsoleConfig, input: {
   return req<DoseCalendar>(
     "POST", `${cfg.processUrl}/api/v1/process/dose-calendar`, undefined, input);
 }
+
+/* ---------------------------------------------------- logistics twin */
+export interface FacilityItem {
+  facility_id: string; name: string; kind: string;
+  lat: number; lon: number; validated: boolean;
+}
+export interface RouteLeg {
+  kind: string; origin: string; destination: string;
+  duration_min: number; distance_km: number;
+}
+export interface LogisticsRoute {
+  mode: string; origin: string; destination: string;
+  legs: RouteLeg[]; total_minutes: number; total_distance_km: number;
+  eos_activity_gbq: number; arrival_activity_gbq: number;
+  decay_factor: number; patient_doses_on_arrival: number;
+  routing_source: string; validated: boolean;
+}
+export interface ReachBand {
+  minutes: number; radius_km: number; arrival_activity_gbq: number;
+}
+export interface FacilityReach {
+  facility_id: string; name: string; kind: string;
+  travel_minutes: number; distance_km: number;
+  arrival_activity_gbq: number; feasible_one_dose: boolean;
+}
+export interface Reachability {
+  origin: string; nuclide: string; eos_activity_gbq: number;
+  half_life_min: number; max_delivery_minutes_one_dose: number;
+  bands: ReachBand[]; facilities: FacilityReach[];
+  routing_source: string; validated: boolean;
+}
+
+export async function listFacilities(cfg: ConsoleConfig): Promise<FacilityItem[]> {
+  const r = await fetch(`${cfg.processUrl}/api/v1/logistics/facilities`);
+  if (!r.ok) throw new Error(`facilities ${r.status}`);
+  return r.json();
+}
+
+export async function routeLogistics(cfg: ConsoleConfig, input: {
+  origin_id: string; dest_id: string; protocol_id: string;
+  eos_activity_gbq: number; mode: string;
+}): Promise<LogisticsRoute> {
+  return req<LogisticsRoute>(
+    "POST", `${cfg.processUrl}/api/v1/logistics/route`, undefined, input);
+}
+
+export async function reachabilityLogistics(cfg: ConsoleConfig, input: {
+  origin_id: string; protocol_id: string; eos_activity_gbq: number;
+}): Promise<Reachability> {
+  return req<Reachability>(
+    "POST", `${cfg.processUrl}/api/v1/logistics/reachability`, undefined, input);
+}
