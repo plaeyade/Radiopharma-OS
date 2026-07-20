@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -331,6 +331,13 @@ producción de radionúclidos PET en ciclotrón.
     unitarias; el pesado no llega a 302.6 km → 422 honesto), y **notas
     regulatorias** en la respuesta (EASA specific/SORA + ICAO TI/IATA DGR,
     bulto Tipo A IAEA SSR-6);
+  - en la consola: pestaña **Física** (v0.31.0): Burnup radial 2D
+    interactivo (EOB ideal/1D/2D, gráfica de depleción y flujo por anillo,
+    corrección radial), Thermal Engine (margen térmico, corriente máxima
+    admisible, veredicto) y tarjeta Elmer FEM con estado honesto — verificado
+    e2e en navegador (75 µA/2 h: EOB_2D 394.572 vs 1D 394.574 GBq;
+    ventana Havar 40 µA: T_pico 502.6 K, fuera de límite por 29.5 K,
+    corriente máx. 34.4 µA);
   - en la consola: pestaña **Logística** (calculadora de ruta con las
     piernas, selector de modo terrestre/aéreo/dron con catálogo de drones
     y blindaje, tarjetas de llegada/dosis, notas regulatorias,

@@ -18,6 +18,7 @@ import TelemetrySection from "@/sections/TelemetrySection";
 import TrendsSection from "@/sections/TrendsSection";
 import ProcesoSection from "@/sections/ProcesoSection";
 import LogisticaSection from "@/sections/LogisticaSection";
+import FisicaSection from "@/sections/FisicaSection";
 
 export default function Home() {
   const [data, setData] = useState<ConsoleData | null>(null);
@@ -178,6 +179,7 @@ export default function Home() {
               <TabsTrigger value="trends"><LineChart className="mr-1.5 h-4 w-4" />Tendencias</TabsTrigger>
               <TabsTrigger value="proceso"><Beaker className="mr-1.5 h-4 w-4" />Proceso</TabsTrigger>
               <TabsTrigger value="logistica"><Route className="mr-1.5 h-4 w-4" />Logística</TabsTrigger>
+              <TabsTrigger value="fisica"><Atom className="mr-1.5 h-4 w-4" />Física</TabsTrigger>
             </TabsList>
             <div className="mt-5">
               <TabsContent value="overview">
@@ -210,12 +212,15 @@ export default function Home() {
               <TabsContent value="logistica">
                 <LogisticaSection data={data} cfg={effCfg} selected={batchId} />
               </TabsContent>
+              <TabsContent value="fisica">
+                <FisicaSection cfg={effCfg} />
+              </TabsContent>
             </div>
           </Tabs>
         )}
       </main>
       <footer className="border-t border-slate-800 py-4 text-center text-xs text-slate-600">
-        Radiopharma OS v0.29.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
+        Radiopharma OS v0.31.0 · datos nucleares 100 % abiertos (IAEA-NDS · DDEP · CATIMA)
         {data && ` · actualizado ${new Date(data.fetched_at).toLocaleTimeString("es-MX")}`}
       </footer>
     </div>

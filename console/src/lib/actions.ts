@@ -416,3 +416,74 @@ export async function reachabilityLogistics(cfg: ConsoleConfig, input: {
   return req<Reachability>(
     "POST", `${cfg.processUrl}/api/v1/logistics/reachability`, undefined, input);
 }
+
+/* ------------------------------------------- física: burnup 2D + térmico */
+export interface RadialRingResult {
+  index: number; r_in_cm: number; r_out_cm: number; r_mean_cm: number;
+  flux_rel: number; production_weight: number; burnup_rate_s: number;
+  depletion_fraction: number;
+}
+export interface Burnup2DResult {
+  reaction_id: string; product_nuclide: string; beam_energy_mev: number;
+  current_ua: number; irradiation_time_min: number; beam_spot_cm2: number;
+  beam_sigma_cm: number; spot_radius_cm: number; n_rings: number;
+  burnup_xs_max_mb: number; burnup_xs_eff_mb: number;
+  flux_peak_cm2_s: number; flux_mean_cm2_s: number; peak_factor: number;
+  rings: RadialRingResult[];
+  burnup_rate_max_s: number; depletion_weighted: number; depletion_max: number;
+  eob_ideal_gbq: number; eob_1d_gbq: number; eob_2d_gbq: number;
+  loss_vs_ideal_gbq: number; loss_vs_1d_gbq: number; model: string;
+}
+
+export async function burnup2d(cfg: ConsoleConfig, input: {
+  reaction_id: string; target_id: string; beam_energy_mev: number;
+  current_ua: number; irradiation_time_min: number; beam_spot_cm2: number;
+  beam_sigma_cm: number; n_rings?: number;
+}): Promise<Burnup2DResult> {
+  return req<Burnup2DResult>(
+    "POST", `${cfg.yeUrl}/api/v1/production/burnup-2d`, undefined,
+    { n_rings: 20, ...input });
+}
+
+export interface ThermalResult {
+  beam_power_w: number; spot_area_cm2: number;
+  heat_flux_mean_w_cm2: number; heat_flux_peak_w_cm2: number;
+  peak_factor: number; delta_t_conduction_k: number; delta_t_film_k: number;
+  t_peak_k: number; t_mean_k: number; t_limit_k: number; margin_k: number;
+  within_limit: boolean; max_current_ua: number; model: string;
+}
+
+export async function thermalTarget(cfg: ConsoleConfig, input: {
+  beam_energy_mev: number; current_ua: number; beam_spot_cm2: number;
+  target_thickness_cm: number; conductivity_w_cm_k: number;
+  film_coeff_w_cm2_k: number; coolant_temp_k: number; t_limit_k: number;
+  beam_sigma_cm?: number | null;
+}): Promise<ThermalResult> {
+  return req<ThermalResult>(
+    "POST", `${cfg.yeUrl}/api/v1/thermal/target`, undefined, input);
+}
+
+export interface ElmerStatus {
+  available: boolean; cmd: string; version: string | null; solver: string;
+}
+
+export async function elmerStatus(cfg: ConsoleConfig): Promise<ElmerStatus> {
+  return req<ElmerStatus>("GET", `${cfg.yeUrl}/api/v1/elmer/status`);
+}
+
+export interface ElmerCompareResult {
+  t_peak_fem_k: number; t_mean_fem_k: number;
+  t_peak_reduced_k: number; t_mean_reduced_k: number;
+  peak_rel_diff: number; fem_conservative_bound_ok: boolean;
+  solver: string; model: string;
+}
+
+export async function elmerCompare(cfg: ConsoleConfig, input: {
+  beam_energy_mev: number; current_ua: number; beam_spot_cm2: number;
+  target_thickness_cm: number; conductivity_w_cm_k: number;
+  film_coeff_w_cm2_k: number; coolant_temp_k: number;
+  beam_sigma_cm?: number | null;
+}): Promise<ElmerCompareResult> {
+  return req<ElmerCompareResult>(
+    "POST", `${cfg.yeUrl}/api/v1/elmer/thermal/compare`, undefined, input);
+}
