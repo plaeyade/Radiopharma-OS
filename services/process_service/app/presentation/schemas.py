@@ -3,6 +3,9 @@ Esquemas Pydantic del Process Twin.
 """
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -55,3 +58,59 @@ class SimulateOut(BaseModel):
     patient_doses: int
     validated: bool
     steps: list[StepResultOut]
+
+
+class ScheduleIn(BaseModel):
+    protocol_id: str = Field(..., examples=["fdg_18f"])
+    dose_time: datetime = Field(..., examples=["2026-07-20T14:00:00Z"])
+    irradiation_time_min: float = Field(..., gt=0, examples=[60.0])
+    setup_min: float = Field(0.0, ge=0, examples=[10.0])
+    eos_target_gbq: Optional[float] = Field(None, gt=0, examples=[30.0])
+    target_doses: Optional[int] = Field(None, gt=0, examples=[80])
+
+
+class ScheduledStepOut(BaseModel):
+    name: str
+    start: datetime
+    end: datetime
+    activity_out_gbq: float
+
+
+class ScheduleOut(BaseModel):
+    protocol_id: str
+    nuclide: str
+    eos_target_gbq: float
+    eob_required_gbq: float
+    dose_time: datetime
+    beam_start: datetime
+    setup_min: float
+    irradiation_time_min: float
+    eob_time: datetime
+    total_lead_time_min: float
+    patient_doses: int
+    validated: bool
+    steps: list[ScheduledStepOut]
+
+
+class BottleneckIn(BaseModel):
+    protocol_id: str = Field(..., examples=["fdg_18f"])
+    eob_activity_gbq: float = Field(..., gt=0, examples=[108.9])
+
+
+class StepBottleneckOut(BaseModel):
+    name: str
+    loss_gbq: float
+    decay_loss_gbq: float
+    efficiency_loss_gbq: float
+    eos_gain_1min_faster_gbq: float
+    eos_gain_1pp_efficiency_gbq: float
+
+
+class BottleneckOut(BaseModel):
+    protocol_id: str
+    nuclide: str
+    eob_activity_gbq: float
+    eos_activity_gbq: float
+    total_loss_gbq: float
+    dominant_loss_step: str
+    steps: list[StepBottleneckOut]

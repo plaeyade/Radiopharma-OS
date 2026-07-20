@@ -289,3 +289,42 @@ export async function registerProcessSimEvent(cfg: ConsoleConfig, token: string,
   await req("POST", `${cfg.dlUrl}/api/v1/batches/${batchId}/events`, token,
     { action: "proceso_simulado", detail });
 }
+
+/* ---------------------------------------------------- process twin F2 */
+export interface ScheduledStep {
+  name: string; start: string; end: string; activity_out_gbq: number;
+}
+export interface ProcessSchedule {
+  protocol_id: string; nuclide: string;
+  eos_target_gbq: number; eob_required_gbq: number;
+  dose_time: string; beam_start: string; setup_min: number;
+  irradiation_time_min: number; eob_time: string;
+  total_lead_time_min: number; patient_doses: number;
+  validated: boolean; steps: ScheduledStep[];
+}
+
+export async function scheduleProcess(cfg: ConsoleConfig, input: {
+  protocol_id: string; dose_time: string; irradiation_time_min: number;
+  setup_min?: number; eos_target_gbq?: number; target_doses?: number;
+}): Promise<ProcessSchedule> {
+  return req<ProcessSchedule>(
+    "POST", `${cfg.processUrl}/api/v1/process/schedule`, undefined, input);
+}
+
+export interface StepBottleneck {
+  name: string; loss_gbq: number; decay_loss_gbq: number;
+  efficiency_loss_gbq: number; eos_gain_1min_faster_gbq: number;
+  eos_gain_1pp_efficiency_gbq: number;
+}
+export interface ProcessBottleneck {
+  protocol_id: string; nuclide: string; eob_activity_gbq: number;
+  eos_activity_gbq: number; total_loss_gbq: number;
+  dominant_loss_step: string; steps: StepBottleneck[];
+}
+
+export async function bottleneckProcess(cfg: ConsoleConfig, protocolId: string,
+                                        eobGbq: number): Promise<ProcessBottleneck> {
+  return req<ProcessBottleneck>(
+    "POST", `${cfg.processUrl}/api/v1/process/bottleneck`, undefined,
+    { protocol_id: protocolId, eob_activity_gbq: eobGbq });
+}

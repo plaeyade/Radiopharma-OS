@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Beaker, ClipboardCheck, Users } from "lucide-react";
+import { ArrowRight, Beaker, CalendarClock, ClipboardCheck, Gauge, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
 import type { Session } from "@/lib/session";
-import { registerProcessSimEvent, simulateProcess, type ProcessSimulation } from "@/lib/actions";
+import { bottleneckProcess, registerProcessSimEvent, scheduleProcess, simulateProcess,
+         type ProcessBottleneck, type ProcessSchedule, type ProcessSimulation } from "@/lib/actions";
 
 interface Props {
   data: ConsoleData;
@@ -20,12 +21,22 @@ interface Props {
   onChanged: () => void;
 }
 
-/** Process Twin: cascada EOB -> EOS con decaimiento y eficiencias por paso. */
+const fmtHora = (iso: string) =>
+  new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+
+/** Process Twin: cascada EOB -> EOS, planificación inversa y cuellos de botella. */
 export default function ProcesoSection({ data, cfg, session, selected, onSelect, onChanged }: Props) {
   const [protocolId, setProtocolId] = useState<string>(data.protocols[0]?.protocol_id ?? "");
   const [eobTxt, setEobTxt] = useState<string>("");
   const [sim, setSim] = useState<ProcessSimulation | null>(null);
   const [busy, setBusy] = useState(false);
+  // F2: planificación inversa
+  const [doseTime, setDoseTime] = useState<string>("");
+  const [setupTxt, setSetupTxt] = useState<string>("10");
+  const [dosesTxt, setDosesTxt] = useState<string>("");
+  const [plan, setPlan] = useState<ProcessSchedule | null>(null);
+  // F2: cuello de botella
+  const [cuello, setCuello] = useState<ProcessBottleneck | null>(null);
 
   const batch = data.batches.find((b) => b.batch_id === selected);
   const proto = data.protocols.find((p) => p.protocol_id === protocolId)
@@ -37,6 +48,16 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
     const manual = parseFloat(eobTxt);
     return Number.isFinite(manual) && manual > 0 ? manual : (eobLote ?? 0);
   }, [eobTxt, eobLote]);
+
+  // F2: tiempo muerto estimado desde telemetría real de la corrida
+  const muerto = useMemo(() => {
+    const series = data.telemetry[selected];
+    if (!series?.length || !batch) return null;
+    const span = Math.max(...series.flatMap((s) => s.points.map((p) => p.t)));
+    const nominal = batch.beam.irradiation_time_min;
+    const extra = span - nominal;
+    return { span, nominal, extra };
+  }, [data.telemetry, selected, batch]);
 
   const doSimulate = async () => {
     if (!proto || !(eob > 0)) {
@@ -50,6 +71,50 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
       toast.success(`EOS ${r.eos_activity_gbq.toFixed(2)} GBq · ${r.patient_doses} dosis`);
     } catch (e) {
       toast.error(`Simulación falló: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doSchedule = async () => {
+    if (!proto) return;
+    const when = doseTime ? new Date(doseTime) : null;
+    if (!when || Number.isNaN(when.getTime())) {
+      toast.error("Indica la hora de administración de la dosis");
+      return;
+    }
+    const doses = parseInt(dosesTxt, 10);
+    const irr = batch?.beam?.irradiation_time_min ?? 60;
+    setBusy(true);
+    try {
+      const r = await scheduleProcess(cfg, {
+        protocol_id: proto.protocol_id,
+        dose_time: when.toISOString(),
+        irradiation_time_min: irr,
+        setup_min: parseFloat(setupTxt) || 0,
+        ...(Number.isFinite(doses) && doses > 0
+          ? { target_doses: doses }
+          : sim ? { eos_target_gbq: sim.eos_activity_gbq } : { eos_target_gbq: 30 }),
+      });
+      setPlan(r);
+      toast.success(`Plan listo: haz a las ${fmtHora(r.beam_start)}, EOB ${r.eob_required_gbq.toFixed(1)} GBq`);
+    } catch (e) {
+      toast.error(`Planificación falló: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doBottleneck = async () => {
+    if (!proto || !(eob > 0)) {
+      toast.error("Selecciona protocolo y EOB > 0 primero");
+      return;
+    }
+    setBusy(true);
+    try {
+      setCuello(await bottleneckProcess(cfg, proto.protocol_id, eob));
+    } catch (e) {
+      toast.error(`Análisis falló: ${(e as Error).message}`);
     } finally {
       setBusy(false);
     }
@@ -124,10 +189,15 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
               placeholder={eobLote ? eobLote.toFixed(3) : "GBq al EOB"}
               className="h-8 border-slate-700 bg-slate-900 text-xs" />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end gap-2">
             <Button size="sm" onClick={doSimulate} disabled={busy || !proto}
-                    className="h-8 w-full bg-cyan-700 hover:bg-cyan-600">
+                    className="h-8 flex-1 bg-cyan-700 hover:bg-cyan-600">
               Simular cascada
+            </Button>
+            <Button size="sm" variant="outline" onClick={doBottleneck}
+                    disabled={busy || !proto}
+                    className="h-8 border-slate-700 text-xs">
+              <Gauge className="mr-1 h-3.5 w-3.5" />Cuellos
             </Button>
           </div>
         </CardContent>
@@ -228,6 +298,144 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
           </Card>
         </>
       )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card className="border-slate-800 bg-slate-900/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-200">
+              <CalendarClock className="h-4 w-4 text-emerald-400" />
+              Planificación inversa (desde hora de dosis)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <Label className="text-xs text-slate-400">Hora de dosis</Label>
+                <Input type="datetime-local" value={doseTime}
+                       onChange={(e) => setDoseTime(e.target.value)}
+                       className="h-8 border-slate-700 bg-slate-900 text-xs" />
+              </div>
+              <div>
+                <Label className="text-xs text-slate-400">Dosis objetivo</Label>
+                <Input value={dosesTxt} onChange={(e) => setDosesTxt(e.target.value)}
+                       placeholder={sim ? `${sim.patient_doses}` : "80"}
+                       className="h-8 border-slate-700 bg-slate-900 text-xs" />
+              </div>
+              <div>
+                <Label className="text-xs text-slate-400">Prep. haz (min)</Label>
+                <Input value={setupTxt} onChange={(e) => setSetupTxt(e.target.value)}
+                       className="h-8 border-slate-700 bg-slate-900 text-xs" />
+              </div>
+            </div>
+            <Button size="sm" onClick={doSchedule} disabled={busy || !proto}
+                    className="h-8 bg-emerald-700 hover:bg-emerald-600">
+              Planificar hacia atrás
+            </Button>
+            {muerto && (
+              <p className="text-xs text-slate-500">
+                Corrida del lote: {muerto.span.toFixed(0)} min de telemetría vs{" "}
+                {muerto.nominal} min nominales → tiempo muerto estimado{" "}
+                <span className="text-amber-300">{muerto.extra.toFixed(0)} min</span>{" "}
+                (rampa + manipulación, medido — no nominal).
+              </p>
+            )}
+            {plan && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-400">
+                  Haz a las <span className="text-emerald-300">{fmtHora(plan.beam_start)}</span>
+                  {" · "}EOB a las <span className="text-cyan-300">{fmtHora(plan.eob_time)}</span>
+                  {" con "}<span className="text-cyan-300">{plan.eob_required_gbq.toFixed(2)} GBq</span>
+                  {" · "}lead total {plan.total_lead_time_min.toFixed(0)} min
+                </p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-left text-slate-500">
+                      <th className="py-1 pr-2">Paso</th>
+                      <th className="py-1 pr-2 text-right">Inicio</th>
+                      <th className="py-1 pr-2 text-right">Fin</th>
+                      <th className="py-1 text-right">Act. salida</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {plan.steps.map((s) => (
+                      <tr key={s.name} className="border-b border-slate-800/60 text-slate-300">
+                        <td className="py-1 pr-2 capitalize">{s.name}</td>
+                        <td className="py-1 pr-2 text-right">{fmtHora(s.start)}</td>
+                        <td className="py-1 pr-2 text-right">{fmtHora(s.end)}</td>
+                        <td className="py-1 text-right text-cyan-300">
+                          {s.activity_out_gbq.toFixed(2)} GBq
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-800 bg-slate-900/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm text-slate-200">
+              <Gauge className="h-4 w-4 text-amber-400" />
+              Cuello de botella de la cascada
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!cuello ? (
+              <p className="py-6 text-center text-xs text-slate-500">
+                Pulsa «Cuellos» con protocolo y EOB seleccionados para cuantificar
+                pérdidas y sensibilidades por paso.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-400">
+                  Pérdida total {cuello.total_loss_gbq.toFixed(2)} GBq
+                  (EOB {cuello.eob_activity_gbq.toFixed(1)} → EOS {cuello.eos_activity_gbq.toFixed(2)}) ·
+                  paso dominante:{" "}
+                  <span className="capitalize text-amber-300">{cuello.dominant_loss_step}</span>
+                </p>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-left text-slate-500">
+                      <th className="py-1 pr-2">Paso</th>
+                      <th className="py-1 pr-2 text-right">Pérdida</th>
+                      <th className="py-1 pr-2 text-right">Decaim.</th>
+                      <th className="py-1 pr-2 text-right">Efic.</th>
+                      <th className="py-1 pr-2 text-right">+EOS/min</th>
+                      <th className="py-1 text-right">+EOS/pp η</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cuello.steps.map((s) => (
+                      <tr key={s.name}
+                          className={`border-b border-slate-800/60 text-slate-300 ${s.name === cuello.dominant_loss_step ? "bg-amber-950/30" : ""}`}>
+                        <td className="py-1 pr-2 capitalize">{s.name}</td>
+                        <td className="py-1 pr-2 text-right text-amber-300/90">
+                          {s.loss_gbq.toFixed(2)}
+                        </td>
+                        <td className="py-1 pr-2 text-right">{s.decay_loss_gbq.toFixed(2)}</td>
+                        <td className="py-1 pr-2 text-right">{s.efficiency_loss_gbq.toFixed(2)}</td>
+                        <td className="py-1 pr-2 text-right text-emerald-300/90">
+                          +{s.eos_gain_1min_faster_gbq.toFixed(3)}
+                        </td>
+                        <td className="py-1 text-right text-emerald-300/90">
+                          +{s.eos_gain_1pp_efficiency_gbq.toFixed(3)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-xs text-slate-500">
+                  +EOS/min: ganancia de EOS si el paso fuese 1 min más rápido
+                  (idéntica en todos: solo depende de T½). +EOS/pp η: ganancia
+                  por 1 punto porcentual de eficiencia — máxima donde η es menor.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

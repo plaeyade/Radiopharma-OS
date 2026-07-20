@@ -6,10 +6,15 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from app.application.process_service import ProcessService
+from app.domain.bottleneck import BottleneckResult
 from app.domain.entities import ChainResult, Protocol
-from app.presentation.schemas import (ProtocolOut, ProtocolStepOut,
-                                      ProtocolSummaryOut, SimulateIn,
-                                      SimulateOut, StepResultOut)
+from app.domain.scheduling import ScheduleResult
+from app.presentation.schemas import (BottleneckIn, BottleneckOut,
+                                      ProtocolOut, ProtocolStepOut,
+                                      ProtocolSummaryOut, ScheduleIn,
+                                      ScheduleOut, ScheduledStepOut,
+                                      SimulateIn, SimulateOut,
+                                      StepBottleneckOut, StepResultOut)
 
 router = APIRouter(prefix="/api/v1/process", tags=["process-twin"])
 
@@ -89,3 +94,67 @@ def simulate(payload: SimulateIn) -> SimulateOut:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return _chain_out(result)
+
+
+def _schedule_out(r: ScheduleResult) -> ScheduleOut:
+    return ScheduleOut(
+        protocol_id=r.protocol_id,
+        nuclide=r.nuclide,
+        eos_target_gbq=round(r.eos_target_gbq, 4),
+        eob_required_gbq=round(r.eob_required_gbq, 4),
+        dose_time=r.dose_time,
+        beam_start=r.beam_start,
+        setup_min=r.setup_min,
+        irradiation_time_min=r.irradiation_time_min,
+        eob_time=r.eob_time,
+        total_lead_time_min=round(r.total_lead_time_min, 2),
+        patient_doses=r.patient_doses,
+        validated=r.validated,
+        steps=[ScheduledStepOut(
+            name=s.name, start=s.start, end=s.end,
+            activity_out_gbq=round(s.activity_out_gbq, 4))
+            for s in r.steps])
+
+
+@router.post("/schedule", response_model=ScheduleOut)
+def schedule(payload: ScheduleIn) -> ScheduleOut:
+    try:
+        result = _service.schedule(
+            payload.protocol_id, payload.dose_time,
+            payload.irradiation_time_min, payload.setup_min,
+            payload.eos_target_gbq, payload.target_doses)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"protocolo '{payload.protocol_id}' no encontrado")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _schedule_out(result)
+
+
+@router.post("/bottleneck", response_model=BottleneckOut)
+def bottleneck(payload: BottleneckIn) -> BottleneckOut:
+    try:
+        r: BottleneckResult = _service.bottleneck(
+            payload.protocol_id, payload.eob_activity_gbq)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"protocolo '{payload.protocol_id}' no encontrado")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return BottleneckOut(
+        protocol_id=r.protocol_id,
+        nuclide=r.nuclide,
+        eob_activity_gbq=round(r.eob_activity_gbq, 4),
+        eos_activity_gbq=round(r.eos_activity_gbq, 4),
+        total_loss_gbq=round(r.total_loss_gbq, 4),
+        dominant_loss_step=r.dominant_loss_step,
+        steps=[StepBottleneckOut(
+            name=s.name,
+            loss_gbq=round(s.loss_gbq, 4),
+            decay_loss_gbq=round(s.decay_loss_gbq, 4),
+            efficiency_loss_gbq=round(s.efficiency_loss_gbq, 4),
+            eos_gain_1min_faster_gbq=round(s.eos_gain_1min_faster_gbq, 4),
+            eos_gain_1pp_efficiency_gbq=round(
+                s.eos_gain_1pp_efficiency_gbq, 4)) for s in r.steps])

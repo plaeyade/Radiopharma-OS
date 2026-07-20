@@ -60,7 +60,8 @@ def simulate_chain(protocol: Protocol, eob_activity_gbq: float) -> ChainResult:
         prod_eff *= step.efficiency
 
     eos = activity
-    doses = math.floor(eos / protocol.dose_per_patient_gbq)
+    # epsilon de redondeo: floor(79.999999999) debe ser 80, no 79
+    doses = math.floor(eos / protocol.dose_per_patient_gbq + 1e-9)
     return ChainResult(
         protocol_id=protocol.protocol_id,
         nuclide=protocol.nuclide,

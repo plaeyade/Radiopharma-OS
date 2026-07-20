@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.24.0 · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.25.0 · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -243,6 +243,25 @@ producción de radionúclidos PET en ciclotrón.
     cascada paso a paso y **registro de la simulación en el eBR** del lote
     como evento `proceso_simulado`) — verificado e2e (lote real
     B-20260719-DA21A43E: EOB 108.95 GBq → EOS 31.03 GBq → 83 dosis).
+- **Process Twin F2** (Process Service v0.2 · `POST /process/schedule` +
+  `POST /process/bottleneck`) — la cascada se vuelve operativa:
+  - **planificación inversa** (`/schedule`): dado el objetivo clínico
+    (actividad EOS o nº de dosis a una hora de administración), resuelve la
+    inversa de la cascada (`EOB = EOS / (Πdecay·Πη)`) y construye la línea
+    temporal hacia atrás: inicio de haz, EOB, ventana de cada paso con su
+    actividad de salida — con tiempo de preparación del haz configurable;
+  - **análisis de cuello de botella** (`/bottleneck`): por paso, pérdida
+    descompuesta en decaimiento + eficiencia, ganancia de EOS por minuto
+    ahorrado (idéntica en todos los pasos — solo depende de T½) y por punto
+    porcentual de eficiencia (máxima donde η es menor → paso dominante);
+  - **tiempos muertos medidos** (consola): la telemetría real de la corrida
+    (span de las series) se compara con el tiempo nominal de irradiación
+    del lote → tiempo muerto estimado (rampa + manipulación), dato medido
+    y no nominal;
+  - verificado e2e en vivo (lote B-20260720-1428496C, KIUBE 18 MeV/75 µA):
+    180 dosis a las 14:00 → haz a las 11:20, EOB requerida 233.85 GBq
+    (lote real: 234.22 GBq ✓), paso dominante síntesis (73.6 GBq de
+    pérdida por eficiencia), tiempo muerto medido 6 min.
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -356,7 +375,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 294 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 27 PT + 6 CLI)
+make test     # 312 tests (12 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 45 PT + 6 CLI)
 ```
 
 ## Estructura
@@ -443,8 +462,13 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       (`validated: false` hasta validación in-situ), dosis por paciente,
       pestaña Proceso en consola y registro `proceso_simulado` en el eBR —
       verificado e2e (EOB real 108.95 GBq → EOS 31.03 GBq → 83 dosis).
-- [ ] Process Twin F2: estimación de tiempos muertos desde telemetría real,
-      programación de producción (backward scheduling desde hora de dosis).
+- [x] Process Twin F2: planificación inversa desde hora de dosis (inversa
+      exacta de la cascada + línea temporal completa), análisis de cuello de
+      botella (pérdidas decaimiento/eficiencia y sensibilidades por paso) y
+      tiempo muerto medido desde telemetría real — verificado e2e.
+- [ ] Process Twin F3: calendario multi-paciente (fraccionamiento del EOS en
+      dosis con decaimiento entre administraciones) y protocolos validados
+      con datos in-situ.
 - [ ] TALYS como segunda fuente de σ(E) tras el proveedor IAEA (cap. 13,
       opcional — redundante para las 4 reacciones del MVP).
 - [ ] Burnup 2D acoplado a Elmer FEM (cap. 18) — tras validar Burnup 1D

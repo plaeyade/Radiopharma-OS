@@ -9,10 +9,13 @@ validación con datos reales de planta (honestidad de datos).
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
+from app.domain.bottleneck import BottleneckResult, bottleneck_analysis
 from app.domain.entities import ChainResult, Protocol, ProtocolStep
 from app.domain.process_chain import simulate_chain
+from app.domain.scheduling import ScheduleResult, backward_schedule
 
 _DEFAULT_DATA = Path(__file__).resolve().parents[2] / "data" / "protocols.json"
 
@@ -77,3 +80,28 @@ class ProcessService:
                  eob_activity_gbq: float) -> ChainResult:
         proto = self._catalog.get(protocol_id)
         return simulate_chain(proto, eob_activity_gbq)
+
+    def schedule(self, protocol_id: str,
+                 dose_time: datetime,
+                 irradiation_time_min: float,
+                 setup_min: float = 0.0,
+                 eos_target_gbq: float | None = None,
+                 target_doses: int | None = None) -> ScheduleResult:
+        """Planificación inversa desde la hora de dosis.
+
+        Objetivo clínico: eos_target_gbq directo o target_doses (que se
+        convierte con la dosis por paciente del protocolo).
+        """
+        proto = self._catalog.get(protocol_id)
+        if eos_target_gbq is None:
+            if target_doses is None or target_doses <= 0:
+                raise ValueError(
+                    "indique eos_target_gbq o target_doses (> 0)")
+            eos_target_gbq = target_doses * proto.dose_per_patient_gbq
+        return backward_schedule(proto, eos_target_gbq, dose_time,
+                                 irradiation_time_min, setup_min)
+
+    def bottleneck(self, protocol_id: str,
+                   eob_activity_gbq: float) -> BottleneckResult:
+        proto = self._catalog.get(protocol_id)
+        return bottleneck_analysis(proto, eob_activity_gbq)
