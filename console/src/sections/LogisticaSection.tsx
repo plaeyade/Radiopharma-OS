@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plane, Radar, Route, Truck } from "lucide-react";
+import { Plane, Radar, Route, Truck, Wind } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
-import { listFacilities, reachabilityLogistics, routeLogistics,
-         type FacilityItem, type LogisticsRoute, type Reachability } from "@/lib/actions";
+import { listDrones, listFacilities, reachabilityLogistics, routeLogistics,
+         type DroneItem, type FacilityItem, type LogisticsRoute, type Reachability } from "@/lib/actions";
 
 interface Props {
   data: ConsoleData;
@@ -28,9 +29,12 @@ const LEG_STYLE: Record<string, string> = {
   tdg_buffer: "text-amber-300",
   flight: "text-violet-300",
   courier: "text-emerald-300",
+  preflight: "text-slate-400",
+  drone_flight: "text-fuchsia-300",
 };
 const LEG_LABEL: Record<string, string> = {
   road: "Carretera", tdg_buffer: "Buffer TDG", flight: "Vuelo", courier: "Mensajería",
+  preflight: "Ops UAS (Tipo A)", drone_flight: "Vuelo dron",
 };
 
 /** Logistics Twin: rutas terrestre/aérea con decaimiento en tránsito. */
@@ -38,6 +42,9 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
   const [facilities, setFacilities] = useState<FacilityItem[]>(DEMO_FACILITIES);
   const [destId, setDestId] = useState<string>("hosp_norte");
   const [mode, setMode] = useState<string>("road");
+  const [drones, setDrones] = useState<DroneItem[]>([]);
+  const [droneId, setDroneId] = useState<string>("");
+  const [shieldingTxt, setShieldingTxt] = useState<string>("20");
   const [route, setRoute] = useState<LogisticsRoute | null>(null);
   const [reach, setReach] = useState<Reachability | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,6 +58,10 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
 
   useEffect(() => {
     listFacilities(cfg).then(setFacilities).catch(() => { /* demo */ });
+    listDrones(cfg).then((d) => {
+      setDrones(d);
+      if (d.length) setDroneId((prev) => prev || d[0].drone_id);
+    }).catch(() => { /* sin catálogo dron */ });
   }, [cfg]);
 
   const doRoute = async () => {
@@ -62,7 +73,12 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
     try {
       setRoute(await routeLogistics(cfg, {
         origin_id: origin.facility_id, dest_id: destId,
-        protocol_id: protoId, eos_activity_gbq: eos, mode }));
+        protocol_id: protoId, eos_activity_gbq: eos, mode,
+        ...(mode === "drone" ? {
+          drone_id: droneId,
+          shielding_kg: parseFloat(shieldingTxt) || 0,
+        } : {}),
+      }));
     } catch (e) {
       setRoute(null);
       toast.error(`Ruta falló: ${(e as Error).message}`);
@@ -129,6 +145,9 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
                 <SelectItem value="air" className="text-xs">
                   <span className="flex items-center gap-1"><Plane className="h-3 w-3" />Aéreo (TDG + vuelo)</span>
                 </SelectItem>
+                <SelectItem value="drone" className="text-xs">
+                  <span className="flex items-center gap-1"><Wind className="h-3 w-3" />Dron (VTOL, Tipo A)</span>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -144,6 +163,33 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
               <Radar className="mr-1 h-3.5 w-3.5" />Alcanzabilidad
             </Button>
           </div>
+          {mode === "drone" && (
+            <>
+              <div className="md:col-span-2">
+                <Label className="text-xs text-slate-400">Dron</Label>
+                <Select value={droneId} onValueChange={setDroneId}>
+                  <SelectTrigger className="h-8 border-slate-700 bg-slate-900 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="border-slate-700 bg-slate-900">
+                    {drones.map((d) => (
+                      <SelectItem key={d.drone_id} value={d.drone_id} className="text-xs">
+                        {d.name} · {d.max_payload_kg} kg · {d.range_km} km
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-slate-400">Blindaje (kg)</Label>
+                <Input value={shieldingTxt} onChange={(e) => setShieldingTxt(e.target.value)}
+                       className="h-8 border-slate-700 bg-slate-900 text-xs" />
+              </div>
+              <div className="self-end pb-1 text-xs text-slate-500">
+                FDG granel: 15-30 kg
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -184,7 +230,8 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
               <div className="rounded border border-slate-800 p-3">
                 <p className="text-xs text-slate-500">Modo</p>
                 <p className="text-xl font-semibold text-slate-200">
-                  {route.mode === "air" ? "Aéreo" : "Terrestre"}
+                  {route.mode === "air" ? "Aéreo"
+                    : route.mode === "drone" ? "Dron" : "Terrestre"}
                 </p>
               </div>
             </div>
@@ -210,6 +257,13 @@ export default function LogisticaSection({ data, cfg, selected }: Props) {
                 ))}
               </tbody>
             </table>
+            {route.notes?.length > 0 && (
+              <ul className="mt-2 space-y-0.5">
+                {route.notes.map((n, i) => (
+                  <li key={i} className="text-xs text-slate-500">· {n}</li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       )}

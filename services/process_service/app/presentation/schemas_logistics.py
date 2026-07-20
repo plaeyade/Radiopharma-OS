@@ -25,6 +25,21 @@ class RouteIn(BaseModel):
     mode: str = Field("road", examples=["road"])
     tdg_buffer_min: float = Field(90.0, ge=0)
     courier_min: float = Field(30.0, ge=0)
+    drone_id: Optional[str] = Field(None, examples=["vtol_ala_fija_pesado"])
+    shielding_kg: float = Field(20.0, ge=0)
+    preflight_min: float = Field(20.0, ge=0)
+
+
+class DroneOut(BaseModel):
+    drone_id: str
+    name: str
+    drone_class: str
+    cruise_kmh: float
+    range_km: float
+    max_payload_kg: float
+    validated: bool
+    note: str
+    source: str
 
 
 class LegOut(BaseModel):
@@ -48,6 +63,7 @@ class RouteOut(BaseModel):
     patient_doses_on_arrival: int
     routing_source: str
     validated: bool
+    notes: list[str] = []
 
 
 class ReachabilityIn(BaseModel):

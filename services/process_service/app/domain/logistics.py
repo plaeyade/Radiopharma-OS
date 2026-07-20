@@ -68,6 +68,7 @@ class RouteResult:
     patient_doses_on_arrival: int
     routing_source: str  # qué proveedor calculó los tiempos terrestres
     validated: bool
+    notes: tuple[str, ...] = ()  # notas regulatorias/operativas (dron, TDG)
 
 
 def haversine_km(a: GeoPoint, b: GeoPoint) -> float:
@@ -125,7 +126,8 @@ def build_air_route(origin: Facility, destination: Facility,
 def summarize_route(mode: str, origin: Facility, destination: Facility,
                     legs: tuple[Leg, ...], eos_activity_gbq: float,
                     half_life_min: float, dose_per_patient_gbq: float,
-                    routing_source: str, validated: bool) -> RouteResult:
+                    routing_source: str, validated: bool,
+                    notes: tuple[str, ...] = ()) -> RouteResult:
     """Cierra la ruta con el decaimiento de la carga y las dosis a llegada."""
     if eos_activity_gbq <= 0:
         raise ValueError("eos_activity_gbq debe ser positivo")
@@ -145,7 +147,8 @@ def summarize_route(mode: str, origin: Facility, destination: Facility,
         decay_factor=0.5 ** (total_min / half_life_min),
         patient_doses_on_arrival=doses,
         routing_source=routing_source,
-        validated=validated)
+        validated=validated,
+        notes=notes)
 
 
 def max_delivery_minutes(eos_activity_gbq: float, required_gbq: float,

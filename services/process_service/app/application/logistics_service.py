@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from app.application.process_service import ProtocolCatalog
+from app.domain.drone_ops import (DroneModel, build_drone_route,
+                                  drone_notes)
 from app.domain.logistics import (DEFAULT_COURIER_MIN, DEFAULT_TDG_BUFFER_MIN,
                                   Facility, GeoPoint, Leg, RouteResult,
                                   build_air_route, decayed,
@@ -76,6 +78,23 @@ def _load_airports(path: Path) -> list[Facility]:
         for a in raw.get("airports", [])]
 
 
+def _load_drones(path: Path) -> dict[str, DroneModel]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    out: dict[str, DroneModel] = {}
+    for d in raw.get("drones", []):
+        out[d["drone_id"]] = DroneModel(
+            drone_id=d["drone_id"], name=d["name"],
+            drone_class=d["drone_class"],
+            cruise_kmh=float(d["cruise_kmh"]),
+            range_km=float(d["range_km"]),
+            max_payload_kg=float(d["max_payload_kg"]),
+            validated=bool(d.get("validated", False)),
+            note=d.get("note", ""), source=d.get("source", ""))
+    if not out:
+        raise ValueError(f"sin drones en {path}")
+    return out
+
+
 class LogisticsService:
     """Casos de uso del Logistics Twin."""
 
@@ -87,6 +106,7 @@ class LogisticsService:
         data = data_dir or _DEFAULT_DATA
         self._facilities = _load_facilities(data / "facilities.json")
         self._airports = _load_airports(data / "airports.json")
+        self._drones = _load_drones(data / "drones.json")
         self._routing = routing or LocalRoutingProvider()
 
     @property
@@ -102,10 +122,22 @@ class LogisticsService:
             raise KeyError(facility_id)
         return f
 
+    def list_drones(self) -> list[DroneModel]:
+        return list(self._drones.values())
+
+    def get_drone(self, drone_id: str) -> DroneModel:
+        d = self._drones.get(drone_id)
+        if d is None:
+            raise KeyError(drone_id)
+        return d
+
     def route(self, origin_id: str, dest_id: str, protocol_id: str,
               eos_activity_gbq: float, mode: str = "road",
               tdg_buffer_min: float = DEFAULT_TDG_BUFFER_MIN,
-              courier_min: float = DEFAULT_COURIER_MIN) -> RouteResult:
+              courier_min: float = DEFAULT_COURIER_MIN,
+              drone_id: str | None = None,
+              shielding_kg: float = 20.0,
+              preflight_min: float = 20.0) -> RouteResult:
         """Ruta origen -> destino con decaimiento de la carga."""
         origin = self.get_facility(origin_id)
         dest = self.get_facility(dest_id)
@@ -114,6 +146,7 @@ class LogisticsService:
             raise ValueError("eos_activity_gbq debe ser positivo")
 
         validated = origin.validated and dest.validated
+        notes: tuple[str, ...] = ()
         if mode == "road":
             minutes, km = self._routing.road_time(origin.point, dest.point)
             legs = (Leg("road", origin.name, dest.name, minutes, km),)
@@ -125,13 +158,22 @@ class LogisticsService:
             legs = build_air_route(origin, dest, o_apt, d_apt,
                                    g_min, g_km, courier_min, tdg_buffer_min)
             source = f"{self._routing.name}+openflights-haversine"
+        elif mode == "drone":
+            if drone_id is None:
+                raise ValueError("modo dron requiere drone_id")
+            drone = self.get_drone(drone_id)
+            legs = build_drone_route(origin, dest, drone, shielding_kg,
+                                     preflight_min)
+            source = f"drone-haversine:{drone.drone_id}"
+            notes = tuple(drone_notes(drone, shielding_kg))
+            validated = validated and drone.validated
         else:
-            raise ValueError(f"modo '{mode}' no soportado (road|air)")
+            raise ValueError(f"modo '{mode}' no soportado (road|air|drone)")
 
         return summarize_route(
             mode, origin, dest, legs, eos_activity_gbq,
             proto.half_life_min, proto.dose_per_patient_gbq,
-            source, validated)
+            source, validated, notes)
 
     def reachability(self, origin_id: str, protocol_id: str,
                      eos_activity_gbq: float,

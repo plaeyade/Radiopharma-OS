@@ -1,0 +1,43 @@
+{
+  "source": "Parámetros de referencia de fabricante/publicaciones (Skyports/RigiTech Eiger BVLOS médico 2025, MDPI Drones 2026 para isotopos PET, UAVOS UVH-170). NO medidos en operación propia: validated=false (honestidad de datos).",
+  "regulatory": [
+    "Operación UAS con mercancías peligrosas Clase 7: categoría 'specific' EASA (SORA) + ICAO Technical Instructions / IATA DGR.",
+    "Bulto Tipo A requerido (IAEA SSR-6) con aprobación del operador UAS y del consignador.",
+    "El blindaje de FDG a granel pesa 15-30 kg: descarta drones ligeros para bultos completos."
+  ],
+  "drones": [
+    {
+      "drone_id": "eiger_vtol",
+      "name": "VTOL ligero clase RigiTech Eiger",
+      "drone_class": "vtol_ligero",
+      "cruise_kmh": 104.0,
+      "range_km": 100.0,
+      "max_payload_kg": 3.0,
+      "validated": false,
+      "note": "Solo dosis unitarias / cantidades exceptuadas (sin blindaje completo).",
+      "source": "Programa BVLOS médico Skyports (Bélgica, 2025): 18.7 km en 13 min, payload 3 kg."
+    },
+    {
+      "drone_id": "vtol_ala_fija_pesado",
+      "name": "VTOL ala fija pesado (clase MDPI-2026)",
+      "drone_class": "vtol_ala_fija",
+      "cruise_kmh": 120.0,
+      "range_km": 300.0,
+      "max_payload_kg": 60.0,
+      "validated": false,
+      "note": "FDG a granel con blindaje 15-30 kg + contenedor; clase ganadora para radiofármacos.",
+      "source": "MDPI Drones (2026): escenarios de >50 kg de payload para isotopos PET."
+    },
+    {
+      "drone_id": "uvh_170_heli",
+      "name": "Helicóptero UAV clase UAVOS UVH-170",
+      "drone_class": "helicoptero_uav",
+      "cruise_kmh": 60.0,
+      "range_km": 350.0,
+      "max_payload_kg": 15.0,
+      "validated": false,
+      "note": "Blindaje ligero; largo alcance a baja velocidad.",
+      "source": "UAVOS UVH-170: 10-15 kg de payload, 350 km de alcance."
+    }
+  ]
+}

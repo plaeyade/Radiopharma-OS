@@ -8,8 +8,9 @@ from fastapi import APIRouter, HTTPException
 from app.application.logistics_service import (LogisticsService,
                                                ReachabilityResult)
 from app.domain.logistics import RouteResult
-from app.presentation.schemas_logistics import (FacilityOut, FacilityReachOut,
-                                                LegOut, ReachabilityIn,
+from app.presentation.schemas_logistics import (DroneOut, FacilityOut,
+                                                FacilityReachOut, LegOut,
+                                                ReachabilityIn,
                                                 ReachabilityOut, ReachBandOut,
                                                 RouteIn, RouteOut)
 
@@ -36,7 +37,8 @@ def _route_out(r: RouteResult) -> RouteOut:
         decay_factor=round(r.decay_factor, 6),
         patient_doses_on_arrival=r.patient_doses_on_arrival,
         routing_source=r.routing_source,
-        validated=r.validated)
+        validated=r.validated,
+        notes=list(r.notes))
 
 
 def _reach_out(r: ReachabilityResult) -> ReachabilityOut:
@@ -67,16 +69,26 @@ def list_facilities() -> list[FacilityOut]:
         for f in _service.list_facilities()]
 
 
+@router.get("/drones", response_model=list[DroneOut])
+def list_drones() -> list[DroneOut]:
+    return [DroneOut(
+        drone_id=d.drone_id, name=d.name, drone_class=d.drone_class,
+        cruise_kmh=d.cruise_kmh, range_km=d.range_km,
+        max_payload_kg=d.max_payload_kg, validated=d.validated,
+        note=d.note, source=d.source) for d in _service.list_drones()]
+
+
 @router.post("/route", response_model=RouteOut)
 def route(payload: RouteIn) -> RouteOut:
     try:
         result = _service.route(
             payload.origin_id, payload.dest_id, payload.protocol_id,
             payload.eos_activity_gbq, payload.mode,
-            payload.tdg_buffer_min, payload.courier_min)
+            payload.tdg_buffer_min, payload.courier_min,
+            payload.drone_id, payload.shielding_kg, payload.preflight_min)
     except KeyError as exc:
         raise HTTPException(
-            status_code=404, detail=f"instalación/protocolo '{exc.args[0]}' no encontrado")
+            status_code=404, detail=f"instalación/protocolo/dron '{exc.args[0]}' no encontrado")
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return _route_out(result)

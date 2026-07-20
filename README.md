@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.28.0 · TALYS como segunda fuente σ(E) (verificación cruzada IAEA vs teórico) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.29.0 · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -293,10 +293,22 @@ producción de radionúclidos PET en ciclotrón.
     (`T½·log2(EOS/dosis)`), bandas-isócronas (radio + actividad a esa
     hora) y viabilidad por hospital;
   - instalaciones `validated: false` (coordenadas demo honestas);
-  - en la consola: pestaña **Logística** (calculadora de ruta con las 4
-    piernas, tarjetas de llegada/dosis, alcanzabilidad por hospital y
-    bandas) — verificado e2e en vivo (lote 234.2 GBq: aéreo MAD→VLC
-    192 min → 69.6 GBq/187 dosis vs terrestre 472 min → 24.9 GBq).
+  - **pierna con dron** (v0.29.0): operación punto a punto sin aeropuerto
+    (ops UAS/bulto Tipo A + vuelo directo), catálogo real de 3 clases
+    (VTOL ligero 3 kg/100 km, VTOL ala fija pesado 60 kg/300 km,
+    helicóptero UAV 15 kg/350 km — parámetros de fabricante/publicaciones,
+    `validated: false`), restricciones duras de **alcance y payload**
+    (blindaje FDG 15-30 kg + contenedor: el ligero solo vale para dosis
+    unitarias; el pesado no llega a 302.6 km → 422 honesto), y **notas
+    regulatorias** en la respuesta (EASA specific/SORA + ICAO TI/IATA DGR,
+    bulto Tipo A IAEA SSR-6);
+  - en la consola: pestaña **Logística** (calculadora de ruta con las
+    piernas, selector de modo terrestre/aéreo/dron con catálogo de drones
+    y blindaje, tarjetas de llegada/dosis, notas regulatorias,
+    alcanzabilidad por hospital y bandas) — verificado e2e en vivo
+    (lote 234.2 GBq: aéreo MAD→VLC 192 min → 69.6 GBq/187 dosis vs
+    terrestre 472 min → 24.9 GBq; dron pesado urbano 24 min →
+    201.8 GBq/545 dosis).
 - **Consola web operativa** (`console/`, React + TypeScript + Vite +
   Tailwind/shadcn): el ciclo GMP completo desde el navegador —
   - **login contra el Auth Service** (JWT en sesión, chip de usuario con rol,
@@ -427,7 +439,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 366 tests (25 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 86 PT/LOG + 6 CLI)
+make test     # 383 tests (25 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 103 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -527,8 +539,9 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [ ] Logistics Twin F2: OSRM/Valhalla self-hosted como proveedor de
       routing en producción, y capa GNN (city2graph) para predicción de
       tiempos con GPS real de transportistas (cuando exista telemetría).
-- [ ] Pierna con dron (VTOL ala fija, blindaje 15-30 kg): modelo de
-      rango/payload y marco EASA/IAEA Clase 7 — opciones documentadas.
+- [x] Pierna con dron (v0.29.0): catálogo de 3 clases VTOL, restricciones
+      de alcance/payload, bulto Tipo A y marco EASA/IAEA Clase 7 en notas —
+      verificado e2e.
 - [ ] Protocolos del Process Twin validados con datos in-situ (bloqueado:
       requiere rendimientos y tiempos medidos en planta).
 - [x] TALYS como segunda fuente de σ(E) (cap. 13): proveedor tras el mismo

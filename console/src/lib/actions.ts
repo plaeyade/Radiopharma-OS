@@ -366,7 +366,19 @@ export interface LogisticsRoute {
   legs: RouteLeg[]; total_minutes: number; total_distance_km: number;
   eos_activity_gbq: number; arrival_activity_gbq: number;
   decay_factor: number; patient_doses_on_arrival: number;
-  routing_source: string; validated: boolean;
+  routing_source: string; validated: boolean; notes: string[];
+}
+
+export interface DroneItem {
+  drone_id: string; name: string; drone_class: string;
+  cruise_kmh: number; range_km: number; max_payload_kg: number;
+  validated: boolean; note: string; source: string;
+}
+
+export async function listDrones(cfg: ConsoleConfig): Promise<DroneItem[]> {
+  const r = await fetch(`${cfg.processUrl}/api/v1/logistics/drones`);
+  if (!r.ok) throw new Error(`drones ${r.status}`);
+  return r.json();
 }
 export interface ReachBand {
   minutes: number; radius_km: number; arrival_activity_gbq: number;
@@ -392,6 +404,7 @@ export async function listFacilities(cfg: ConsoleConfig): Promise<FacilityItem[]
 export async function routeLogistics(cfg: ConsoleConfig, input: {
   origin_id: string; dest_id: string; protocol_id: string;
   eos_activity_gbq: number; mode: string;
+  drone_id?: string; shielding_kg?: number;
 }): Promise<LogisticsRoute> {
   return req<LogisticsRoute>(
     "POST", `${cfg.processUrl}/api/v1/logistics/route`, undefined, input);
