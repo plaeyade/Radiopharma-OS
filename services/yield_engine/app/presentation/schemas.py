@@ -108,6 +108,119 @@ class BurnupMultizoneResponse(BaseModel):
     model: str
 
 
+# ------------- Burnup radial 2D + Thermal Engine + Elmer FEM --------------
+
+class BurnupRadialRequest(BaseModel):
+    reaction_id: str = Field(..., examples=["o18_p_n_f18"])
+    target_id: str = Field(..., examples=["h2_18o"])
+    beam_energy_mev: float = Field(..., gt=0, le=40)
+    current_ua: float = Field(..., gt=0, le=300)
+    irradiation_time_min: float = Field(..., gt=0, le=600)
+    beam_spot_cm2: float = Field(1.0, gt=0,
+                                 description="Área efectiva del haz sobre el blanco")
+    beam_sigma_cm: float = Field(
+        0.15, gt=0, description="σ radial del perfil gaussiano del haz")
+    n_rings: int = Field(20, ge=1, le=200,
+                         description="Anillos concéntricos del modelo radial")
+    burnup_xs_max_mb: float = Field(
+        800.0, gt=0,
+        description="Meseta de la sección no elástica (referencia 1D)")
+
+
+class RadialRingOut(BaseModel):
+    index: int
+    r_in_cm: float
+    r_out_cm: float
+    r_mean_cm: float
+    flux_rel: float
+    production_weight: float
+    burnup_rate_s: float
+    depletion_fraction: float
+
+
+class BurnupRadialResponse(BaseModel):
+    reaction_id: str
+    product_nuclide: str
+    beam_energy_mev: float
+    current_ua: float
+    irradiation_time_min: float
+    beam_spot_cm2: float
+    beam_sigma_cm: float
+    spot_radius_cm: float
+    n_rings: int
+    burnup_xs_max_mb: float
+    burnup_xs_eff_mb: float
+    flux_peak_cm2_s: float
+    flux_mean_cm2_s: float
+    peak_factor: float
+    rings: list[RadialRingOut]
+    burnup_rate_max_s: float
+    depletion_weighted: float
+    depletion_max: float
+    eob_ideal_gbq: float
+    eob_1d_gbq: float
+    eob_2d_gbq: float
+    loss_vs_ideal_gbq: float
+    loss_vs_1d_gbq: float
+    model: str
+
+
+class ThermalTargetRequest(BaseModel):
+    beam_energy_mev: float = Field(..., gt=0, le=40)
+    current_ua: float = Field(..., gt=0, le=300)
+    beam_spot_cm2: float = Field(1.0, gt=0)
+    target_thickness_cm: float = Field(0.5, gt=0,
+                                       description="Espesor del blanco en la dirección del haz")
+    conductivity_w_cm_k: float = Field(
+        0.006, gt=0, description="Conductividad del medio blanco (agua: 0.006 W/cm·K)")
+    film_coeff_w_cm2_k: float = Field(
+        0.5, gt=0, description="Coeficiente de película del refrigerante")
+    coolant_temp_k: float = Field(293.15, gt=0)
+    t_limit_k: float = Field(373.15, gt=0,
+                             description="Límite térmico (p.ej. ebullición del medio)")
+    beam_sigma_cm: Optional[float] = Field(
+        None, gt=0, description="σ del haz gaussiano (None = perfil uniforme)")
+
+
+class ThermalTargetResponse(BaseModel):
+    beam_power_w: float
+    spot_area_cm2: float
+    heat_flux_mean_w_cm2: float
+    heat_flux_peak_w_cm2: float
+    peak_factor: float
+    delta_t_conduction_k: float
+    delta_t_film_k: float
+    t_peak_k: float
+    t_mean_k: float
+    t_limit_k: float
+    margin_k: float
+    within_limit: bool
+    max_current_ua: float
+    model: str
+
+
+class ElmerCompareRequest(BaseModel):
+    beam_energy_mev: float = Field(..., gt=0, le=40)
+    current_ua: float = Field(..., gt=0, le=300)
+    beam_spot_cm2: float = Field(1.0, gt=0)
+    target_thickness_cm: float = Field(0.5, gt=0)
+    conductivity_w_cm_k: float = Field(0.006, gt=0)
+    film_coeff_w_cm2_k: float = Field(0.5, gt=0)
+    coolant_temp_k: float = Field(293.15, gt=0)
+    beam_sigma_cm: Optional[float] = Field(None, gt=0)
+
+
+class ElmerCompareResponse(BaseModel):
+    t_peak_fem_k: float
+    t_mean_fem_k: float
+    t_peak_reduced_k: float
+    t_mean_reduced_k: float
+    peak_rel_diff: float
+    fem_conservative_bound_ok: bool
+    solver: str
+    model: str
+
+
 # ---------------- Calibration Layer (EDS v2.0, Vol. II) --------------------
 
 class EquipmentOut(BaseModel):

@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.29.0 · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -41,6 +41,35 @@ producción de radionúclidos PET en ciclotrón.
   σ_b(E) paramétrica con umbral, atenuación exponencial del flujo y Bateman
   con término de quemado por capa. Con `n_zones=1` reproduce exactamente el
   grupo único; el EOB sin quemado es idéntico al del modelo base.
+- **Burnup Engine radial 2D** (v0.30.0, `POST /api/v1/production/burnup-2d`):
+  depleción no uniforme bajo **haz gaussiano** — el spot se divide en N
+  anillos con pesos de producción de forma cerrada (gaussiana truncada,
+  Σw = 1 exacto), flujo medio por anillo, Bateman con quemado por anillo y
+  σ_b,eff ponderada por producción del perfil axial 1D (misma física: la
+  única diferencia es la distribución radial del flujo). Propiedades
+  verificadas: `EOB_2D ≤ EOB_1D ≤ EOB_ideal` (la depleción se concentra en
+  el eje; corrección radial positiva), σ ≫ R converge al 1D, convergencia
+  en nº de anillos. Ejemplo vivo (18 MeV/300 µA/10 h, spot 0.5 cm²,
+  σ = 0.1 cm): EOB_1D 2903.378 GBq → EOB_2D 2903.333 GBq (corrección
+  0.045 GBq; depleción en el eje 2× la media ponderada).
+- **Thermal Engine reducido** (v0.30.0, `POST /api/v1/thermal/target`):
+  solución analítica estacionaria de la cadena térmica del blanco
+  (potencia del haz 1 MeV·µA = 1 W → conducción axial q''·t/k → película
+  q''/h), con **pico gaussiano** de forma cerrada (misma normalización que
+  el Burnup radial), margen térmico frente al límite y **corriente máxima
+  admisible** exacta. Es deliberadamente conservador (cota superior: toda
+  la potencia conduce axialmente).
+- **Acoplamiento Elmer FEM** (v0.30.0, cap. 18 EDS): generador de caso
+  completo para ElmerFEM — malla nativa estructurada (cuadriláteros 404,
+  formato mesh.header/nodes/elements/boundary) y SIF axisimétrico
+  (Heat Equation estacionaria, fuente volumétrica gaussiana en MATC con
+  ∫q'''dV = P exacto, BC convectiva en SI), runner `ELMER_CMD` (patrón
+  TALYS_CMD/VERAPDF_CMD) y parser tolerante de SaveScalars. Endpoints
+  `GET /api/v1/elmer/status` (honesto) y
+  `POST /api/v1/elmer/thermal/compare` (FEM 2D vs reducido; **503 si el
+  binario no está instalado — nunca se simula un resultado FEM**;
+  elmerfem no está en conda-forge y su compilación requiere red externa,
+  por lo que en el sandbox el estado es `available: false`).
 - **Data Lake (Fase 1)**: registros de lote inmutables ALCOA+ con hash SHA-256
   de integridad, anulación controlada (sin borrado), artefactos JSON en object
   store (MinIO/S3 en despliegue, filesystem en dev) y metadatos en PostgreSQL.
@@ -439,7 +468,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 383 tests (25 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 103 PT/LOG + 6 CLI)
+make test     # 415 tests (25 NDS + 94 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 103 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -447,7 +476,7 @@ make test     # 383 tests (25 NDS + 62 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 
 ```
 services/
 ├── nuclear_data_service/      # σ(E), decaimiento, registry de datasets
-├── yield_engine/              # física de producción + burnup
+├── yield_engine/              # física de producción + burnup 1D/2D + térmico + Elmer
 ├── data_lake_service/         # batches + QC + liberación + eBR (ALCOA+)
 ├── auth_service/              # JWT + usuarios + roles + refresh tokens
 ├── qc_engine/                 # QC físico: decay, half-life fit, aceptación
@@ -471,7 +500,8 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Segunda reacción: ¹⁴N(p,α)¹¹C con blanco N₂.
 - [x] Reacciones ¹⁵N(p,n)¹⁵O y ⁶⁸Zn(p,n)⁶⁸Ga (mismo patrón, ~30 min c/u).
 - [x] Burnup Engine: depleción de blanco enriquecido (EDS cap. 16, grupo único).
-- [ ] Burnup 2D acoplado a Elmer FEM (distribución espacial del quemado).
+- [x] Burnup 2D radial (distribución espacial del quemado) + Elmer FEM
+      acoplado tras ELMER_CMD (binario honesto: 503 si no está instalado).
 - [ ] Calibration Layer: K-factor por lote con datos de producción reales (cap. 17).
 - [x] Fase 1: Data Lake (PostgreSQL + MinIO), registros ALCOA+, pipeline CLI.
 - [x] Auth Service (JWT + roles) y Data Lake endurecido; Alembic scaffolding.
@@ -548,7 +578,11 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       puerto del NDS, caché ALCOA+, verificación cruzada con métricas y
       endpoints /talys/status + /cross-sections/compare — binario vía
       TALYS_CMD (patrón VERAPDF_CMD).
-- [ ] Burnup 2D acoplado a Elmer FEM (cap. 18) — tras validar Burnup 1D
-      contra EOB real del KIUBE y disponer de la geometría del blanco.
+- [x] Burnup 2D radial + Thermal Engine + acoplamiento Elmer FEM
+      (v0.30.0): depleción gaussiana por anillos (EOB_2D ≤ EOB_1D),
+      térmico reducido exacto con corriente máxima, generador de malla
+      nativa + SIF axisimétrico y runner ELMER_CMD con status/503 honestos
+      (binario no instalable en el sandbox: no está en conda-forge) —
+      verificado e2e. Pendiente: ejecutar el FEM real en planta.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.

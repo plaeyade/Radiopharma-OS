@@ -7,10 +7,17 @@ from fastapi import APIRouter, HTTPException
 
 from app.application.production_service import ProductionService, REACTIONS
 from app.application.target_catalog import TARGET_CATALOG
+from app.infrastructure.elmer.elmer_runner import (ElmerError,
+                                                   ElmerUnavailable)
 from app.presentation.schemas import (BurnupMultizoneRequest,
-                                      BurnupMultizoneResponse, BurnupRequest,
-                                      BurnupResponse, ProductionRequest,
-                                      ProductionResponse)
+                                      BurnupMultizoneResponse,
+                                      BurnupRadialRequest,
+                                      BurnupRadialResponse, BurnupRequest,
+                                      BurnupResponse, ElmerCompareRequest,
+                                      ElmerCompareResponse, ProductionRequest,
+                                      ProductionResponse,
+                                      ThermalTargetRequest,
+                                      ThermalTargetResponse)
 
 router = APIRouter(prefix="/api/v1", tags=["yield-engine"])
 
@@ -78,6 +85,71 @@ def compute_burnup_multizone(req: BurnupMultizoneRequest) -> BurnupMultizoneResp
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return BurnupMultizoneResponse(**r)
+
+
+@router.post("/production/burnup-2d", response_model=BurnupRadialResponse)
+def compute_burnup_radial(req: BurnupRadialRequest) -> BurnupRadialResponse:
+    """Quemado del blanco 2D: depleción radial bajo haz gaussiano, con el
+    EOB 1D (flujo uniforme) de referencia calculado con idénticos
+    parámetros. La diferencia EOB_1D − EOB_2D es la corrección radial."""
+    try:
+        r = _service.burnup_radial(
+            reaction_id=req.reaction_id, target_id=req.target_id,
+            beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
+            irradiation_time_min=req.irradiation_time_min,
+            beam_spot_cm2=req.beam_spot_cm2,
+            beam_sigma_cm=req.beam_sigma_cm, n_rings=req.n_rings,
+            burnup_xs_max_mb=req.burnup_xs_max_mb)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return BurnupRadialResponse(**r)
+
+
+@router.post("/thermal/target", response_model=ThermalTargetResponse)
+def compute_thermal_target(req: ThermalTargetRequest) -> ThermalTargetResponse:
+    """Modelo térmico reducido (analítico estacionario): conducción axial
+    + película de convección, con pico gaussiano del haz."""
+    try:
+        r = _service.thermal_target(
+            beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
+            beam_spot_cm2=req.beam_spot_cm2,
+            target_thickness_cm=req.target_thickness_cm,
+            conductivity_w_cm_k=req.conductivity_w_cm_k,
+            film_coeff_w_cm2_k=req.film_coeff_w_cm2_k,
+            coolant_temp_k=req.coolant_temp_k, t_limit_k=req.t_limit_k,
+            beam_sigma_cm=req.beam_sigma_cm)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return ThermalTargetResponse(**r)
+
+
+@router.get("/elmer/status")
+def elmer_status() -> dict:
+    """Estado honesto del acoplamiento FEM Elmer (patrón TALYS/veraPDF):
+    available=false si el binario no está instalado — nunca se simula."""
+    return _service.elmer_status()
+
+
+@router.post("/elmer/thermal/compare", response_model=ElmerCompareResponse)
+def elmer_thermal_compare(req: ElmerCompareRequest) -> ElmerCompareResponse:
+    """Comparación FEM (Elmer, ecuación del calor 2D axisimétrica) contra
+    el modelo reducido analítico para el mismo caso físico."""
+    try:
+        r = _service.elmer_thermal_compare(
+            beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
+            beam_spot_cm2=req.beam_spot_cm2,
+            target_thickness_cm=req.target_thickness_cm,
+            conductivity_w_cm_k=req.conductivity_w_cm_k,
+            film_coeff_w_cm2_k=req.film_coeff_w_cm2_k,
+            coolant_temp_k=req.coolant_temp_k,
+            beam_sigma_cm=req.beam_sigma_cm)
+    except ElmerUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except ElmerError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return ElmerCompareResponse(**r)
 
 
 @router.get("/reactions")
