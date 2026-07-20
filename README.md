@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -304,6 +304,25 @@ producción de radionúclidos PET en ciclotrón.
     remanente y EOS mínima) — verificado e2e en vivo (EOS real 66.7 GBq:
     3/3 pacientes servidos entre 14:00 y 18:00; EOS mínima 2.71 GBq —
     el lote está sobredimensionado para esa agenda).
+- **Process Twin F4** (Process Service v0.5 · `POST /process/campaign`)
+  — plan de campaña: de la demanda de pacientes a los lotes necesarios:
+  - agrupa las citas en el **mínimo número de lotes viables** (voraz
+    cronológico): cada lote nace `prep_min` antes de su primera cita,
+    crece mientras la EOS requerida exacta (inversa del calendario, con
+    decaimiento entre administraciones) quepa en la capacidad, y respeta
+    la separación mínima `turnaround_min` entre lotes (haz + síntesis +
+    QC del anterior);
+  - honestidad operativa: las citas no servibles (dosis > capacidad, o
+    el turnaround empuja la EOS más allá de la cita) se reportan como
+    **no servidas** — nunca se maquilla;
+  - propiedades verificadas: inversa exacta (remanente ≈ 0 al servir
+    con la EOS requerida), monotonía en capacidad, turnaround entre
+    lotes consecutivos;
+  - en la consola: tarjeta **Plan de campaña** en Proceso (reutiliza las
+    citas del calendario: capacidad/prep/turnaround, tabla de lotes con
+    EOS requerida, utilización y ventana) — verificado e2e en vivo
+    (7 citas: 1 lote 14.44 GBq al 36 %; con capacidad 3 GBq → 2 lotes,
+    mañana 2.72 GBq al 90.6 % + tarde 1.76 GBq, turnaround respetado).
 - **Logistics Twin F1** (Process Service v0.4 · `POST /process/logistics/route`
   + `/reachability`) — la distribución del radiofármaco con decaimiento
   en tránsito:
@@ -475,7 +494,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 415 tests (25 NDS + 94 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 103 PT/LOG + 6 CLI)
+make test     # 429 tests (25 NDS + 94 YE + 100 DL + 35 Auth + 16 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -570,6 +589,9 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Process Twin F3: calendario multi-paciente (fraccionamiento del EOS
       con decaimiento entre administraciones, viabilidad por cita e inversa
       exacta de EOS requerida) — verificado e2e.
+- [x] Process Twin F4: plan de campaña (demanda → mínimo nº de lotes con
+      inversa exacta por lote, turnaround y citas no servidas honestas) —
+      verificado e2e.
 - [x] Logistics Twin F1: rutas terrestre (interfaz OSMnx-ready) y aérea
       (OpenFlights + buffer TDG) con decaimiento en tránsito,
       alcanzabilidad por presupuesto de dosis — verificado e2e.

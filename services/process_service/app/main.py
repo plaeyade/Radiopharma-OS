@@ -20,7 +20,7 @@ from app.presentation.routers import logistics_api, process_api
 
 app = FastAPI(
     title="Radiopharma OS - Process Service",
-    version="0.4.0",
+    version="0.5.0",
     description=(
         "Process Twin: cascada EOB -> EOS con decaimiento por paso, "
         "eficiencias de proceso y estimación de dosis por paciente. "
@@ -45,4 +45,4 @@ app.include_router(logistics_api.router)
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
-    return {"service": "process-service", "status": "ok", "version": "0.4.0"}
+    return {"service": "process-service", "status": "ok", "version": "0.5.0"}

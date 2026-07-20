@@ -487,3 +487,28 @@ export async function elmerCompare(cfg: ConsoleConfig, input: {
   return req<ElmerCompareResult>(
     "POST", `${cfg.yeUrl}/api/v1/elmer/thermal/compare`, undefined, input);
 }
+
+/* ------------------------------------------------ plan de campaña (F4) */
+export interface CampaignBatchItem {
+  index: number; eos_time: string; required_eos_gbq: number;
+  capacity_gbq: number; headroom_gbq: number; utilization: number;
+  n_appointments: number; first_appointment: string;
+  last_appointment: string; total_dose_gbq: number;
+}
+export interface CampaignPlan {
+  protocol_id: string; half_life_min: number; capacity_gbq: number;
+  prep_min: number; turnaround_min: number;
+  batches: CampaignBatchItem[];
+  n_appointments: number; n_served: number;
+  unserved: { time: string; dose_gbq?: number; label: string }[];
+  total_required_eos_gbq: number; total_dose_gbq: number;
+}
+
+export async function campaignProcess(cfg: ConsoleConfig, input: {
+  protocol_id: string; capacity_gbq: number; prep_min?: number;
+  turnaround_min?: number;
+  appointments: { time: string; dose_gbq?: number; label?: string }[];
+}): Promise<CampaignPlan> {
+  return req<CampaignPlan>(
+    "POST", `${cfg.processUrl}/api/v1/process/campaign`, undefined, input);
+}

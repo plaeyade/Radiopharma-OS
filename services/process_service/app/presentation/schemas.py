@@ -150,3 +150,43 @@ class DoseCalendarOut(BaseModel):
     remaining_after_last_gbq: float
     validated: bool
     slots: list[DoseSlotOut]
+
+
+# ---------------- Plan de campaña (Process Twin F4) -------------------------
+
+class CampaignIn(BaseModel):
+    protocol_id: str = Field(..., examples=["fdg_18f"])
+    capacity_gbq: float = Field(..., gt=0, examples=[40.0],
+                                description="Capacidad EOS por lote")
+    prep_min: float = Field(30.0, ge=0,
+                            description="Margen EOS → primera cita del lote")
+    turnaround_min: float = Field(240.0, ge=0,
+                                  description="Separación mínima entre lotes")
+    appointments: list[AppointmentIn] = Field(..., min_length=1)
+
+
+class CampaignBatchOut(BaseModel):
+    index: int
+    eos_time: datetime
+    required_eos_gbq: float
+    capacity_gbq: float
+    headroom_gbq: float
+    utilization: float
+    n_appointments: int
+    first_appointment: datetime
+    last_appointment: datetime
+    total_dose_gbq: float
+
+
+class CampaignOut(BaseModel):
+    protocol_id: str
+    half_life_min: float
+    capacity_gbq: float
+    prep_min: float
+    turnaround_min: float
+    batches: list[CampaignBatchOut]
+    n_appointments: int
+    n_served: int
+    unserved: list[AppointmentIn]
+    total_required_eos_gbq: float
+    total_dose_gbq: float

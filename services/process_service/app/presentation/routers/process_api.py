@@ -7,17 +7,20 @@ from fastapi import APIRouter, HTTPException
 
 from app.application.process_service import ProcessService
 from app.domain.bottleneck import BottleneckResult
+from app.domain.campaign import CampaignResult
 from app.domain.dose_calendar import Appointment, CalendarResult
 from app.domain.entities import ChainResult, Protocol
 from app.domain.scheduling import ScheduleResult
-from app.presentation.schemas import (BottleneckIn, BottleneckOut,
-                                      DoseCalendarIn, DoseCalendarOut,
-                                      DoseSlotOut, ProtocolOut,
-                                      ProtocolStepOut, ProtocolSummaryOut,
-                                      ScheduleIn, ScheduleOut,
-                                      ScheduledStepOut, SimulateIn,
-                                      SimulateOut, StepBottleneckOut,
-                                      StepResultOut)
+from app.presentation.schemas import (AppointmentIn, BottleneckIn,
+                                      BottleneckOut,
+                                      CampaignBatchOut, CampaignIn,
+                                      CampaignOut, DoseCalendarIn,
+                                      DoseCalendarOut, DoseSlotOut,
+                                      ProtocolOut, ProtocolStepOut,
+                                      ProtocolSummaryOut, ScheduleIn,
+                                      ScheduleOut, ScheduledStepOut,
+                                      SimulateIn, SimulateOut,
+                                      StepBottleneckOut, StepResultOut)
 
 router = APIRouter(prefix="/api/v1/process", tags=["process-twin"])
 
@@ -203,3 +206,53 @@ def calendar(payload: DoseCalendarIn) -> DoseCalendarOut:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return _calendar_out(result)
+
+
+def _campaign_out(protocol_id: str, r: CampaignResult) -> CampaignOut:
+    return CampaignOut(
+        protocol_id=protocol_id,
+        half_life_min=r.half_life_min,
+        capacity_gbq=r.capacity_gbq,
+        prep_min=r.prep_min,
+        turnaround_min=r.turnaround_min,
+        batches=[CampaignBatchOut(
+            index=b.index, eos_time=b.eos_time,
+            required_eos_gbq=round(b.required_eos_gbq, 4),
+            capacity_gbq=b.capacity_gbq,
+            headroom_gbq=round(b.headroom_gbq, 4),
+            utilization=round(b.utilization, 4),
+            n_appointments=b.n_appointments,
+            first_appointment=b.first_appointment,
+            last_appointment=b.last_appointment,
+            total_dose_gbq=round(b.total_dose_gbq, 4)) for b in r.batches],
+        n_appointments=r.n_appointments,
+        n_served=r.n_served,
+        unserved=[AppointmentIn(time=a.time, dose_gbq=a.dose_gbq,
+                                label=a.label) for a in r.unserved],
+        total_required_eos_gbq=round(r.total_required_eos_gbq, 4),
+        total_dose_gbq=round(r.total_dose_gbq, 4))
+
+
+@router.post("/campaign", response_model=CampaignOut)
+def campaign(payload: CampaignIn) -> CampaignOut:
+    """Plan de campaña (F4): agrupa la demanda en el mínimo número de
+    lotes viables según capacidad EOS, decaimiento entre administraciones
+    y separación mínima entre lotes. Las citas no servibles se reportan
+    explícitamente (honestidad operativa)."""
+    try:
+        proto = _service.get_protocol(payload.protocol_id)
+        appts = [Appointment(
+            time=a.time,
+            dose_gbq=(a.dose_gbq if a.dose_gbq is not None
+                      else proto.dose_per_patient_gbq),
+            label=a.label) for a in payload.appointments]
+        result = _service.campaign(
+            payload.protocol_id, appts, payload.capacity_gbq,
+            prep_min=payload.prep_min, turnaround_min=payload.turnaround_min)
+    except KeyError:
+        raise HTTPException(
+            status_code=404,
+            detail=f"protocolo '{payload.protocol_id}' no encontrado")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _campaign_out(payload.protocol_id, result)

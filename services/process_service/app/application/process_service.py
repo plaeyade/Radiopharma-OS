@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.domain.bottleneck import BottleneckResult, bottleneck_analysis
+from app.domain.campaign import CampaignResult, plan_campaign
 from app.domain.dose_calendar import (Appointment, CalendarResult,
                                       dose_calendar)
 from app.domain.entities import ChainResult, Protocol, ProtocolStep
@@ -115,3 +116,13 @@ class ProcessService:
         """Calendario multi-paciente con decaimiento entre administraciones."""
         proto = self._catalog.get(protocol_id)
         return dose_calendar(proto, eos_activity_gbq, eos_time, appointments)
+
+    def campaign(self, protocol_id: str,
+                 appointments: list[Appointment],
+                 capacity_gbq: float,
+                 prep_min: float = 30.0,
+                 turnaround_min: float = 240.0) -> CampaignResult:
+        """Plan de campaña (F4): demanda → mínimo número de lotes viables."""
+        proto = self._catalog.get(protocol_id)
+        return plan_campaign(proto, appointments, capacity_gbq,
+                             prep_min=prep_min, turnaround_min=turnaround_min)

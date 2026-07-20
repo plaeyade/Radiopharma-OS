@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Beaker, CalendarClock, ClipboardCheck, Gauge, Plus, Trash2, Users, XCircle, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Beaker, CalendarClock, CalendarRange, ClipboardCheck, Gauge, Plus, Trash2, Users, XCircle, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ConsoleConfig, ConsoleData } from "@/lib/console-data";
 import type { Session } from "@/lib/session";
-import { bottleneckProcess, doseCalendar, registerProcessSimEvent, scheduleProcess, simulateProcess,
-         type DoseCalendar, type ProcessBottleneck, type ProcessSchedule, type ProcessSimulation } from "@/lib/actions";
+import { bottleneckProcess, campaignProcess, doseCalendar, registerProcessSimEvent, scheduleProcess, simulateProcess,
+         type CampaignPlan, type DoseCalendar, type ProcessBottleneck, type ProcessSchedule, type ProcessSimulation } from "@/lib/actions";
 
 interface Props {
   data: ConsoleData;
@@ -45,6 +45,11 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
     { label: "P3", time: "", dose: "" },
   ]);
   const [cal, setCal] = useState<DoseCalendar | null>(null);
+  // F4: plan de campaña (reutiliza las mismas citas)
+  const [capTxt, setCapTxt] = useState<string>("40");
+  const [prepTxt, setPrepTxt] = useState<string>("30");
+  const [turnTxt, setTurnTxt] = useState<string>("240");
+  const [camp, setCamp] = useState<CampaignPlan | null>(null);
 
   const batch = data.batches.find((b) => b.batch_id === selected);
   const proto = data.protocols.find((p) => p.protocol_id === protocolId)
@@ -185,6 +190,40 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
       onChanged();
     } catch (e) {
       toast.error(`No se pudo registrar: ${(e as Error).message}`);
+    }
+  };
+
+  // F4: plan de campaña sobre las mismas citas (no requiere simulación)
+  const doCampaign = async () => {
+    if (!proto) return;
+    const appts = citas
+      .filter((c) => c.time)
+      .map((c) => ({
+        time: new Date(c.time).toISOString(),
+        label: c.label || undefined,
+        dose_gbq: c.dose ? parseFloat(c.dose) : undefined,
+      }));
+    if (!appts.length) {
+      toast.error("Define al menos una cita con hora");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await campaignProcess(cfg, {
+        protocol_id: proto.protocol_id,
+        capacity_gbq: parseFloat(capTxt),
+        prep_min: parseFloat(prepTxt),
+        turnaround_min: parseFloat(turnTxt),
+        appointments: appts,
+      });
+      setCamp(r);
+      if (r.unserved.length > 0) {
+        toast.warning(`${r.unserved.length} cita(s) no servibles con esta capacidad/turnaround`);
+      }
+    } catch (e) {
+      toast.error(`Campaña falló: ${(e as Error).message}`);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -587,6 +626,96 @@ export default function ProcesoSection({ data, cfg, session, selected, onSelect,
               <p className="text-xs text-slate-500">
                 El inventario decae entre administraciones (T½ {cal.half_life_min} min);
                 una cita no viable no descuenta actividad.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-slate-800 bg-slate-900/60 lg:col-span-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm text-slate-200">
+            <CalendarRange className="h-4 w-4 text-cyan-400" />
+            Plan de campaña (demanda → lotes necesarios)
+            <Badge variant="outline" className="ml-auto text-[10px]">F4</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-3 gap-2 max-w-xl">
+            <div>
+              <Label className="text-xs text-slate-400">Capacidad EOS/lote (GBq)</Label>
+              <Input value={capTxt} onChange={(e) => setCapTxt(e.target.value)}
+                     className="h-8 border-slate-700 bg-slate-900 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-400">Prep. EOS→cita (min)</Label>
+              <Input value={prepTxt} onChange={(e) => setPrepTxt(e.target.value)}
+                     className="h-8 border-slate-700 bg-slate-900 text-xs" />
+            </div>
+            <div>
+              <Label className="text-xs text-slate-400">Turnaround (min)</Label>
+              <Input value={turnTxt} onChange={(e) => setTurnTxt(e.target.value)}
+                     className="h-8 border-slate-700 bg-slate-900 text-xs" />
+            </div>
+          </div>
+          <div className="flex gap-2 items-center">
+            <Button size="sm" onClick={doCampaign} disabled={busy || !proto}
+                    className="h-8 bg-cyan-700 hover:bg-cyan-600">
+              Planificar campaña
+            </Button>
+            <span className="text-xs text-slate-500">
+              usa las mismas citas del calendario de pacientes
+            </span>
+          </div>
+          {camp && (
+            <div className="space-y-2">
+              <p className="text-xs text-slate-400">
+                <span className="text-cyan-300">{camp.batches.length} lote(s)</span>
+                {" · "}servidas <span className="text-emerald-300">{camp.n_served}/{camp.n_appointments}</span>
+                {" · "}EOS total requerida {camp.total_required_eos_gbq.toFixed(2)} GBq
+                {" · "}dosis total {camp.total_dose_gbq.toFixed(2)} GBq
+                {camp.unserved.length > 0 && (
+                  <span className="text-red-400">
+                    {" · "}no servibles: {camp.unserved.map((a) => a.label || fmtHora(a.time)).join(", ")}
+                  </span>
+                )}
+              </p>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-left text-slate-500">
+                    <th className="py-1 pr-2">Lote</th>
+                    <th className="py-1 pr-2 text-right">EOS</th>
+                    <th className="py-1 pr-2 text-right">EOS requerida</th>
+                    <th className="py-1 pr-2 text-right">Utilización</th>
+                    <th className="py-1 pr-2 text-right">Citas</th>
+                    <th className="py-1 text-right">Ventana</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {camp.batches.map((b) => (
+                    <tr key={b.index} className="border-b border-slate-800/60 text-slate-300">
+                      <td className="py-1 pr-2">#{b.index}</td>
+                      <td className="py-1 pr-2 text-right">{fmtHora(b.eos_time)}</td>
+                      <td className="py-1 pr-2 text-right text-cyan-300">
+                        {b.required_eos_gbq.toFixed(2)} GBq
+                      </td>
+                      <td className="py-1 pr-2 text-right">
+                        <span className={b.utilization > 0.85 ? "text-amber-300" : "text-emerald-300"}>
+                          {(b.utilization * 100).toFixed(0)} %
+                        </span>
+                      </td>
+                      <td className="py-1 pr-2 text-right">{b.n_appointments}</td>
+                      <td className="py-1 text-right">
+                        {fmtHora(b.first_appointment)} – {fmtHora(b.last_appointment)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-slate-500">
+                La EOS requerida es la inversa exacta con decaimiento entre administraciones
+                (T½ {camp.half_life_min} min); el turnaround es la separación mínima entre
+                lotes (haz + síntesis + QC del lote anterior).
               </p>
             </div>
           )}
