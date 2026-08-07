@@ -25,7 +25,7 @@ DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 app = FastAPI(
     title="Radiopharma OS - Yield Engine",
-    version="0.2.0",
+    version="0.3.0",
     description=(
         "Cálculo de rendimiento de blanco grueso para producción de "
         "radionúclidos PET (MVP: 18O(p,n)18F)."),

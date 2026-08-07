@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -121,6 +121,21 @@ producción de radionúclidos PET en ciclotrón.
   `GET /calibration/{reacción}/{equipo}`); `POST /production/calibrated`
   devuelve la predicción física con el factor vigente aplicado y su
   metadato de calibración (o `calibrated=false` si no hay modelo).
+  **F2 (v0.34.0, cap. 17)**:
+  - **Indicadores de desempeño (17.26)** — error absoluto/relativo,
+    tendencia temporal (pendiente + R²) y estabilidad (σ del error) sobre
+    pares teórico ↔ medido: `POST /calibration/indicators`.
+  - **Drift Analyzer (17.10)** — deriva significativa: cambio acumulado
+    de la pendiente sobre el intervalo observado > 2σ de los residuos
+    del ajuste lineal (avisa de degradación antes de que afecte a la
+    producción; el ruido grande no se reporta como deriva).
+  - **Gestión temporal (17.11)** — qué versión era válida en una fecha
+    dada, para auditorías: `GET /calibration/{reacción}/{equipo}/at?when=…`
+    (404 honesto si no existía ninguna).
+  - **Validación anti-deterioro (17.23)** — una calibración nueva solo
+    se acepta si su RMS de cocientes residuales sobre las mismas medidas
+    no supera al de la versión vigente; si empeora, `fit` responde **422
+    sin almacenar nada** (la validación queda registrada en el modelo).
 - **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
   (revisión inicial `0001_batch_records`).
 - **QC Engine** (Quality Control Twin, EDS Vol. IV):
@@ -536,7 +551,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 447 tests (25 NDS + 96 YE + 100 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 468 tests (25 NDS + 117 YE + 100 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -608,6 +623,10 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Calibration Layer: WLS + χ² con criterios GMP, modelos versionados y
       producción calibrada — verificado e2e (C=0.92 recuperado con datos
       sintéticos KIUBE; predicción calibrada = física × C).
+- [x] Calibration Layer F2 (v0.34.0, cap. 17): indicadores 17.26, Drift
+      Analyzer 17.10, gestión temporal 17.11 y validación anti-deterioro
+      17.23 — verificado e2e (deriva −1 %/día detectada con R²=1;
+      calibración que deteriora rechazada con 422).
 - [x] Gate formal veraPDF: `POST /batches/{id}/ebr/validate-pdfa` ejecuta el
       validador de referencia ISO 19005 (VERAPDF_CMD o imagen Docker perfil
       `calidad`), registra el veredicto en la pista de auditoría del eBR

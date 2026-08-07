@@ -11,6 +11,9 @@ from pathlib import Path
 
 from app.application.production_service import REACTIONS
 from app.domain.calibration import FitResult, Measurement, fit_factor
+from app.domain.calibration_indicators import (
+    DriftVerdict, PerformanceIndicators, active_at, drift_analysis,
+    performance_indicators, validate_new_factor)
 
 
 @dataclass(frozen=True)
@@ -91,6 +94,15 @@ class CalibrationService:
             raise ValueError(f"Reacción desconocida: {reaction_id}")
         equipo = self._catalog.get(equipment_id)
         fit: FitResult = fit_factor(medidas)
+        # 17.23: una calibración nueva solo se acepta si no deteriora el
+        # desempeño global respecto de la versión vigente (RMS sobre las
+        # mismas medidas). Si empeora, se rechaza sin almacenar nada.
+        prev = self.get_active(reaction_id, equipment_id)
+        validation = validate_new_factor(
+            medidas, fit.factor, prev["factor"] if prev else None)
+        if not validation["accepted"]:
+            raise ValueError(
+                f"Calibración rechazada (EDS 17.23): {validation['note']}")
         version = 1 + sum(1 for m in self._models
                           if m["reaction_id"] == reaction_id
                           and m["equipment_id"] == equipment_id)
@@ -102,9 +114,22 @@ class CalibrationService:
             chi2_ndf=fit.chi2_ndf, status=fit.status,
             fitted_at=datetime.now(timezone.utc).isoformat(),
             medidas=tuple(asdict(m) for m in medidas))
-        self._models.append(asdict(model))
+        self._models.append({**asdict(model), "validation": validation})
         self._save()
         return model
+
+    # -- 17.11 gestión temporal ---------------------------------------------
+    def get_at(self, reaction_id: str, equipment_id: str,
+               when: datetime) -> dict | None:
+        """Qué versión era válida en una fecha dada (auditorías)."""
+        return active_at(self.history(reaction_id, equipment_id), when)
+
+    # -- 17.26 / 17.10 indicadores y drift -----------------------------------
+    def indicators(self, medidas: list[Measurement]) -> PerformanceIndicators:
+        return performance_indicators(medidas)
+
+    def drift(self, medidas: list[Measurement]) -> DriftVerdict:
+        return drift_analysis(medidas)
 
     def get_active(self, reaction_id: str, equipment_id: str) -> dict | None:
         """Última versión del modelo para (reacción, equipo), o None."""

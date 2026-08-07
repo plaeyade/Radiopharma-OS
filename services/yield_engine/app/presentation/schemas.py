@@ -273,6 +273,28 @@ class CalibrationModelOut(BaseModel):
     medidas: list[dict]
 
 
+class CalibrationIndicatorsIn(BaseModel):
+    """17.26/17.10: histórico de pares (teórico, medido) para evaluar
+    el desempeño y la deriva del modelo físico."""
+    medidas: list[CalibrationMeasurementIn] = Field(..., min_length=2)
+
+
+class CalibrationIndicatorsOut(BaseModel):
+    n: int
+    error_abs_mean_gbq: float
+    error_rel_mean: float
+    error_rel_max: float
+    error_rel_std: float
+    trend_slope_rel_per_day: float
+    trend_r2: float
+    span_days: float
+    drift_detected: bool
+    accumulated_rel_change: float
+    residual_std: float
+    drift_threshold: float
+    drift_note: str
+
+
 class CalibratedProductionRequest(ProductionRequest):
     equipment_id: str = Field(..., examples=["iba_kiube"])
 
