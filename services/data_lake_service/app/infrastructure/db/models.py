@@ -101,3 +101,20 @@ class AlertRow(Base):
     acked_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
     acked_at: Mapped[str | None] = mapped_column(DateTime(timezone=True),
                                                  nullable=True)
+
+
+class SimulationRow(Base):
+    """Resultados de simulaciones científicas (EDS 4.9: simulation/)."""
+    __tablename__ = "simulation_records"
+
+    simulation_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    created_at: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_by: Mapped[str] = mapped_column(String(120), nullable=False)
+    kind: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    solver: Mapped[str] = mapped_column(String(200), nullable=False)
+    reaction_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    target_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    inputs_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    results_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    artifact_key: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    record_hash: Mapped[str] = mapped_column(String(64), nullable=False)

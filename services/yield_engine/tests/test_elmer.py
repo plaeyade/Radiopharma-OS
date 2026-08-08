@@ -73,10 +73,13 @@ def test_mesh_header_coherente(tmp_path: Path):
         toks = line.split()
         assert toks[1] == "1" and toks[2] == "404"
         assert all(1 <= int(n) <= n_nodes for n in toks[3:7])
-    # frontera: solo la cara refrigerada
+    n_elems = len((mesh / "mesh.elements").read_text().strip().splitlines())
+    # frontera: solo la cara refrigerada (formato: id bc padre 0 tipo n1 n2)
     for line in (mesh / "mesh.boundary").read_text().strip().splitlines():
         toks = line.split()
-        assert toks[1] == str(BC_COOLED) and toks[2] == "202"
+        assert toks[1] == str(BC_COOLED) and toks[4] == "202"
+        assert 1 <= int(toks[2]) <= n_elems  # elemento padre válido
+        assert toks[3] == "0"
 
 
 def test_mesh_validacion(tmp_path: Path):
@@ -101,7 +104,7 @@ def test_sif_contenido_gaussiano(tmp_path: Path):
 def test_sif_fuente_uniforme_sin_sigma(tmp_path: Path):
     case = ElmerThermalCase(**{**CASE.__dict__, "beam_sigma_cm": None})
     sif = write_sif(tmp_path, case).read_text()
-    assert "Heat Source = Real" in sif and "Real MATC" not in sif
+    assert "Volumetric Heat Source = Real" in sif and "Real MATC" not in sif
     # q''' = P/V = 720 / (π·0.5642²·0.5 cm³→m³)
     import math
     v = math.pi * (0.5642e-2) ** 2 * 0.5e-2
@@ -223,3 +226,27 @@ def test_compare_linaje_yield_burnup(tmp_path: Path):
     # cota conservadora: el FEM no supera al reducido 1D
     assert r["fem_conservative_bound_ok"]
     assert r["t_peak_fem_k"] == 350.0
+
+
+
+def test_parse_scalars_formato_real_estacionario():
+    """Formato real Elmer 26 estacionario: todas las columnas son variables
+    (sin paso inicial), detectado vía scalars.dat.names."""
+    names = ("Metadata for SaveScalars file: ./scalars.dat\n"
+             "Elmer version: 26.2\n\nVariables in columns of matrix: \n"
+             "   1: max: temperature\n   2: mean: temperature\n")
+    vals = parse_save_scalars("   4.7579E+002   4.6467E+002\n", names)
+    assert vals == [475.79, 464.67]
+
+
+def test_parse_scalars_formato_real_transitorio():
+    """Transitorio: paso/tiempo + variables (n_vars + 1 columnas)."""
+    names = "Variables in columns of matrix: \n   1: max: temperature\n"
+    vals = parse_save_scalars("  3   512.5\n", names)
+    assert vals == [512.5]
+
+
+def test_parse_scalars_incompatible():
+    with pytest.raises(ValueError, match="incompatible"):
+        parse_save_scalars(" 1.0 2.0 3.0 4.0\n",
+                           "Variables in columns of matrix: \n   1: a\n")

@@ -19,6 +19,7 @@ from app.application.alert_service import AlertService
 from app.application.analytics_service import AnalyticsService
 from app.application.batch_service import BatchService
 from app.application.ebr_service import EbrService
+from app.application.simulation_service import SimulationService
 from app.config import load_settings
 from app.infrastructure.db.database import (build_engine,
                                             build_session_factory,
@@ -27,9 +28,10 @@ from app.infrastructure.db.sql_alert_repository import SqlAlertRepository
 from app.infrastructure.db.sql_audit_repository import SqlAuditEventRepository
 from app.infrastructure.db.sql_batch_repository import SqlBatchRepository
 from app.infrastructure.db.sql_qc_repository import SqlQcRepository
+from app.infrastructure.db.sql_simulation_repository import SqlSimulationRepository
 from app.infrastructure.db.sql_signature_repository import SqlSignatureRepository
 from app.infrastructure.security.auth_client import AuthServiceClient
-from app.presentation.routers import alerts, analytics, batches
+from app.presentation.routers import alerts, analytics, batches, simulations
 
 settings = load_settings()
 
@@ -63,6 +65,8 @@ async def lifespan(app: FastAPI):
     batches.init(service, ebr, alerts=alert_service)
     alerts.init(alert_service)
     analytics.init(AnalyticsService(batch_repo))
+    simulations.init(SimulationService(SqlSimulationRepository(session_factory),
+                                       _build_store()))
     yield
     await engine.dispose()
 
@@ -86,6 +90,7 @@ app.add_middleware(
 app.include_router(batches.router)
 app.include_router(analytics.router)
 app.include_router(alerts.router)
+app.include_router(simulations.router)
 
 
 @app.get("/health", tags=["meta"])

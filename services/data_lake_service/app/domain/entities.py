@@ -252,3 +252,39 @@ class Alert:
     message: str
     acked_by: str | None = None
     acked_at: datetime | None = None
+
+
+@dataclass
+class SimulationRecord:
+    """Resultado de una simulación científica persistido (EDS 4.9, 7.11):
+    p. ej. FEM térmico Elmer (temperature, stresses, deformations, heat
+    flux). Append-only como todo el Data Lake (ALCOA+)."""
+    simulation_id: str
+    created_at: datetime
+    created_by: str
+    kind: str                      # "elmer_thermal", "burnup_radial", ...
+    solver: str                    # binario y versión usados
+    reaction_id: Optional[str]     # linaje yield→burnup→elmer (cap. 8.11)
+    target_id: Optional[str]
+    inputs: dict                   # parámetros físicos del caso
+    results: dict                  # temperature/stresses/deformations/heat flux
+    artifact_key: Optional[str] = None   # simulation/<kind>/<id>/...
+    record_hash: str = ""
+
+    def canonical_payload(self) -> dict:
+        return {
+            "simulation_id": self.simulation_id,
+            "created_at": self.created_at.isoformat(),
+            "created_by": self.created_by,
+            "kind": self.kind,
+            "solver": self.solver,
+            "reaction_id": self.reaction_id,
+            "target_id": self.target_id,
+            "inputs": self.inputs,
+            "results": self.results,
+        }
+
+    def compute_hash(self) -> str:
+        blob = json.dumps(self.canonical_payload(), sort_keys=True,
+                          separators=(",", ":"))
+        return hashlib.sha256(blob.encode("utf-8")).hexdigest()

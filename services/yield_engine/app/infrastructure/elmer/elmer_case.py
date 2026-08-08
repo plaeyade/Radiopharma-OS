@@ -90,7 +90,9 @@ def write_mesh(case_dir: Path, case: ElmerThermalCase,
 
     with open(mesh_dir / "mesh.boundary", "w", encoding="utf-8") as fh:
         for i in range(n_r):
-            fh.write(f"{i + 1} {BC_COOLED} {_EL_EDGE} "
+            # formato nativo: id  bc  padre  0  tipo  n1  n2
+            padre = (n_z - 1) * n_r + i + 1   # cuadrilátero adyacente
+            fh.write(f"{i + 1} {BC_COOLED} {padre} 0 {_EL_EDGE} "
                      f"{node_id(i, n_z)} {node_id(i + 1, n_z)}\n")
 
     return mesh_dir
@@ -112,11 +114,11 @@ def write_sif(case_dir: Path, case: ElmerThermalCase,
         factor = gaussian_peak_factor(case.spot_radius_cm, case.beam_sigma_cm)
         q0 = case.beam_power_w * factor / volume
         heat_source = (
-            "  Heat Source = Variable Coordinate 1\n"
+            "  Volumetric Heat Source = Variable Coordinate 1\n"
             f'    Real MATC "{q0:.10e}*exp(-(tx(0))^2/(2*{sigma:.10e}^2))"\n')
     else:
         q0 = case.beam_power_w / volume
-        heat_source = f"  Heat Source = Real {q0:.10e}\n"
+        heat_source = f"  Volumetric Heat Source = Real {q0:.10e}\n"
 
     sif = f"""Header
   CHECK KEYWORDS Warn

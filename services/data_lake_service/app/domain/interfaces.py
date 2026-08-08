@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Optional, Protocol
 
 from app.domain.entities import (AuditEventRecord, BatchRecord, EbrSignature,
-                                 QcRecord)
+                                 QcRecord, SimulationRecord)
 
 
 class BatchRepository(Protocol):
@@ -65,3 +65,15 @@ class AuthVerifier(Protocol):
     def authenticate(self, username: str, password: str) -> Optional[dict]:
         """Devuelve {'username': ..., 'role': ...} si las credenciales son válidas; None si no."""
         ...
+
+
+class SimulationRepository(Protocol):
+    """Persistencia de resultados de simulación (append-only)."""
+
+    async def save(self, record: "SimulationRecord") -> "SimulationRecord": ...
+
+    async def get(self, simulation_id: str) -> "Optional[SimulationRecord]": ...
+
+    async def list(self, kind: Optional[str] = None,
+                   reaction_id: Optional[str] = None,
+                   limit: int = 100) -> "list[SimulationRecord]": ...

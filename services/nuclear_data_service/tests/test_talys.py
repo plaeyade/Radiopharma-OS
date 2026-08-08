@@ -79,7 +79,7 @@ def test_build_input():
     assert "projectile p" in inp
     assert "element o" in inp
     assert "mass 18" in inp
-    assert "energy 0.1-30.0" in inp
+    assert "energy 0.1 30 0.5" in inp
     with pytest.raises(ValueError):
         build_input("p", "o", 18, 30.0, 0.1)
 

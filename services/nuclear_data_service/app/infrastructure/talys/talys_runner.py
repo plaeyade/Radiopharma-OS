@@ -72,17 +72,21 @@ def parse_rp_tot(path: Path) -> list[tuple[float, float]]:
 
 
 def build_input(projectile: str, element: str, mass: int,
-                emin_mev: float = 0.1, emax_mev: float = 30.0) -> str:
-    """Input TALYS mínimo para función de excitación (p,x)."""
+                emin_mev: float = 0.1, emax_mev: float = 30.0,
+                step_mev: float = 0.5) -> str:
+    """Input TALYS mínimo para función de excitación (p,x).
+    Sintaxis TALYS 2.x: `energy emin emax paso` (paso en MeV)."""
     if mass <= 0:
         raise ValueError("mass debe ser positiva")
     if not 0 < emin_mev < emax_mev:
         raise ValueError("rango de energía inválido")
+    if step_mev <= 0 or step_mev >= (emax_mev - emin_mev):
+        raise ValueError("step_mev debe ser positivo y menor que el rango")
     return (
         f"projectile {projectile}\n"
         f"element {element.lower()}\n"
         f"mass {mass}\n"
-        f"energy {emin_mev}-{emax_mev}\n"
+        f"energy {emin_mev:.6g} {emax_mev:.6g} {step_mev:.6g}\n"
     )
 
 

@@ -31,9 +31,25 @@ class ElmerError(RuntimeError):
     """ElmerSolver se ejecutó pero no produjo resultados válidos."""
 
 
-def parse_save_scalars(text: str) -> list[float]:
-    """Parsea la salida de SaveScalars: última fila numérica, sin la
-    primera columna (paso/tiempo). Lanza ValueError si no hay datos."""
+def parse_save_scalars(text: str, names_text: str | None = None) -> list[float]:
+    """Parsea la salida de SaveScalars: última fila numérica.
+
+    Si se facilita el contenido de `scalars.dat.names` (formato real de
+    Elmer), se usa el nº de variables declarado para decidir si la fila
+    lleva una columna inicial de paso/tiempo (transitorio) o no
+    (estacionario: todas las columnas son variables). Sin `.names` se
+    asume el formato con paso inicial (compatibilidad histórica)."""
+    n_vars: int | None = None
+    if names_text is not None:
+        count = 0
+        for line in names_text.splitlines():
+            s = line.strip()
+            if s and s[0].isdigit() and ":" in s:
+                try:
+                    count = max(count, int(s.split(":", 1)[0]))
+                except ValueError:
+                    pass
+        n_vars = count or None
     last_row: list[float] | None = None
     for line in text.splitlines():
         s = line.strip()
@@ -43,10 +59,20 @@ def parse_save_scalars(text: str) -> list[float]:
             row = [float(tok) for tok in s.split()]
         except ValueError:
             continue
-        if len(row) >= 2:
+        if len(row) >= 1:
             last_row = row
     if last_row is None:
         raise ValueError("SaveScalars sin filas de datos")
+    if n_vars is not None:
+        if len(last_row) == n_vars:
+            return last_row
+        if len(last_row) == n_vars + 1:
+            return last_row[1:]
+        raise ValueError(
+            f"fila de {len(last_row)} columnas incompatible con "
+            f"{n_vars} variables declaradas en scalars.dat.names")
+    if len(last_row) < 2:
+        raise ValueError("SaveScalars sin columnas de datos")
     return last_row[1:]
 
 
@@ -100,4 +126,7 @@ class ElmerRunner:
         if not scalars.exists():
             raise ElmerError(
                 f"ElmerSolver no generó scalars.dat; ver {log_path}")
-        return parse_save_scalars(scalars.read_text(encoding="utf-8"))
+        names = case_dir / "scalars.dat.names"
+        return parse_save_scalars(
+            scalars.read_text(encoding="utf-8"),
+            names.read_text(encoding="utf-8") if names.exists() else None)
