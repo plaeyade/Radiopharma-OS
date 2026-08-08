@@ -531,6 +531,12 @@ extremo a extremo a través de la API:
 | TALYS revalidación con **structure mínima** (v0.35.1) | 61 puntos; pico **331.28 mb @ 8.6 MeV**; `rms_rel_deviation` **0.6886**; `n_compared` 76 — vía `GET /api/v1/cross-sections/compare/o18_p_n_f18` |
 | Elmer FEM vs modelo térmico reducido | `pipeline: yield→burnup→elmer`; t_peak_fem 962.73 K < t_peak_reduced 1085.45 K → `fem_conservative_bound_ok: true` (puerta cap. 8.11 respetada) |
 | Registro DL de la simulación FEM | `SIM-3AF3172F5F27`, artefacto `simulation/elmer_thermal/SIM-3AF3172F5F27/results.json`, `integrity_ok: true` |
+| Elmer 26.2 (devel b1187b5) e2e con artefactos persistidos (v0.35.1) | caso 610 W en 0.5 cm³: t_peak_fem 26951.65 K < t_peak_reduced 52389.15 K → cota conservadora OK (analítico axial: q·L²/2k + película + refrigerante ≈ 26 951 K, coincidencia exacta); registro `SIM-29A044FC7B60`, `integrity_ok: true` |
+
+Los artefactos de Elmer (binario + módulos HeatSolve/SaveData/ResultOutputSolve
++ librerías, 30 MB, md5 `5708285f…`) quedan persistidos en
+`sci_runtime/elmer_artifacts.tar.gz`: la restauración ya no requiere toolchain
+ni compilación.
 
 **Hallazgo de ingeniería (v0.35.1):** la structure de TALYS (8.7 GB, 16
 subdirectorios) tiene un **subconjunto esencial** para nucleidos ligeros:
