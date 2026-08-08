@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -517,7 +517,33 @@ identificados como modelados o FEM). Alternativas reales de instalación:
 
 En todos los casos: `export TALYS_CMD=/ruta/talys` /
 `export ELMER_CMD=/ruta/ElmerSolver` y los endpoints pasan de 503 honesto
-a funcionales **sin tocar código**. Los resultados FEM se organizan según
+a funcionales **sin tocar código**.
+
+#### Validación con binarios reales (evidencia)
+
+Compilados desde fuente en el sandbox (gfortran 16.1.0 conda; TALYS 2.2 de
+`arjankoning1/talys`, ElmerFEM 26.2 build mínimo sin MPI) y ejecutados de
+extremo a extremo a través de la API:
+
+| Validación | Resultado real |
+|------------|----------------|
+| TALYS ¹⁸O(p,n)¹⁸F vs IAEA (estructura completa) | 61 puntos; pico 334 mb @ 8.6 MeV vs 533.4 mb @ 5.04 MeV IAEA; `rms_rel_deviation` 0.6883 |
+| TALYS revalidación con **structure mínima** (v0.35.1) | 61 puntos; pico **331.28 mb @ 8.6 MeV**; `rms_rel_deviation` **0.6886**; `n_compared` 76 — vía `GET /api/v1/cross-sections/compare/o18_p_n_f18` |
+| Elmer FEM vs modelo térmico reducido | `pipeline: yield→burnup→elmer`; t_peak_fem 962.73 K < t_peak_reduced 1085.45 K → `fem_conservative_bound_ok: true` (puerta cap. 8.11 respetada) |
+| Registro DL de la simulación FEM | `SIM-3AF3172F5F27`, artefacto `simulation/elmer_thermal/SIM-3AF3172F5F27/results.json`, `integrity_ok: true` |
+
+**Hallazgo de ingeniería (v0.35.1):** la structure de TALYS (8.7 GB, 16
+subdirectorios) tiene un **subconjunto esencial** para nucleidos ligeros:
+11 subdirectorios simples (`abundance, masses, levels, best, decay,
+deformation, resonances, resfiles, thermal, profile, integral`) + `optical`
++ de `density` únicamente `ground/ctm/ctm.light` (436 B, lectura
+incondicional en `densitymatch_` durante la inicialización). `gamma`,
+`fission` y `breakup` no se leen para p+¹⁸O y la desviación frente a la
+estructura completa es < 1 % (331.28 vs 334 mb). La restauración del
+runtime pasa así de ~15 min a ~2 min. Para otros proyectiles/targets
+(d, α, actínidos) sí hacen falta `breakup`/`fission`/`gamma`.
+
+ Los resultados FEM se organizan según
 la estructura canónica del Data Lake (`simulation/elmer/`, cap. 4.9) y
 las curvas TALYS como «datos modelados» (cap. 11.10).
 
@@ -583,6 +609,13 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - [x] Segunda reacción: ¹⁴N(p,α)¹¹C con blanco N₂.
 - [x] Reacciones ¹⁵N(p,n)¹⁵O y ⁶⁸Zn(p,n)⁶⁸Ga (mismo patrón, ~30 min c/u).
 - [x] Burnup Engine: depleción de blanco enriquecido (EDS cap. 16, grupo único).
+- [x] Validación con binarios reales compilados desde fuente: TALYS 2.2
+  (pico 334 mb @ 8.6 MeV, rms 0.6883 vs IAEA) y ElmerFEM 26.2
+  (puerta cap. 8.11: yield→burnup→elmer, cota conservadora verificada).
+- [x] DL Simulations (caps. 4.9/7.11): registro ALCOA+ de resultados FEM
+  en `simulation/elmer/` con hash de integridad y verificación.
+- [x] Runtime científico mínimo revalidado (v0.35.1): structure TALYS
+  esencial (12 subdirectorios + `ctm.light`), restauración ~2 min.
 - [x] Burnup 2D radial (distribución espacial del quemado) + Elmer FEM
       acoplado tras ELMER_CMD (binario honesto: 503 si no está instalado).
 - [ ] Calibration Layer: K-factor por lote con datos de producción reales (cap. 17).
