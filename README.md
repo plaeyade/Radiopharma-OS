@@ -551,7 +551,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 468 tests (25 NDS + 117 YE + 100 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 477 tests (25 NDS + 120 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
