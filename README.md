@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.37.0 · Elmer FEM Interface cap. 18 (termo-mecánico acoplado Heat→Stress real: von Mises + desplazamiento, Material Library 18.8/18.14, validación numérica 18.22, artefactos con StressSolve persistidos) · v0.36.0 · Calibration Layer F3 (K-factor por lote 17.6/17.21: puerta de calidad predefinida, ajuste incremental, auditoría 17.25, descomposición de incertidumbre 17.20) · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.38.0 · Monte Carlo Interface cap. 19 (OpenGATE/Geant4 reales: transporte de protones en H2-18O, deposición/dosis, incertidumbre estadística por lotes 19.20, validación previa 19.21, comparación independiente vs determinista 19.14, auditoría 19.24, estado honesto de datasets) · v0.37.0 · Elmer FEM Interface cap. 18 (termo-mecánico acoplado Heat→Stress real: von Mises + desplazamiento, Material Library 18.8/18.14, validación numérica 18.22, artefactos con StressSolve persistidos) · v0.36.0 · Calibration Layer F3 (K-factor por lote 17.6/17.21: puerta de calidad predefinida, ajuste incremental, auditoría 17.25, descomposición de incertidumbre 17.20) · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -613,7 +613,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 511 tests (25 NDS + 154 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 536 tests (25 NDS + 179 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -641,6 +641,17 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 
 ## Roadmap inmediato
 
+- [x] Monte Carlo Interface cap. 19 (v0.38.0): transporte de partículas
+      con OpenGATE/Geant4 reales — Geometry Builder 19.6, Material
+      Manager 19.7 (H2-18O consistente con el Physics Twin), Source
+      Generator 19.8, Physics List Manager 19.9 (FTFP_BERT/QGSP_*_HP
+      registradas), Scoring de deposición/dosis 19.11, incertidumbre
+      estadística por lotes independientes con convergencia 19.20,
+      validación previa 19.21 (simulaciones incompletas no entran al
+      DL), comparación independiente vs potencia determinista 19.14 y
+      auditoría completa 19.24. Endpoints: `GET /mc/status` (inventario
+      honesto de datasets Geant4) y `POST /mc/target`. DL: kind
+      `monte_carlo` en `simulation/monte_carlo/`.
 - [x] Cliente HTTP del YE hacia el NDS (variable `NUCLEAR_DATA_URL`).
 - [x] Segunda reacción: ¹⁴N(p,α)¹¹C con blanco N₂.
 - [x] Reacciones ¹⁵N(p,n)¹⁵O y ⁶⁸Zn(p,n)⁶⁸Ga (mismo patrón, ~30 min c/u).

@@ -20,6 +20,13 @@ from app.infrastructure.elmer.elmer_case import (ElmerThermalCase,
                                                  build_case_thermomechanical)
 from app.infrastructure.elmer.elmer_runner import (ElmerError, ElmerRunner,
                                                    ElmerUnavailable)
+from app.domain import monte_carlo as mc_domain
+from app.infrastructure.gate.gate_case import (MonteCarloTargetCase,
+                                               build_case as build_gate_case)
+from app.infrastructure.gate.gate_runner import (GateError, GateRunner,
+                                                 GateUnavailable,
+                                                 build_gate_env,
+                                                 datasets_instalados)
 
 # Metadatos de reacciones soportadas por el MVP
 REACTIONS: dict[str, dict] = {
@@ -38,13 +45,15 @@ class ProductionService:
     """Fachada de casos de uso del Yield Engine."""
 
     def __init__(self, stopping: StoppingPowerProvider, rxn: ReactionDataProvider,
-                 elmer: ElmerRunner | None = None) -> None:
+                 elmer: ElmerRunner | None = None,
+                 gate: GateRunner | None = None) -> None:
         self._calc = YieldCalculator(stopping, rxn)
         self._stopping = stopping
         self._rxn = rxn
         self._burnup_mz = BurnupMultizoneCalculator(stopping, rxn)
         self._burnup_radial = BurnupRadialCalculator(rxn)
         self._elmer = elmer or ElmerRunner()
+        self._gate = gate if gate is not None else GateRunner(env_extra=build_gate_env())
 
     def burnup_multizone(
         self,
@@ -185,6 +194,110 @@ class ProductionService:
                 "cmd": self._elmer.cmd_label,
                 "version": self._elmer.version(),
                 "solver": "ElmerFEM HeatSolver (Heat Equation, axi 2D)"}
+
+    def mc_status(self) -> dict:
+        """Estado honesto del Monte Carlo Interface (cap. 19).
+
+        Reporta disponibilidad del motor, versiones (19.24) e inventario
+        de datasets Geant4 instalados: qué listas de física son
+        ejecutables en este entorno (19.9)."""
+        st: dict = {"available": False, "cmd": self._gate.cmd_label,
+                    "versions": None, "datasets": datasets_instalados(),
+                    "solver": "OpenGATE/Geant4 Monte Carlo (cap. 19)"}
+        try:
+            if self._gate.check():
+                st["available"] = True
+                st["versions"] = self._gate.versions()
+        except Exception:
+            pass
+        return st
+
+    def monte_carlo_target(
+            self, reaction_id: str, target_id: str,
+            beam_energy_mev: float, current_ua: float,
+            n_histories: int = 50_000, n_batches: int = 5,
+            physics_list: str = "FTFP_BERT",
+            target_radius_cm: float = 1.0, target_thickness_cm: float = 0.5,
+            beam_radius_cm: float = 0.5, seed: int = 12345,
+            operador: str = "sistema", motivo: str = "",
+            work_dir: Optional[str] = None) -> dict:
+        """EDS cap. 19: simulación Monte Carlo del blanco (alta fidelidad).
+
+        Filosofía 19.3: el MC no sustituye al flujo operativo diario —
+        valida modelos, alimenta calibración e investigación. Ejecuta el
+        transporte de protones en H2-18O con OpenGATE/Geant4 reales y
+        devuelve deposición de energía, dosis, métricas estadísticas
+        (19.20) y la comparación independiente con la potencia
+        determinista del Physics Twin (19.14). Si el motor no está
+        disponible, GateUnavailable → 503: nunca se simula un MC.
+        """
+        import json
+        from datetime import datetime, timezone
+        from pathlib import Path
+
+        case = MonteCarloTargetCase(
+            beam_energy_mev=beam_energy_mev,
+            beam_radius_cm=beam_radius_cm,
+            target_radius_cm=target_radius_cm,
+            target_thickness_cm=target_thickness_cm,
+            n_histories=n_histories, n_batches=n_batches,
+            physics_list=physics_list, seed=seed)
+        reasons = mc_domain.validar_caso(case)   # 19.21
+        if reasons:
+            raise ValueError("; ".join(reasons))
+        if not self._gate.check():
+            raise GateUnavailable(
+                "OpenGATE/Geant4 no disponible (OPENGATE_PYTHON/GATEPY_DIR)")
+
+        versions = self._gate.versions()
+
+        def _run(case_dir: Path) -> tuple[dict, str]:
+            script = build_gate_case(case_dir, case)
+            log = self._gate.run(script, case_dir)
+            results = json.loads((case_dir / "mc_results.json").read_text())
+            return results, log
+
+        if work_dir is not None:
+            results, log = _run(Path(work_dir))
+        else:
+            import tempfile
+            with tempfile.TemporaryDirectory(prefix="gate_mc_") as tmp:
+                results, log = _run(Path(tmp))
+
+        metricas = mc_domain.evaluar_resultados(results)          # 19.20/19.21
+        power_det = beam_power_w(beam_energy_mev, current_ua)
+        comparacion = mc_domain.comparar_con_determinista(
+            results["edep_mev_per_history"], current_ua, power_det)  # 19.14
+        auditoria = {  # 19.24
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "usuario": operador, "motivo": motivo,
+            "geometria": {"world_cm": 20, "target": "Tubs",
+                          "radio_cm": target_radius_cm,
+                          "espesor_cm": target_thickness_cm,
+                          "material": "H2O18 (H:O 2:1, rho=1.11 g/cm3)"},
+            "opengate_version": versions.get("opengate"),
+            "geant4_version": versions.get("geant4"),
+            "physics_list": physics_list,
+            "semilla": seed, "n_lotes": n_batches,
+            "configuracion": case.__dict__,
+        }
+        return {
+            "pipeline": "monte-carlo (alta fidelidad, cap. 19)",
+            "reaction_id": reaction_id, "target_id": target_id,
+            "beam_energy_mev": beam_energy_mev, "current_ua": current_ua,
+            "edep_mev_per_history": results["edep_mev_per_history"],
+            "edep_mev_batches": results["batches_edep_mev"],
+            "dose_gy_per_history": results.get("dose_gy_per_history"),
+            "target_mass_g": results.get("target_mass_g"),
+            "metricas_mc": metricas,
+            "comparacion_determinista": comparacion,
+            "auditoria": auditoria,
+            "validation_ok": metricas["validation_ok"],
+            "review_required": metricas["review_required"],
+            "solver": self._gate.cmd_label,
+            "model": "OpenGATE/Geant4 " + physics_list + " (cap. 19)",
+        }
+
 
     def elmer_thermal_compare(
         self,

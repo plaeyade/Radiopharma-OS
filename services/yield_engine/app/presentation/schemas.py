@@ -377,3 +377,45 @@ class ElmerThermomechanicalResponse(BaseModel):
     review_required: bool
     solver: str
     model: str
+
+
+class MonteCarloRequest(BaseModel):
+    """EDS cap. 19: caso Monte Carlo del blanco (19.6–19.11, 19.24)."""
+
+    reaction_id: str = Field(..., examples=["o18_p_n_f18"])
+    target_id: str = Field(..., examples=["h2_18o"])
+    beam_energy_mev: float = Field(..., gt=0, examples=[16.5])
+    current_ua: float = Field(..., gt=0, examples=[37.0])
+    n_histories: int = Field(50_000, ge=100, le=500_000,
+                             description="Historias MC (19.25: coste acotado)")
+    n_batches: int = Field(5, ge=2, le=20,
+                           description="Lotes independientes para la "
+                                       "incertidumbre estadística (19.20)")
+    physics_list: str = Field("FTFP_BERT",
+                              description="Lista de física registrada (19.9); "
+                                          "las _HP requieren G4NDL (ver /mc/status)")
+    target_radius_cm: float = Field(1.0, gt=0)
+    target_thickness_cm: float = Field(0.5, gt=0)
+    beam_radius_cm: float = Field(0.5, gt=0)
+    seed: int = Field(12345, ge=1)
+    operador: str = Field(..., min_length=1, examples=["mlopez"])
+    motivo: str = Field("", description="Motivo del estudio (auditoría 19.24)")
+
+
+class MonteCarloResponse(BaseModel):
+    pipeline: str
+    reaction_id: str
+    target_id: str
+    beam_energy_mev: float
+    current_ua: float
+    edep_mev_per_history: float
+    edep_mev_batches: list[float]
+    dose_gy_per_history: float | None
+    target_mass_g: float | None
+    metricas_mc: dict
+    comparacion_determinista: dict
+    auditoria: dict
+    validation_ok: bool
+    review_required: bool
+    solver: str
+    model: str

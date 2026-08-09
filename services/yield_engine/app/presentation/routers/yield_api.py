@@ -9,6 +9,7 @@ from app.application.production_service import ProductionService, REACTIONS
 from app.application.target_catalog import TARGET_CATALOG
 from app.infrastructure.elmer.elmer_runner import (ElmerError,
                                                    ElmerUnavailable)
+from app.infrastructure.gate.gate_runner import GateError, GateUnavailable
 from app.presentation.schemas import (BurnupMultizoneRequest,
                                       BurnupMultizoneResponse,
                                       BurnupRadialRequest,
@@ -17,6 +18,7 @@ from app.presentation.schemas import (BurnupMultizoneRequest,
                                       ElmerCompareResponse,
                                       ElmerThermomechanicalRequest,
                                       ElmerThermomechanicalResponse,
+                                      MonteCarloRequest, MonteCarloResponse,
                                       ProductionRequest,
                                       ProductionResponse,
                                       ThermalTargetRequest,
@@ -183,6 +185,37 @@ def elmer_thermomechanical(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return ElmerThermomechanicalResponse(**r)
+
+
+@router.get("/mc/status")
+def mc_status() -> dict:
+    """Estado honesto del Monte Carlo Interface (cap. 19)."""
+    return _service.mc_status()
+
+
+@router.post("/mc/target", response_model=MonteCarloResponse)
+def monte_carlo_target(req: MonteCarloRequest) -> MonteCarloResponse:
+    """EDS cap. 19: simulación Monte Carlo del blanco con OpenGATE/Geant4
+    reales — deposición de energía, dosis, métricas estadísticas (19.20)
+    y comparación independiente con el modelo determinista (19.14).
+    503 sin motor, 422 si el caso no supera la validación 19.21."""
+    try:
+        r = _service.monte_carlo_target(
+            reaction_id=req.reaction_id, target_id=req.target_id,
+            beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
+            n_histories=req.n_histories, n_batches=req.n_batches,
+            physics_list=req.physics_list,
+            target_radius_cm=req.target_radius_cm,
+            target_thickness_cm=req.target_thickness_cm,
+            beam_radius_cm=req.beam_radius_cm, seed=req.seed,
+            operador=req.operador, motivo=req.motivo)
+    except GateUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except GateError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return MonteCarloResponse(**r)
 
 
 @router.get("/reactions")
