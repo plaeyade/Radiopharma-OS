@@ -10,10 +10,12 @@ from fastapi import APIRouter, HTTPException, Query
 from app.application.calibration_service import CalibrationService
 from app.application.production_service import ProductionService
 from app.domain.calibration import Measurement
+from app.domain.calibration_batch import BatchMeasurement
 from app.presentation.schemas import (
+    AuditEntryOut, BatchMeasurementIn, BatchMeasurementOut,
     CalibrationFitIn, CalibrationIndicatorsIn, CalibrationIndicatorsOut,
     CalibrationModelOut, CalibratedProductionRequest, EquipmentOut,
-    ProductionResponseCalibrated)
+    FitFromBatchesIn, ProductionResponseCalibrated)
 
 router = APIRouter(prefix="/api/v1", tags=["calibration"])
 
@@ -123,6 +125,60 @@ def indicators(req: CalibrationIndicatorsIn) -> CalibrationIndicatorsOut:
         accumulated_rel_change=drift.accumulated_rel_change,
         residual_std=drift.residual_std, drift_threshold=drift.threshold,
         drift_note=drift.note)
+
+
+@router.post("/calibration/batch-measurement",
+             response_model=BatchMeasurementOut, status_code=201)
+def register_batch_measurement(req: BatchMeasurementIn) -> BatchMeasurementOut:
+    """17.6 + 17.21: registra la medida EOB de un lote real si supera la
+    puerta de calidad predefinida. El rechazo también queda auditado (17.25):
+    se devuelve 201 con accepted=false y las razones — nada se oculta."""
+    medida = BatchMeasurement(
+        batch_id=req.batch_id, fecha=req.fecha,
+        eob_predicho_gbq=req.eob_predicho_gbq,
+        eob_medido_gbq=req.eob_medido_gbq,
+        incertidumbre_gbq=req.incertidumbre_gbq, operador=req.operador)
+    try:
+        r = _cal.register_batch_measurement(
+            req.reaction_id, req.equipment_id, medida, motivo=req.motivo)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return BatchMeasurementOut(**r)
+
+
+@router.get("/calibration/{reaction_id}/{equipment_id}/measurements",
+            response_model=list[BatchMeasurementOut])
+def list_batch_measurements(reaction_id: str,
+                            equipment_id: str) -> list[BatchMeasurementOut]:
+    """Medidas por lote aceptadas para (reacción, equipo)."""
+    out = []
+    for m in _cal.batch_measurements(reaction_id, equipment_id):
+        out.append(BatchMeasurementOut(**m, accepted=True, reasons=[]))
+    return out
+
+
+@router.post("/calibration/fit-from-batches",
+             response_model=CalibrationModelOut)
+def fit_from_batches(req: FitFromBatchesIn) -> CalibrationModelOut:
+    """17.21 (incremental) + 17.23 (anti-deterioro) + 17.22 (versión con
+    operador y motivo): recalcula C con las medidas por lote aceptadas."""
+    try:
+        m = _cal.fit_from_batches(req.reaction_id, req.equipment_id,
+                                  operador=req.operador, motivo=req.motivo)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return CalibrationModelOut(
+        model_id=m.model_id, reaction_id=m.reaction_id,
+        equipment_id=m.equipment_id, version=m.version, factor=m.factor,
+        factor_uncertainty=m.factor_uncertainty, n_points=m.n_points,
+        chi2_ndf=m.chi2_ndf, status=m.status, fitted_at=m.fitted_at,
+        medidas=list(m.medidas))
+
+
+@router.get("/calibration/audit", response_model=list[AuditEntryOut])
+def calibration_audit() -> list[AuditEntryOut]:
+    """17.25: registro completo de auditoría de la Calibration Layer."""
+    return [AuditEntryOut(**e) for e in _cal.audit_log()]
 
 
 @router.post("/production/calibrated",

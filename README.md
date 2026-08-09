@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.36.0 · Calibration Layer F3 (K-factor por lote 17.6/17.21: puerta de calidad predefinida, ajuste incremental, auditoría 17.25, descomposición de incertidumbre 17.20) · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -136,6 +136,20 @@ producción de radionúclidos PET en ciclotrón.
     se acepta si su RMS de cocientes residuales sobre las mismas medidas
     no supera al de la versión vigente; si empeora, `fit` responde **422
     sin almacenar nada** (la validación queda registrada en el modelo).
+  **F3 (v0.36.0, cap. 17)** — K-factor por lote con datos de producción reales:
+  - **Medidas asociadas al lote (17.6)** — `POST /calibration/batch-measurement`
+    registra la EOB medida de un lote junto a su predicción física.
+  - **Puerta de calidad predefinida (17.21)** — solo se incorporan medidas
+    coherentes (k ∈ [0.1, 10], u_rel ≤ 25 %, lote y operador trazables);
+    «no todas las producciones se incorporan automáticamente».
+  - **Ajuste incremental (17.21 + 17.23)** — `POST /calibration/fit-from-batches`
+    recalcula C con las medidas aceptadas pasando la puerta anti-deterioro.
+  - **Versionado y auditoría (17.22/17.25)** — operador, motivo, algoritmo y
+    evidencia por registro y por ajuste; `GET /calibration/audit` expone
+    también los rechazos (nada se oculta).
+  - **Descomposición de incertidumbre (17.20)** — `/production/calibrated`
+    reporta física, experimental y de calibración por separado; el resultado
+    físico puro permanece intacto y accesible (17.3).
 - **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
   (revisión inicial `0001_batch_records`).
 - **QC Engine** (Quality Control Twin, EDS Vol. IV):
@@ -583,7 +597,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 477 tests (25 NDS + 120 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 498 tests (25 NDS + 141 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -624,7 +638,14 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   esencial (12 subdirectorios + `ctm.light`), restauración ~2 min.
 - [x] Burnup 2D radial (distribución espacial del quemado) + Elmer FEM
       acoplado tras ELMER_CMD (binario honesto: 503 si no está instalado).
-- [ ] Calibration Layer: K-factor por lote con datos de producción reales (cap. 17).
+- [x] Calibration Layer F3 (v0.36.0): K-factor por lote con datos de
+      producción reales (cap. 17) — medidas EOB asociadas al lote (17.6),
+      puerta de calidad predefinida e incremental (17.21), versionado con
+      operador/motivo/algoritmo (17.22), auditoría completa con evidencia
+      (17.25) y descomposición de incertidumbre física/experimental/
+      calibración (17.20). Endpoints: `POST /calibration/batch-measurement`,
+      `GET .../measurements`, `POST /calibration/fit-from-batches`,
+      `GET /calibration/audit`.
 - [x] Fase 1: Data Lake (PostgreSQL + MinIO), registros ALCOA+, pipeline CLI.
 - [x] Auth Service (JWT + roles) y Data Lake endurecido; Alembic scaffolding.
 - [x] Informes QC persistidos + liberación GMP (lote→QC→liberación).

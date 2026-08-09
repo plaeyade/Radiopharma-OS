@@ -11,6 +11,8 @@ from pathlib import Path
 
 from app.application.production_service import REACTIONS
 from app.domain.calibration import FitResult, Measurement, fit_factor
+from app.domain.calibration_batch import (ALGORITMO, BatchMeasurement,
+                                          quality_gate)
 from app.domain.calibration_indicators import (
     DriftVerdict, PerformanceIndicators, active_at, drift_analysis,
     performance_indicators, validate_new_factor)
@@ -76,14 +78,21 @@ class CalibrationService:
         self._store = Path(store_path)
         self._catalog = catalog
         self._models: list[dict] = []
+        self._measurements: list[dict] = []   # 17.6: medidas por lote
+        self._audit: list[dict] = []          # 17.25: registro de auditoría
         if self._store.exists():
-            self._models = json.loads(self._store.read_text(encoding="utf-8"))["models"]
+            raw = json.loads(self._store.read_text(encoding="utf-8"))
+            self._models = raw["models"]
+            self._measurements = raw.get("measurements", [])
+            self._audit = raw.get("audit", [])
 
     # -- persistencia -------------------------------------------------------
     def _save(self) -> None:
         self._store.parent.mkdir(parents=True, exist_ok=True)
         tmp = self._store.with_suffix(".tmp")
-        tmp.write_text(json.dumps({"models": self._models}, indent=2),
+        tmp.write_text(json.dumps({"models": self._models,
+                                   "measurements": self._measurements,
+                                   "audit": self._audit}, indent=2),
                        encoding="utf-8")
         tmp.replace(self._store)
 
@@ -146,6 +155,65 @@ class CalibrationService:
                 if (reaction_id is None or m["reaction_id"] == reaction_id)
                 and (equipment_id is None or m["equipment_id"] == equipment_id)]
 
+    # -- 17.6/17.21/17.22/17.25: medidas por lote ---------------------------
+    def register_batch_measurement(self, reaction_id: str, equipment_id: str,
+                                   medida: BatchMeasurement,
+                                   motivo: str) -> dict:
+        """Registra la medida EOB de un lote real (17.6) si supera la puerta
+        de calidad predefinida (17.21). Toda incorporación — y todo rechazo —
+        genera registro de auditoría (17.25) con operador, motivo y evidencia."""
+        if reaction_id not in REACTIONS:
+            raise ValueError(f"Reacción desconocida: {reaction_id}")
+        self._catalog.get(equipment_id)
+        gate = quality_gate(medida)
+        entrada = {
+            "reaction_id": reaction_id, "equipment_id": equipment_id,
+            "batch_id": medida.batch_id, "fecha": medida.fecha,
+            "eob_predicho_gbq": medida.eob_predicho_gbq,
+            "eob_medido_gbq": medida.eob_medido_gbq,
+            "incertidumbre_gbq": medida.incertidumbre_gbq,
+            "operador": medida.operador, "k": gate["k"]}
+        self._audit.append({
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "usuario": medida.operador, "accion": "registro_medida_lote",
+            "aceptada": gate["accepted"], "motivo": motivo,
+            "evidencia": entrada, "razones_rechazo": gate["reasons"]})
+        if gate["accepted"]:
+            self._measurements.append(entrada)
+        self._save()
+        return {**entrada, "accepted": gate["accepted"],
+                "reasons": gate["reasons"]}
+
+    def batch_measurements(self, reaction_id: str | None = None,
+                           equipment_id: str | None = None) -> list[dict]:
+        return [m for m in self._measurements
+                if (reaction_id is None or m["reaction_id"] == reaction_id)
+                and (equipment_id is None or m["equipment_id"] == equipment_id)]
+
+    def audit_log(self) -> list[dict]:
+        return list(self._audit)
+
+    def fit_from_batches(self, reaction_id: str, equipment_id: str,
+                         operador: str, motivo: str) -> CalibrationModel:
+        """Ajuste incremental (17.21): recalcula C con todas las medidas por
+        lote aceptadas. Pasa por la misma puerta anti-deterioro 17.23 que
+        cualquier calibración; el modelo físico permanece intacto (17.3)."""
+        medidas = [Measurement(fecha=m["fecha"],
+                               eob_predicho_gbq=m["eob_predicho_gbq"],
+                               eob_medido_gbq=m["eob_medido_gbq"],
+                               incertidumbre_gbq=m["incertidumbre_gbq"])
+                   for m in self.batch_measurements(reaction_id, equipment_id)]
+        model = self.fit_and_store(reaction_id, equipment_id, medidas)
+        self._audit.append({
+            "fecha": datetime.now(timezone.utc).isoformat(),
+            "usuario": operador, "accion": "fit_from_batches",
+            "aceptada": True, "motivo": motivo,
+            "evidencia": {"model_id": model.model_id,
+                          "n_medidas": len(medidas), "algoritmo": ALGORITMO},
+            "razones_rechazo": []})
+        self._save()
+        return model
+
     def apply(self, production: dict, reaction_id: str,
               equipment_id: str) -> dict:
         """Aplica el factor vigente a un resultado de producción del Physics
@@ -177,5 +245,25 @@ class CalibrationService:
             "model_id": model["model_id"], "version": model["version"],
             "factor": c, "factor_uncertainty": uc,
             "status": model["status"], "fitted_at": model["fitted_at"],
-            "eob_fisico_sin_calibrar_gbq": production["eob_activity_gbq"]}
+            "eob_fisico_sin_calibrar_gbq": production["eob_activity_gbq"],
+            # 17.20: las tres componentes de incertidumbre, independientes
+            "incertidumbre_gbq": _descomposicion_incertidumbre(
+                production, model, c, uc)}
         return out
+
+
+def _descomposicion_incertidumbre(production: dict, model: dict,
+                                  c: float, uc: float) -> dict:
+    """17.20: física (del motor), experimental (medidas del ajuste, vía u(C))
+    y de calibración (propagación de u(C) al resultado), en cuadratura para
+    el total. Cada componente permanece disponible por separado."""
+    eob = production["eob_activity_gbq"]
+    u_fisica = float(production.get("eob_activity_gbq_uncertainty") or 0.0)
+    u_experimental = abs(eob) * uc if uc > 0.0 else 0.0
+    u_calibrada = abs(eob * c) * (uc / c) if c > 0.0 and uc > 0.0 else 0.0
+    total = (u_fisica ** 2 + u_calibrada ** 2) ** 0.5
+    return {"fisica": round(u_fisica, 4),
+            "experimental": round(u_experimental, 4),
+            "calibracion": round(u_calibrada, 4),
+            "total": round(total, 4),
+            "nota": "componentes independientes (17.20); total = cuadratura"}

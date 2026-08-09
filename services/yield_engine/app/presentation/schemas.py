@@ -301,3 +301,49 @@ class CalibratedProductionRequest(ProductionRequest):
 
 class ProductionResponseCalibrated(ProductionResponse):
     calibration: dict
+
+
+# -- F3: K-factor por lote (17.6/17.21/17.22/17.25) --------------------------
+class BatchMeasurementIn(BaseModel):
+    """17.6: medida EOB real asociada a un lote de producción."""
+    reaction_id: str
+    equipment_id: str
+    batch_id: str = Field(..., min_length=1)
+    fecha: str = Field(..., examples=["2026-08-08"])
+    eob_predicho_gbq: float = Field(..., gt=0)
+    eob_medido_gbq: float = Field(..., gt=0)
+    incertidumbre_gbq: float = Field(0.0, ge=0)
+    operador: str = Field(..., min_length=1)
+    motivo: str = Field("", description="motivo del registro (auditoría 17.25)")
+
+
+class BatchMeasurementOut(BaseModel):
+    reaction_id: str
+    equipment_id: str
+    batch_id: str
+    fecha: str
+    eob_predicho_gbq: float
+    eob_medido_gbq: float
+    incertidumbre_gbq: float
+    operador: str
+    k: float | None
+    accepted: bool
+    reasons: list[str]
+
+
+class FitFromBatchesIn(BaseModel):
+    reaction_id: str
+    equipment_id: str
+    operador: str = Field(..., min_length=1)
+    motivo: str = Field(..., min_length=1,
+                        description="obligatorio (17.22/17.25)")
+
+
+class AuditEntryOut(BaseModel):
+    fecha: str
+    usuario: str
+    accion: str
+    aceptada: bool
+    motivo: str
+    evidencia: dict
+    razones_rechazo: list[str]
