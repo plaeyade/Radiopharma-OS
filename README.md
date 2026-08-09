@@ -1,6 +1,6 @@
 # Radiopharma OS — MVP Physics Twin
 
-**Radiopharma OS** · v0.36.0 · Calibration Layer F3 (K-factor por lote 17.6/17.21: puerta de calidad predefinida, ajuste incremental, auditoría 17.25, descomposición de incertidumbre 17.20) · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
+**Radiopharma OS** · v0.37.0 · Elmer FEM Interface cap. 18 (termo-mecánico acoplado Heat→Stress real: von Mises + desplazamiento, Material Library 18.8/18.14, validación numérica 18.22, artefactos con StressSolve persistidos) · v0.36.0 · Calibration Layer F3 (K-factor por lote 17.6/17.21: puerta de calidad predefinida, ajuste incremental, auditoría 17.25, descomposición de incertidumbre 17.20) · v0.35.1 · Runtime científico mínimo validado (structure TALYS esencial: 12 subdirectorios + `ctm.light`; revalidación e2e: 61 puntos, pico 331.28 mb @ 8.6 MeV, rms 0.6886) · v0.35.0 · DL Simulations (caps. 4.9/7.11: `simulation/elmer/`, hash ALCOA+) + validación con binarios reales TALYS 2.2 / ElmerFEM 26.2 · v0.34.0 · Calibration Layer F2 (indicadores 17.26, Drift Analyzer 17.10, gestión temporal 17.11, validación anti-deterioro 17.23) · v0.33.0 · QC SPC (Shewhart + WE/Nelson + Cpk, trending GMP) · Puerta canónica Yield→Burnup→Elmer · v0.32.0 · Process Twin F4 (plan de campaña: demanda → mínimo nº de lotes con decaimiento y turnaround) · v0.31.0 · Consola Física (Burnup 2D + Thermal + Elmer en navegador) · v0.30.0 · Burnup 2D radial (haz gaussiano, EOB_2D ≤ EOB_1D) + Thermal Engine reducido + acoplamiento Elmer FEM honesto · Pierna con dron VTOL (catálogo real, alcance/payload, marco EASA+IAEA Clase 7) · TALYS 2ª fuente σ(E) · v0.27.0 · Logistics Twin F1 (rutas terrestre/aérea con decaimiento en tránsito, OpenFlights, buffer TDG) · Process Twin F3 (calendario multi-paciente) · Process Twin F2 (planificación inversa desde hora de dosis + cuellos de botella + tiempos muertos medidos) · Process Twin F1 (cascada EOB→EOS con decaimiento y eficiencias, dosis por paciente) · Alertado activo (reglas validadas → persistencia ALCOA+ + webhook) · Gate formal veraPDF (eBR PDF/A-2b, 144/144 reglas) · Calibration Layer multivendor · MFA TOTP · Burnup 1D · OPC-UA · Trending EOB · `docker compose up` · datos 100 % abiertos
 
 Primer incremento codificable del ecosistema Radiopharma OS (Informe Maestro v2.0,
 EDS Vol. II): los dos microservicios que forman el núcleo del **Physics Twin** para
@@ -150,6 +150,21 @@ producción de radionúclidos PET en ciclotrón.
   - **Descomposición de incertidumbre (17.20)** — `/production/calibrated`
     reporta física, experimental y de calibración por separado; el resultado
     físico puro permanece intacto y accesible (17.3).
+- **Elmer FEM Interface — termo-mecánico** (v0.37.0, EDS cap. 18):
+  - **Acoplamiento Heat→Stress (18.13)** — la temperatura del HeatSolver
+    alimenta el StressSolve (elasticidad lineal axisimétrica) en la misma
+    malla; `POST /elmer/thermomechanical` devuelve temperatura máxima/media,
+    **tensión de von Mises máxima** y **desplazamiento máximo** (18.12).
+  - **Material Library (18.8/18.14)** — propiedades termo-mecánicas
+    versionadas con referencia (Havar, 316L); material desconocido o
+    incompleto → simulación rechazada (422 honesto).
+  - **Puerta canónica 8.11** — la respuesta lleva linaje
+    `yield→burnup→elmer(thermomechanical)`.
+  - **Validación numérica (18.22)** — el log del solver se verifica
+    (`ALL DONE`); los resultados dudosos se marcan `review_required`,
+    nunca se ocultan.
+  - **Registro DL** — kind `elmer_thermomechanical` (cap. 4.9) con hash
+    ALCOA+, igual que el resto de simulaciones.
 - **Alembic**: scaffolding de migraciones en `services/data_lake_service/alembic/`
   (revisión inicial `0001_batch_records`).
 - **QC Engine** (Quality Control Twin, EDS Vol. IV):
@@ -546,6 +561,7 @@ extremo a extremo a través de la API:
 | Elmer FEM vs modelo térmico reducido | `pipeline: yield→burnup→elmer`; t_peak_fem 962.73 K < t_peak_reduced 1085.45 K → `fem_conservative_bound_ok: true` (puerta cap. 8.11 respetada) |
 | Registro DL de la simulación FEM | `SIM-3AF3172F5F27`, artefacto `simulation/elmer_thermal/SIM-3AF3172F5F27/results.json`, `integrity_ok: true` |
 | Elmer 26.2 (devel b1187b5) e2e con artefactos persistidos (v0.35.1) | caso 610 W en 0.5 cm³: t_peak_fem 26951.65 K < t_peak_reduced 52389.15 K → cota conservadora OK (analítico axial: q·L²/2k + película + refrigerante ≈ 26 951 K, coincidencia exacta); registro `SIM-29A044FC7B60`, `integrity_ok: true` |
+| Elmer termo-mecánico real (v0.37.0, cap. 18) | Heat→Stress acoplado (StressSolve): mismo caso térmico (t_peak 26951.65 K, idéntico al solver térmico) + **von Mises máx 116 033 MPa** y **desplazamiento máx 2.05 mm** (consistentes con σ≈E·α·ΔT y empotramiento de la cara refrigerada — el caso por defecto es extremo y el modelo lo reporta honestamente); validación numérica 18.22 OK; registro `SIM-41FF20C852FF`, `integrity_ok: true` |
 
 Los artefactos de Elmer (binario + módulos HeatSolve/SaveData/ResultOutputSolve
 + librerías, 30 MB, md5 `5708285f…`) quedan persistidos en
@@ -597,7 +613,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 498 tests (25 NDS + 141 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
+make test     # 511 tests (25 NDS + 154 YE + 106 DL + 35 Auth + 32 QC + 36 TEL + 117 PT/LOG + 6 CLI)
 ```
 
 ## Estructura
@@ -638,6 +654,13 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   esencial (12 subdirectorios + `ctm.light`), restauración ~2 min.
 - [x] Burnup 2D radial (distribución espacial del quemado) + Elmer FEM
       acoplado tras ELMER_CMD (binario honesto: 503 si no está instalado).
+- [x] Elmer FEM Interface cap. 18 (v0.37.0): análisis termo-mecánico
+      acoplado Heat→Stress (18.13) con solver real — temperatura, von Mises
+      y desplazamiento (18.12), Material Library versionada con rechazo de
+      materiales incompletos (18.8/18.14), validación numérica con marca de
+      revisión (18.22), registro DL `elmer_thermomechanical`. Endpoint:
+      `POST /elmer/thermomechanical`. Artefactos Elmer v2 (con StressSolve)
+      persistidos — restauración sin compilar.
 - [x] Calibration Layer F3 (v0.36.0): K-factor por lote con datos de
       producción reales (cap. 17) — medidas EOB asociadas al lote (17.6),
       puerta de calidad predefinida e incremental (17.21), versionado con

@@ -14,7 +14,10 @@ from app.presentation.schemas import (BurnupMultizoneRequest,
                                       BurnupRadialRequest,
                                       BurnupRadialResponse, BurnupRequest,
                                       BurnupResponse, ElmerCompareRequest,
-                                      ElmerCompareResponse, ProductionRequest,
+                                      ElmerCompareResponse,
+                                      ElmerThermomechanicalRequest,
+                                      ElmerThermomechanicalResponse,
+                                      ProductionRequest,
                                       ProductionResponse,
                                       ThermalTargetRequest,
                                       ThermalTargetResponse)
@@ -152,6 +155,34 @@ def elmer_thermal_compare(req: ElmerCompareRequest) -> ElmerCompareResponse:
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return ElmerCompareResponse(**r)
+
+
+@router.post("/elmer/thermomechanical",
+             response_model=ElmerThermomechanicalResponse)
+def elmer_thermomechanical(
+        req: ElmerThermomechanicalRequest) -> ElmerThermomechanicalResponse:
+    """EDS cap. 18: análisis termo-mecánico acoplado (18.13) — temperatura,
+    tensión de von Mises y desplazamiento (18.12) con puerta 8.11 y
+    Material Library (18.8/18.14). 503 sin binario, 422 sin puerta."""
+    try:
+        r = _service.elmer_thermomechanical(
+            reaction_id=req.reaction_id, target_id=req.target_id,
+            irradiation_time_min=req.irradiation_time_min,
+            beam_energy_mev=req.beam_energy_mev, current_ua=req.current_ua,
+            material_id=req.material_id,
+            beam_spot_cm2=req.beam_spot_cm2,
+            target_thickness_cm=req.target_thickness_cm,
+            conductivity_w_cm_k=req.conductivity_w_cm_k,
+            film_coeff_w_cm2_k=req.film_coeff_w_cm2_k,
+            coolant_temp_k=req.coolant_temp_k,
+            beam_sigma_cm=req.beam_sigma_cm)
+    except ElmerUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except ElmerError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return ElmerThermomechanicalResponse(**r)
 
 
 @router.get("/reactions")

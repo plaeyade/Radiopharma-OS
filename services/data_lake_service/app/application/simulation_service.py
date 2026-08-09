@@ -19,7 +19,8 @@ from typing import Optional
 from app.domain.entities import SimulationRecord
 from app.domain.interfaces import ObjectStore, SimulationRepository
 
-_KINDS_VALIDOS = {"elmer_thermal", "burnup_radial", "thermal_reduced",
+_KINDS_VALIDOS = {"elmer_thermal", "elmer_thermomechanical", "burnup_radial",
+                  "thermal_reduced",
                   "talys_excitation"}
 
 

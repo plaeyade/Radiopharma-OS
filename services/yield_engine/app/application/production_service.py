@@ -12,11 +12,14 @@ from app.domain.burnup_zones import (DEFAULT_XS_MAX_MB,
                                      BurnupMultizoneCalculator)
 from app.domain.entities import Beam, TargetMaterial, YieldResult
 from app.domain.interfaces import ReactionDataProvider, StoppingPowerProvider
-from app.domain.thermal_reduced import thermal_reduced
+from app.domain.thermal_reduced import beam_power_w, thermal_reduced
 from app.domain.yield_calculator import YieldCalculator
+from app.domain.elmer_materials import get_material
 from app.infrastructure.elmer.elmer_case import (ElmerThermalCase,
-                                                 build_case)
-from app.infrastructure.elmer.elmer_runner import ElmerRunner
+                                                 build_case,
+                                                 build_case_thermomechanical)
+from app.infrastructure.elmer.elmer_runner import (ElmerError, ElmerRunner,
+                                                   ElmerUnavailable)
 
 # Metadatos de reacciones soportadas por el MVP
 REACTIONS: dict[str, dict] = {
@@ -266,6 +269,101 @@ class ProductionService:
             "fem_conservative_bound_ok": t_max_fem <= reduced.t_peak_k * 1.001,
             "solver": self._elmer.cmd_label,
             "model": "ElmerFEM 2D axisymmetric vs reduced 1D",
+        }
+
+    def elmer_thermomechanical(
+            self, reaction_id: str, target_id: str,
+            irradiation_time_min: float, beam_energy_mev: float,
+            current_ua: float, material_id: str,
+            beam_spot_cm2: float = 1.0, target_thickness_cm: float = 0.5,
+            conductivity_w_cm_k: float = 0.006,
+            film_coeff_w_cm2_k: float = 0.5, coolant_temp_k: float = 293.15,
+            beam_sigma_cm: Optional[float] = None,
+            work_dir: Optional[str] = None) -> dict:
+        """EDS cap. 18: análisis termo-mecánico acoplado (18.13) con puerta
+        canónica 8.11 (Yield→Burnup primero) y Material Library (18.8/18.14).
+        Devuelve temperatura, von Mises y desplazamiento máximos (18.12)."""
+        if self._elmer is None or not self._elmer.available():
+            raise ElmerUnavailable(
+                "binario ElmerSolver no encontrado (ELMER_CMD ni PATH)")
+        import math
+        from pathlib import Path
+
+        material = get_material(material_id)   # 18.14: rechaza si incompleto
+        # 8.11: puerta canónica — Yield y Burnup antes que cualquier FEM
+        y = self.compute(reaction_id=reaction_id, target_id=target_id,
+                         beam_energy_mev=beam_energy_mev,
+                         current_ua=current_ua,
+                         irradiation_time_min=irradiation_time_min)
+        b = self.burnup_multizone(reaction_id=reaction_id, target_id=target_id,
+                                  beam_energy_mev=beam_energy_mev,
+                                  current_ua=current_ua,
+                                  irradiation_time_min=irradiation_time_min,
+                                  beam_spot_cm2=beam_spot_cm2, n_zones=10)
+        power = beam_power_w(beam_energy_mev, current_ua)
+        reduced = thermal_reduced(
+            beam_energy_mev=beam_energy_mev, current_ua=current_ua,
+            beam_spot_cm2=beam_spot_cm2,
+            target_thickness_cm=target_thickness_cm,
+            conductivity_w_cm_k=conductivity_w_cm_k,
+            film_coeff_w_cm2_k=film_coeff_w_cm2_k,
+            coolant_temp_k=coolant_temp_k, t_limit_k=1.0e9,
+            beam_sigma_cm=beam_sigma_cm)
+        case = ElmerThermalCase(
+            beam_power_w=power,
+            spot_radius_cm=math.sqrt(beam_spot_cm2 / math.pi),
+            target_thickness_cm=target_thickness_cm,
+            conductivity_w_cm_k=conductivity_w_cm_k,
+            film_coeff_w_cm2_k=film_coeff_w_cm2_k,
+            coolant_temp_k=coolant_temp_k, beam_sigma_cm=beam_sigma_cm)
+
+        def _run(case_dir: Path) -> tuple[list[float], str]:
+            build_case_thermomechanical(case_dir, case, material)
+            scalars = self._elmer.run(case_dir)
+            log = ""
+            log_path = case_dir / "elmer.log"
+            if log_path.is_file():
+                log = log_path.read_text(encoding="utf-8", errors="replace")
+            return scalars, log
+
+        if work_dir is not None:
+            scalars, log = _run(Path(work_dir))
+        else:
+            import tempfile
+            with tempfile.TemporaryDirectory(prefix="elmer_tm_") as tmp:
+                scalars, log = _run(Path(tmp))
+        if len(scalars) < 4:
+            raise ElmerError(
+                f"scalars.dat incompleto ({len(scalars)} columnas, se "
+                "esperaban 4: T_max, T_mean, vonMises, desplazamiento)")
+        t_max_fem, t_mean_fem, von_mises_max_pa, disp_max = scalars[:4]
+        # 18.22: validación numérica — Elmer marca el final correcto con
+        # "ALL DONE"; "ERROR termination" indica fallo. Los resultados
+        # dudosos se marcan para revisión, nunca se ocultan
+        converged = ("all done" in log.lower()
+                     and "error termination" not in log.lower())
+        return {
+            "pipeline": "yield→burnup→elmer(thermomechanical)",
+            "reaction_id": reaction_id, "target_id": target_id,
+            "irradiation_time_min": irradiation_time_min,
+            "yield_eob_gbq": y.eob_activity_gbq,
+            "burnup_eob_gbq": b["eob_with_burnup_gbq"],
+            "burnup_loss_gbq": b["loss_gbq"],
+            "material": {"material_id": material.material_id,
+                         "version": material.version,
+                         "referencia": material.referencia},
+            "t_peak_fem_k": t_max_fem, "t_mean_fem_k": t_mean_fem,
+            "t_peak_reduced_k": reduced.t_peak_k,
+            "fem_conservative_bound_ok":
+                t_max_fem <= reduced.t_peak_k * 1.001,
+            "von_mises_max_pa": von_mises_max_pa,
+            "von_mises_max_mpa": round(von_mises_max_pa / 1.0e6, 4),
+            "displacement_max_m": disp_max,
+            "displacement_max_mm": round(disp_max * 1000.0, 6),
+            "numerical_validation_ok": converged,
+            "review_required": not converged,
+            "solver": self._elmer.cmd_label,
+            "model": "ElmerFEM Heat→Stress axi 2D acoplado (cap. 18)",
         }
 
     def compute(

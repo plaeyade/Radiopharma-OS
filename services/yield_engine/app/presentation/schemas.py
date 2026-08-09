@@ -347,3 +347,33 @@ class AuditEntryOut(BaseModel):
     motivo: str
     evidencia: dict
     razones_rechazo: list[str]
+
+
+# -- cap. 18: análisis termo-mecánico FEM ------------------------------------
+class ElmerThermomechanicalRequest(ElmerCompareRequest):
+    material_id: str = Field(..., examples=["havar_foil"],
+                             description="Material Library 18.8 (18.14: "
+                                         "incompleto → simulación rechazada)")
+
+
+class ElmerThermomechanicalResponse(BaseModel):
+    pipeline: str
+    reaction_id: str
+    target_id: str
+    irradiation_time_min: float
+    yield_eob_gbq: float
+    burnup_eob_gbq: float
+    burnup_loss_gbq: float
+    material: dict
+    t_peak_fem_k: float
+    t_mean_fem_k: float
+    t_peak_reduced_k: float
+    fem_conservative_bound_ok: bool
+    von_mises_max_pa: float
+    von_mises_max_mpa: float
+    displacement_max_m: float
+    displacement_max_mm: float
+    numerical_validation_ok: bool
+    review_required: bool
+    solver: str
+    model: str
