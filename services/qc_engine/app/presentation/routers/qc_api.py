@@ -164,3 +164,67 @@ def qc_release(payload: QcReleaseIn) -> QcReleaseOut:
         n_conformes=r.n_conformes, n_oos=r.n_oos,
         n_pendientes=r.n_pendientes, validated=r.validated,
         auditoria=r.auditoria)
+
+
+# ---------------- Instrument Integration Layer (cap. 26) ----------------
+
+class _InstrumentState:
+    def __init__(self) -> None:
+        from app.domain.instruments import (FileImportManager,
+                                            InstrumentRegistry)
+        self.registry = InstrumentRegistry()
+        self.importer = FileImportManager(self.registry)
+
+
+_instruments: _InstrumentState | None = None
+
+
+def init_instruments() -> None:
+    global _instruments
+    _instruments = _InstrumentState()
+
+
+@router.post("/instruments/register", status_code=201)
+def instrument_register(payload: dict) -> dict:
+    """Alta en el Instrument Registry (26.6); nunca sobrescribe."""
+    from app.domain.instruments import Instrument, InstrumentoInvalido
+    try:
+        return _instruments.registry.register(Instrument(**payload))
+    except (InstrumentoInvalido, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/instruments")
+def instrument_list() -> list[dict]:
+    return _instruments.registry.list()
+
+
+@router.post("/instruments/{instrument_id}/import", status_code=201)
+def instrument_import(instrument_id: str, payload: dict) -> dict:
+    """Importación de archivo exportado (26.12) con normalización 26.10.
+
+    Body: {"nombre_archivo": ..., "contenido_b64": ..., "ensayo": ...,
+           "operador": ..., "batch": ..., "ensayo_map": {...}?}
+    El archivo original queda registrado con su sha256 (26.12/26.24)
+    y el resultado incorpora fecha/instrumento/operador/lote (26.13)."""
+    import base64
+    from dataclasses import asdict
+
+    from app.domain.instruments import InstrumentoInvalido
+    try:
+        contenido = base64.b64decode(payload["contenido_b64"])
+        res = _instruments.importer.importar(
+            instrument_id, payload.get("nombre_archivo", "export.dat"),
+            contenido, payload["ensayo"], payload.get("operador", "sistema"),
+            payload.get("batch", ""), payload.get("ensayo_map"))
+        return asdict(res)
+    except InstrumentoInvalido as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except KeyError as exc:
+        raise HTTPException(status_code=422, detail=f"falta campo: {exc}")
+
+
+@router.get("/instruments/events")
+def instrument_events() -> list[dict]:
+    """Eventos de adquisición (26.20/26.24)."""
+    return _instruments.importer.eventos()
