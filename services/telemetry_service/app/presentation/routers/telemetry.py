@@ -181,3 +181,30 @@ async def anomaly_detect_batch(batch_id: str, series: str,
     except DeteccionInvalida as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return resultado_a_dict(res)
+
+
+# ---------------- PLC del ciclotrón vía OPC-UA (cap. 30, Fase 8) ----------------
+
+@router.get("/plc/status")
+async def plc_status_endpoint(_: Identity = Depends(current_identity)) -> dict:
+    """Estado honesto de la integración con el PLC real."""
+    from app.infrastructure.opcua.plc_client import plc_status
+    return plc_status()
+
+
+@router.post("/plc/read")
+async def plc_read_endpoint(payload: dict,
+                            _: Identity = Depends(require_operator)) -> dict:
+    """Lectura real de nodos del PLC; 503 honesto si no responde.
+
+    Body: {"series": {"beam_current": ["Ciclotron","BeamCurrent"], ...}}
+    """
+    from app.infrastructure.opcua.plc_client import (PlcUnavailable,
+                                                     plc_read)
+    series = payload.get("series") or {}
+    if not series:
+        raise HTTPException(status_code=422, detail="series requeridas")
+    try:
+        return await plc_read(series)
+    except PlcUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
