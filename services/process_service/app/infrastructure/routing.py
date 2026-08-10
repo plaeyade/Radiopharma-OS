@@ -113,3 +113,53 @@ def default_provider(center: GeoPoint | None = None) -> RoutingProvider:
         except Exception:
             pass
     return LocalRoutingProvider()
+
+
+class OsrmUnavailable(RuntimeError):
+    """Servidor OSRM no configurado o inalcanzable (→ 503 honesto)."""
+
+
+class OsrmRoutingProvider:
+    """Routing real vía servidor OSRM (HTTP, perfil driving).
+
+    EDS: las rutas terrestres usan motores de routing reales en
+    producción; el proveedor local solo es fallback offline. Sin
+    servidor alcanzable, el proveedor lo reporta honestamente y
+    nunca inventa tiempos.
+    """
+
+    name = "osrm-http"
+
+    def __init__(self, base_url: str | None, timeout_s: float = 10.0,
+                 speed_fallback_kmh: float = DEFAULT_SPEED_KMH) -> None:
+        self._base = (base_url or "").rstrip("/")
+        self._timeout = timeout_s
+        self._speed = speed_fallback_kmh
+
+    def _check(self) -> None:
+        if not self._base:
+            raise OsrmUnavailable("OSRM_URL no configurada")
+
+    def road_time(self, origin: GeoPoint, dest: GeoPoint) -> tuple[float, float]:
+        self._check()
+        import httpx
+        url = (f"{self._base}/route/v1/driving/"
+               f"{origin.lon},{origin.lat};{dest.lon},{dest.lat}"
+               "?overview=false")
+        try:
+            r = httpx.get(url, timeout=self._timeout)
+            r.raise_for_status()
+            datos = r.json()
+            leg = datos["routes"][0]
+            return leg["duration"] / 60.0, leg["distance"] / 1000.0
+        except OsrmUnavailable:
+            raise
+        except Exception as exc:
+            raise OsrmUnavailable(
+                f"servidor OSRM inalcanzable en {self._base}: {exc}")
+
+    def reachable_radius_km(self, origin: GeoPoint, minutes: float) -> float:
+        # Las isócronas exactas requieren el plugin table de OSRM;
+        # aquí se aproxima con la velocidad configurada (documentado).
+        del origin
+        return self._speed * (minutes / 60.0) / ROAD_FACTOR
