@@ -12,6 +12,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.application.qc_release_service import QcReleaseService
 from app.application.qc_service import QcService
 from app.presentation.routers import qc_api
 
@@ -24,6 +25,7 @@ app = FastAPI(
 )
 
 qc_api.init(QcService())
+qc_api.init_release(QcReleaseService())
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(

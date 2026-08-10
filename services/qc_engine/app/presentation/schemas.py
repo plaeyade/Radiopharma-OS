@@ -3,6 +3,7 @@ Esquemas Pydantic del QC Engine.
 """
 from __future__ import annotations
 
+from datetime import date
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -111,3 +112,36 @@ class SpcOut(BaseModel):
     cp: Optional[float]
     cpk: Optional[float]
     note: str = "Trending como apoyo a la decisión: no sustituye la evaluación técnica (EDS 25.17)."
+
+
+class QcReleaseIn(BaseModel):
+    """Resultados analíticos de un lote contra un protocolo QC (25.6/25.8)."""
+    protocol_id: str
+    resultados: dict[str, Optional[float]] = Field(
+        ..., description="ensayo -> valor medido (null = pendiente)")
+    operador: str = Field(..., min_length=1)
+    motivo: str = ""
+    lote: str = ""
+    fecha: Optional[date] = None
+
+
+class QcParamEvalOut(BaseModel):
+    parametro: str
+    valor: Optional[float]
+    unidades: str
+    estado: str
+    spec_version: Optional[str]
+    detalle: str
+
+
+class QcReleaseOut(BaseModel):
+    protocol_id: str
+    radiopharmaceutical: str
+    recomendacion: str
+    motivos: list[str]
+    evaluaciones: list[QcParamEvalOut]
+    n_conformes: int
+    n_oos: int
+    n_pendientes: int
+    validated: bool
+    auditoria: dict

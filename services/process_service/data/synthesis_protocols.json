@@ -1,0 +1,65 @@
+{
+  "reaction_protocols": [
+    {
+      "id": "fdg_18f_synthesis",
+      "version": "1.0.0",
+      "radiopharmaceutical": "FDG (18F)",
+      "nuclide": "18F",
+      "half_life_min": 109.77,
+      "validated": false,
+      "source": "Parámetros bibliográficos de referencia para síntesis de FDG (fluoración nucleofílica en acetonitrilo, ~85 °C); pendientes de validación in-situ (honestidad de datos: no medidos en planta).",
+      "reagents": [
+        {"nombre": "Kriptofix K2.2.2/K2CO3", "concentracion": "mezcla catalítica", "volumen_ml": 1.0, "pureza": "grado síntesis", "lote": "REF-K222-000", "caducidad": "2030-01-01"},
+        {"nombre": "Manosa triflato", "concentracion": "20 mg/ml", "volumen_ml": 1.0, "pureza": ">=95%", "lote": "REF-MTRI-000", "caducidad": "2030-01-01"},
+        {"nombre": "Acetonitrilo anhidro", "concentracion": ">=99.9%", "volumen_ml": 2.0, "pureza": "anhidro", "lote": "REF-ACN-000", "caducidad": "2030-01-01"}
+      ],
+      "thermal": {"t_objetivo_c": 85.0, "rampa_calentamiento_c_min": 10.0, "t_mantenimiento_min": 10.0, "rampa_enfriamiento_c_min": 15.0},
+      "kinetic": {"modelo": "primer_orden", "conversion_max": 0.9, "k_ref_min_inv": 0.05, "t_ref_c": 25.0, "ea_j_mol": 60000.0},
+      "steps": [
+        {"kind": "carga", "duration_min": 3.0, "efficiency": 0.98},
+        {"kind": "mezcla", "duration_min": 2.0, "efficiency": 1.0},
+        {"kind": "calentamiento", "duration_min": 6.0, "efficiency": 1.0},
+        {"kind": "reaccion", "duration_min": 10.0, "efficiency": 1.0},
+        {"kind": "enfriamiento", "duration_min": 4.0, "efficiency": 1.0},
+        {"kind": "transferencia", "duration_min": 3.0, "efficiency": 0.97}
+      ]
+    }
+  ],
+  "purification_protocols": [
+    {
+      "id": "fdg_18f_purification",
+      "version": "1.0.0",
+      "radiopharmaceutical": "FDG (18F)",
+      "half_life_min": 109.77,
+      "validated": false,
+      "source": "Secuencia SPE de referencia para FDG (hidrolisis + cartuchos); parámetros bibliográficos pendientes de validación in-situ.",
+      "cartridges": [
+        {"identificacion": "SepPak-C18-REF", "tipo": "C18", "fabricante": "genérico", "lote": "REF-C18-000", "estado": "nuevo"},
+        {"identificacion": "Alumina-N-REF", "tipo": "alumina", "fabricante": "genérico", "lote": "REF-ALU-000", "estado": "nuevo"}
+      ],
+      "steps": [
+        {"kind": "retencion", "duration_min": 4.0, "recovery": 0.97, "impurity_removal": {"K2.2.2_residual": 0.9, "fluoruro_libre": 0.85}},
+        {"kind": "lavado", "duration_min": 3.0, "recovery": 0.99, "impurity_removal": {"K2.2.2_residual": 0.6, "acetonitrilo_residual": 0.8}},
+        {"kind": "elucion", "duration_min": 5.0, "recovery": 0.93, "impurity_removal": {}},
+        {"kind": "recuperacion", "duration_min": 3.0, "recovery": 0.98, "impurity_removal": {"subproductos": 0.5}}
+      ]
+    }
+  ],
+  "formulation_protocols": [
+    {
+      "id": "fdg_18f_formulation",
+      "version": "1.0.0",
+      "radiopharmaceutical": "FDG (18F)",
+      "half_life_min": 109.77,
+      "duration_min": 10.0,
+      "volumen_final_ml": 10.0,
+      "concentracion_max_gbq_ml": 5.0,
+      "validated": false,
+      "source": "Formulación de referencia en solución salina isotónica; parámetros bibliográficos pendientes de validación in-situ.",
+      "excipients": [
+        {"identificacion": "NaCl 0.9%", "concentracion": "9 mg/ml", "volumen_ml": 6.0, "lote": "REF-NACL-000", "proveedor": "genérico", "caducidad": "2030-01-01"},
+        {"identificacion": "Buffer citrato", "concentracion": "10 mM", "volumen_ml": 1.0, "lote": "REF-CIT-000", "proveedor": "genérico", "caducidad": "2030-01-01"}
+      ]
+    }
+  ]
+}

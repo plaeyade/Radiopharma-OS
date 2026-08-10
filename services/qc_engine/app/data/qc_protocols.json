@@ -1,0 +1,24 @@
+{
+  "qc_protocols": [
+    {
+      "id": "fdg_18f_qc",
+      "radiopharmaceutical": "FDG (18F)",
+      "version": "1.0.0",
+      "ensayos_requeridos": ["identidad_radionucleidica", "pureza_radionucleidica_pct", "pureza_radioquimica_pct", "ph", "apariencia_score", "actividad_gbq", "k222_ppm", "acetonitrilo_ppm"],
+      "criterios_aceptacion": "Todos los ensayos requeridos conformes contra las especificaciones vigentes (25.10/25.11)",
+      "documentacion": "Referencia bibliográfica de monografía FDG; pendiente de validación in-situ (honestidad de datos).",
+      "validated": false,
+      "source": "Límites de referencia bibliográficos (tipo monografía Ph. Eur./USP para FDG); no verificados con instrumentos de planta."
+    }
+  ],
+  "specifications": [
+    {"parametro": "identidad_radionucleidica", "limite_inferior": 104.3, "limite_superior": 115.3, "unidades": "min (vida media aparente)", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "pureza_radionucleidica_pct", "limite_inferior": 99.5, "limite_superior": null, "unidades": "%", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "pureza_radioquimica_pct", "limite_inferior": 95.0, "limite_superior": null, "unidades": "%", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "ph", "limite_inferior": 4.5, "limite_superior": 8.5, "unidades": "unidades de pH", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "apariencia_score", "limite_inferior": 1.0, "limite_superior": 1.0, "unidades": "1=limpida/incolora", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "actividad_gbq", "limite_inferior": 0.0, "limite_superior": null, "unidades": "GBq", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "k222_ppm", "limite_inferior": null, "limite_superior": 50.0, "unidades": "ppm", "version": "1.0.0", "vigencia_desde": "2026-01-01"},
+    {"parametro": "acetonitrilo_ppm", "limite_inferior": null, "limite_superior": 410.0, "unidades": "ppm", "version": "1.0.0", "vigencia_desde": "2026-01-01"}
+  ]
+}

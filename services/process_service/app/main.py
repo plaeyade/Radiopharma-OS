@@ -16,7 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
-from app.presentation.routers import logistics_api, process_api
+from app.application.synthesis_service import SynthesisService
+from app.presentation.routers import logistics_api, process_api, synthesis_api
 
 app = FastAPI(
     title="Radiopharma OS - Process Service",
@@ -29,6 +30,7 @@ app = FastAPI(
 
 process_api.init(ProcessService())
 logistics_api.init(LogisticsService())
+synthesis_api.init(SynthesisService())
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -41,6 +43,7 @@ app.add_middleware(
 
 app.include_router(process_api.router)
 app.include_router(logistics_api.router)
+app.include_router(synthesis_api.router)
 
 
 @app.get("/health", tags=["meta"])
