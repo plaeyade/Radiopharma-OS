@@ -1,0 +1,15 @@
+{
+  "catalog_id": "costes_planta_fdg",
+  "version": "1.0.0",
+  "moneda": "EUR",
+  "fuente": "tarifas estimadas de referencia bibliográfica para planta FDG de un solo ciclotrón (no validadas con contabilidad real)",
+  "validado": false,
+  "actividades": {
+    "irradiacion": {"actividad": "irradiacion", "driver": "hora_ciclotron", "tarifa": 350.0, "moneda": "EUR"},
+    "sintesis": {"actividad": "sintesis", "driver": "min_modulo", "tarifa": 2.5, "moneda": "EUR"},
+    "purificacion": {"actividad": "purificacion", "driver": "min_modulo", "tarifa": 1.8, "moneda": "EUR"},
+    "formulacion": {"actividad": "formulacion", "driver": "min_modulo", "tarifa": 1.5, "moneda": "EUR"},
+    "qc": {"actividad": "qc", "driver": "ensayo", "tarifa": 45.0, "moneda": "EUR"},
+    "logistica": {"actividad": "logistica", "driver": "envio", "tarifa": 120.0, "moneda": "EUR"}
+  }
+}
