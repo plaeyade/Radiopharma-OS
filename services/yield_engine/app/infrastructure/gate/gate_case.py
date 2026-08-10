@@ -38,6 +38,7 @@ No editar a mano: la configuración queda registrada en la auditoría
 (19.24) y en el Data Lake; regenerar desde la API para reproducir.
 """
 import json
+import os
 import re
 import sys
 from importlib.metadata import version as _pkg_version
@@ -46,6 +47,7 @@ from pathlib import Path
 import numpy as np
 import opengate as gate
 import opengate_core
+import SimpleITK as sitk
 
 MM = gate.g4_units.mm
 CM = gate.g4_units.cm
@@ -76,13 +78,14 @@ for ibatch in range(CASE["n_batches"]):
     sim.random_seed = CASE["seed"] + 1000 * ibatch
 
     # --- Geometry Builder (19.6): mundo aire + blanco cilíndrico ---
+    # El mundo debe contener a la fuente (z=-10 cm): 30 cm de arista.
     world = sim.world
-    world.size = [20 * CM, 20 * CM, 20 * CM]
+    world.size = [30 * CM, 30 * CM, 30 * CM]
     world.material = "G4_AIR"
 
     # --- Material Manager (19.7): H2-18O enriquecida -----------------
     # Misma estequiometría H:O=2:1 (fracciones másicas de G4_WATER) con
-    # la densidad del agua enriquecida al 97%% en 18O (1.11 g/cm3),
+    # la densidad del agua enriquecida al 97% en 18O (1.11 g/cm3),
     # consistente con el catálogo de blancos del Physics Twin.
     sim.volume_manager.material_database.add_material_weights(
         "H2O18", ["H", "O"], [0.1119, 0.8881],
@@ -90,7 +93,7 @@ for ibatch in range(CASE["n_batches"]):
     target = sim.add_volume("Tubs", "target")
     target.rmin = 0
     target.rmax = CASE["target_radius_cm"] * CM
-    target.dz = CASE["target_thickness_cm"] * CM
+    target.dz = CASE["target_thickness_cm"] * CM / 2  # G4Tubs: semilongitud
     target.mother = world.name
     target.material = "H2O18"
 
@@ -123,9 +126,21 @@ for ibatch in range(CASE["n_batches"]):
     stats.track_types_flag = True
 
     sim.run(start_new_process=True)
-    edep_mev = float(np.asarray(dose.edep).sum())
+    # 19.21: los resultados se leen del archivo escrito por el solver,
+    # no de objetos en memoria del proceso padre.
+    edep_path = os.path.join(
+        CASE["work_dir"], f"edep_batch{ibatch}_edep.mhd"
+    )
+    if not os.path.isfile(edep_path):
+        raise RuntimeError(
+            f"simulación incompleta: no existe {edep_path} (19.21)"
+        )
+    edep_img = sitk.ReadImage(edep_path)
+    edep_mev = float(
+        np.asarray(sitk.GetArrayFromImage(edep_img), dtype=np.float64).sum()
+    )
     results["batches_edep_mev"].append(edep_mev)
-    results["batches_n"].append(int(source.n))
+    results["batches_n"].append(CASE["n_histories"] // CASE["n_batches"])
 
 edep = np.array(results["batches_edep_mev"], dtype=float)
 n_tot = int(sum(results["batches_n"]))
