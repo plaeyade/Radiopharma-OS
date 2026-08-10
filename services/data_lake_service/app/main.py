@@ -31,7 +31,8 @@ from app.infrastructure.db.sql_qc_repository import SqlQcRepository
 from app.infrastructure.db.sql_simulation_repository import SqlSimulationRepository
 from app.infrastructure.db.sql_signature_repository import SqlSignatureRepository
 from app.infrastructure.security.auth_client import AuthServiceClient
-from app.presentation.routers import alerts, analytics, batches, simulations
+from app.presentation.routers import (alerts, analytics, batches, bcdr_api,
+                                        simulations)
 
 settings = load_settings()
 
@@ -91,6 +92,8 @@ app.include_router(batches.router)
 app.include_router(analytics.router)
 app.include_router(alerts.router)
 app.include_router(simulations.router)
+bcdr_api.init()
+app.include_router(bcdr_api.router)
 
 
 @app.get("/health", tags=["meta"])
