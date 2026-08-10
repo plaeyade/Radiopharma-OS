@@ -613,7 +613,7 @@ procedencia del dataset usado.
 ## Tests
 
 ```bash
-make test     # 643 tests (25 NDS + 184 YE + 106 DL + 40 Auth + 46 QC + 46 TEL + 155 PT/LOG + 22 Surrogate + 19 CLI/pipelines)
+make test     # 652 tests (25 NDS + 184 YE + 106 DL + 40 Auth + 46 QC + 46 TEL + 155 PT/LOG + 22 Surrogate + 28 CLI/pipelines)
 make validation  # reporte consolidado de validación Fase 9 (18.13): unitarias/integración,
                  # científica en vivo, rendimiento, pre-despliegue; veredicto apto/no_apto
 make qualification  # calificación DQ/IQ/OQ (Informe 14.9); PQ honestamente no iniciada
