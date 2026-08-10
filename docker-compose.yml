@@ -153,6 +153,10 @@ services:
     build: ./services/process_service
     container_name: rpos-process
     ports: ["8007:8007"]
+  surrogate-service:
+    build: ./services/surrogate_service
+    container_name: rpos-surrogate
+    ports: ["8008:8008"]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8007/health')"]
