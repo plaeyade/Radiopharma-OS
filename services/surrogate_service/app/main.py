@@ -22,7 +22,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.surrogate_service import SurrogateService
-from app.presentation.routers import (agents_api, graph_api, rag_api,
+from app.presentation.routers import (agents_api, graph_api, mlops_api,
+                                  rag_api,
                                   surrogate_api)
 
 app = FastAPI(
@@ -38,6 +39,7 @@ surrogate_api.init(SurrogateService())
 agents_api.init()
 graph_api.init()
 rag_api.init()
+mlops_api.init()
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -51,6 +53,7 @@ app.include_router(surrogate_api.router)
 app.include_router(agents_api.router)
 app.include_router(graph_api.router)
 app.include_router(rag_api.router)
+app.include_router(mlops_api.router)
 
 
 @app.get("/health", tags=["meta"])
