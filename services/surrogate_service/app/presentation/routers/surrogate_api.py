@@ -42,6 +42,27 @@ def audit_log() -> list[dict]:
     return _service.audit_log()
 
 
+@router.get("/bentoml/status")
+def bentoml_status() -> dict:
+    """Estado honesto del runtime BentoML (20.10)."""
+    return _service.bentoml_status()
+
+
+@router.post("/bentoml/package/{model_id}")
+def bentoml_package(model_id: str, version: str | None = None,
+                    dest_dir: str = "/tmp/bentoml_packages") -> dict:
+    """Empaquetado BentoML; 503 honesto si el runtime no existe."""
+    from app.infrastructure.bentoml_adapter import BentoMLUnavailable
+    try:
+        return _service.bentoml_package(model_id, version, dest_dir)
+    except BentoMLUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except FileExistsError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except SurrogateNoEncontrado as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
 @router.post("/train")
 def train(payload: TrainIn) -> dict:
     try:

@@ -180,6 +180,25 @@ class SurrogateService:
     def audit_log(self) -> list[dict]:
         return list(self._audit)
 
+    # ------------------------------------------------ BentoML (20.10)
+    def bentoml_status(self) -> dict:
+        """Estado honesto del runtime BentoML (plataforma oficial)."""
+        from app.infrastructure.bentoml_adapter import BentoMLAdapter
+        return BentoMLAdapter().status()
+
+    def bentoml_package(self, model_id: str, version: str | None,
+                        dest_dir: str) -> dict:
+        """Empaqueta un modelo del registry como servicio BentoML.
+
+        Requiere runtime real; sin él, BentoMLUnavailable (→ 503).
+        """
+        from app.infrastructure.bentoml_adapter import BentoMLAdapter
+        try:
+            rec = self._registry.get(model_id, version)
+        except KeyError as exc:
+            raise SurrogateNoEncontrado(str(exc))
+        return BentoMLAdapter().package(rec, dest_dir)
+
 
 def math_log10(x: float) -> float:
     import math
