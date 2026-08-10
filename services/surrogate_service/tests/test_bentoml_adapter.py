@@ -19,9 +19,9 @@ def client():
     return TestClient(app)
 
 
-def _train(client) -> None:
+def _train(client, version: str) -> None:
     r = client.post("/api/v1/surrogates/train",
-                    json={"version": "bento-1", "responsable": "qa"})
+                    json={"version": version, "responsable": "qa"})
     assert r.status_code == 200
 
 
@@ -35,7 +35,7 @@ def test_status_honesto(client):
 
 def test_package_sin_runtime_es_503_honesto(client, tmp_path, monkeypatch):
     monkeypatch.setattr(BentoMLAdapter, "available", staticmethod(lambda: False))
-    _train(client)
+    _train(client, "bento-503")
     models = client.get("/api/v1/surrogates/models").json()
     mid = models[-1]["model_id"]
     r = client.post(f"/api/v1/surrogates/bentoml/package/{mid}"
@@ -58,7 +58,7 @@ def test_package_con_runtime_no_sobrescribe(client, tmp_path, monkeypatch):
     import types
     stub = types.SimpleNamespace(__version__="stub-test")
     monkeypatch.setitem(sys.modules, "bentoml", stub)
-    _train(client)
+    _train(client, "bento-pkg")
     models = client.get("/api/v1/surrogates/models").json()
     mid = models[-1]["model_id"]
     r1 = client.post(f"/api/v1/surrogates/bentoml/package/{mid}"
