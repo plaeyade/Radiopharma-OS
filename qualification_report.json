@@ -1,0 +1,104 @@
+{
+ "reporte": "Calificación Radiopharma OS (Informe 14.9)",
+ "fecha": "2026-08-10T07:40:52.005799+00:00",
+ "etapas": [
+  {
+   "etapa": "DQ",
+   "ok": true,
+   "checks": [
+    {
+     "nombre": "documento_canonico_informe",
+     "ok": true,
+     "detalle": "Informe_RadiopharmaOS_v2.0_Digital_Twins.docx (267817 B)"
+    },
+    {
+     "nombre": "documento_canonico_eds",
+     "ok": true,
+     "detalle": "ESPECIFICACIÓN TÉCNICA DEL MVP INDUSTRIAL.docx (513095 B)"
+    },
+    {
+     "nombre": "documento_canonico_seh",
+     "ok": true,
+     "detalle": "Software Engineering Handbook (SEH).docx (989528 B)"
+    },
+    {
+     "nombre": "trazabilidad_diseno_codigo",
+     "ok": true,
+     "detalle": "142 referencias a capítulos canónicos en el código de los servicios"
+    }
+   ],
+   "nota": "verificación del diseño (14.9): documentos canónicos presentes y trazabilidad capítulo→código"
+  },
+  {
+   "etapa": "IQ",
+   "ok": true,
+   "checks": [
+    {
+     "nombre": "python",
+     "ok": true,
+     "detalle": "Python 3.12.12"
+    },
+    {
+     "nombre": "dependencias",
+     "ok": true,
+     "detalle": "todas presentes"
+    },
+    {
+     "nombre": "datos_cientificos_instalados",
+     "ok": true,
+     "detalle": "15 ficheros de datos en yield_engine/data"
+    },
+    {
+     "nombre": "servicios_importables",
+     "ok": true,
+     "detalle": "nuclear_data_service: ok; yield_engine: ok; data_lake_service: ok; auth_service: ok; qc_engine: ok; telemetry_service: ok; process_service: ok; surrogate_service: ok"
+    }
+   ],
+   "nota": "verificación de instalación (14.9): entorno, dependencias, datos y servicios"
+  },
+  {
+   "etapa": "OQ",
+   "ok": true,
+   "checks": [
+    {
+     "nombre": "oq_yield_eob_conocido",
+     "ok": true,
+     "detalle": "EOB 16.5MeV/37µA/60min = 108.945 GBq > 1 GBq"
+    },
+    {
+     "nombre": "oq_decaimiento_exacto",
+     "ok": true,
+     "detalle": "retro-corrección a T½ = 200.0000000000 (esperado 200)"
+    },
+    {
+     "nombre": "oq_qc_release_conforme",
+     "ok": true,
+     "detalle": "QC release conforme → liberacion (1 protocolos, cap. 25)"
+    },
+    {
+     "nombre": "oq_synthesis_e2e",
+     "ok": true,
+     "detalle": "cadena RE→PU→FE operativa: 19.825 GBq finales (caps. 22-24)"
+    },
+    {
+     "nombre": "oq_surrogate_inferencia",
+     "ok": true,
+     "detalle": "inferencia surrogate en dominio: 6312.3 MBq/µA @ 12 MeV (cap. 20)"
+    },
+    {
+     "nombre": "oq_inventario_decaimiento",
+     "ok": true,
+     "detalle": "stock a T½ = 18.5000 GBq (esperado 18.5)"
+    }
+   ],
+   "nota": "verificación funcional (14.9): casos operativos con resultado esperado sobre los motores reales"
+  },
+  {
+   "etapa": "PQ",
+   "ok": null,
+   "checks": [],
+   "nota": "Performance Qualification: verificación bajo condiciones reales — no iniciada (requiere entorno clínico real); el sistema nunca la declara superada"
+  }
+ ],
+ "veredicto": "calificado_dq_iq_oq"
+}

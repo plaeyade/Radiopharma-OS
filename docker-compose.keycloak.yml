@@ -1,0 +1,21 @@
+# Overlay OIDC/Keycloak (cap. 47.7; OAuth2/OIDC según despliegue).
+#
+# Uso:  docker compose -f docker-compose.yml -f docker-compose.keycloak.yml up keycloak
+#
+# Una vez arriba, exportar en el entorno de los servicios:
+#   OIDC_ISSUER=http://localhost:8080/realms/radiopharma
+#   OIDC_JWKS_URL=http://keycloak:8080/realms/radiopharma/protocol/openid-connect/certs
+#   OIDC_AUDIENCE=radiopharma-os
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    profiles: ["oidc"]
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?definir en .env (nunca en el repo)}
+      KC_HOSTNAME_STRICT: "false"
+    volumes:
+      - ./config/keycloak/radiopharma-realm.json:/opt/keycloak/data/import/radiopharma-realm.json:ro
+    ports:
+      - "8080:8080"

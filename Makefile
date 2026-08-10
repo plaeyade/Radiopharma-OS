@@ -10,7 +10,7 @@ test:            ## corre todos los tests
 	cd services/telemetry_service && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/process_service && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/surrogate_service && PYTHONPATH=. python -m pytest tests/ -q
-	python -m pytest pipelines/test_batch_cli.py pipelines/test_opcua.py pipelines/test_validation.py -q
+	python -m pytest pipelines/test_batch_cli.py pipelines/test_opcua.py pipelines/test_validation.py pipelines/test_airflow_dags.py pipelines/test_qualification.py -q
 
 validation:      ## reporte consolidado de validación (Fase 9, 18.13)
 	python pipelines/validation_report.py --out validation_report.json
@@ -44,3 +44,6 @@ up:              ## docker compose up
 
 down:
 	docker compose down
+
+qualification:   ## calificación DQ/IQ/OQ (Informe 14.9; PQ honestamente no iniciada)
+	python pipelines/qualification.py --out qualification_report.json

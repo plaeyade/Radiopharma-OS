@@ -1,0 +1,31 @@
+{
+  "realm": "radiopharma",
+  "enabled": true,
+  "displayName": "Radiopharma OS",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      {"name": "administrador"},
+      {"name": "fisico_medico"},
+      {"name": "radioquimico"},
+      {"name": "tecnologo"},
+      {"name": "responsable_calidad"},
+      {"name": "mantenimiento"},
+      {"name": "auditor"}
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "radiopharma-os",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8501/*"],
+      "webOrigins": ["http://localhost:8501"]
+    }
+  ],
+  "users": [],
+  "description": "Realm OIDC de Radiopharma OS (cap. 47.7/47.9): roles institucionales configurables; la autenticacion local HMAC convive con la validacion OIDC segun despliegue."
+}

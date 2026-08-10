@@ -161,3 +161,29 @@ async def list_users(_=Depends(_require_admin)) -> list[UserOut]:
                     role=u.role.name.lower(), is_active=u.is_active,
                     mfa_enabled=u.mfa_enabled)
             for u in users]
+
+
+# ---------------- OIDC/OAuth2 externo (47.7, Keycloak según despliegue) ----------------
+
+@router.get("/oidc/status")
+def oidc_status() -> dict:
+    """Estado honesto del proveedor OIDC externo."""
+    from app.infrastructure.security.oidc_validator import OidcValidator
+    return OidcValidator().status()
+
+
+@router.post("/oidc/verify")
+def oidc_verify(payload: dict) -> dict:
+    """Verificación criptográfica de un token OIDC externo.
+
+    503 si el proveedor no está configurado; 401 si el token no
+    supera la verificación. Nunca se acepta un token sin verificar."""
+    from app.infrastructure.security.oidc_validator import (
+        OidcTokenInvalido, OidcUnavailable, OidcValidator)
+    token = payload.get("token") or ""
+    try:
+        return OidcValidator().verify(token)
+    except OidcUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except OidcTokenInvalido as exc:
+        raise HTTPException(status_code=401, detail=str(exc))
