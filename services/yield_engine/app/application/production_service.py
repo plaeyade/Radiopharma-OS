@@ -271,7 +271,7 @@ class ProductionService:
         auditoria = {  # 19.24
             "fecha": datetime.now(timezone.utc).isoformat(),
             "usuario": operador, "motivo": motivo,
-            "geometria": {"world_cm": 20, "target": "Tubs",
+            "geometria": {"world_cm": 30, "target": "Tubs",
                           "radio_cm": target_radius_cm,
                           "espesor_cm": target_thickness_cm,
                           "material": "H2O18 (H:O 2:1, rho=1.11 g/cm3)"},
