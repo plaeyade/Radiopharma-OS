@@ -22,7 +22,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.surrogate_service import SurrogateService
-from app.presentation.routers import agents_api, surrogate_api
+from app.presentation.routers import agents_api, graph_api, surrogate_api
 
 app = FastAPI(
     title="Radiopharma OS - Surrogate Modeling Server",
@@ -35,6 +35,7 @@ app = FastAPI(
 
 surrogate_api.init(SurrogateService())
 agents_api.init()
+graph_api.init()
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
@@ -46,6 +47,7 @@ app.add_middleware(
 
 app.include_router(surrogate_api.router)
 app.include_router(agents_api.router)
+app.include_router(graph_api.router)
 
 
 @app.get("/health", tags=["meta"])
