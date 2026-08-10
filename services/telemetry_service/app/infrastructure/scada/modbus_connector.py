@@ -73,7 +73,7 @@ async def leer_registros(registros: dict[str, int], tags: dict[str, TagMap],
                 raise ModbusUnavailable(
                     f"serie '{serie}' sin TagMap de normalización (31.13)")
             rr = await cliente.read_holding_registers(
-                direccion, count=1, slave=unidad)
+                direccion, count=1, device_id=unidad)
             if rr.isError():
                 raise ModbusUnavailable(
                     f"error Modbus leyendo {serie} @ {direccion}: {rr}")
