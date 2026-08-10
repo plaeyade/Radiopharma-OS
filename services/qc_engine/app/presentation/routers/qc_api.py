@@ -228,3 +228,122 @@ def instrument_import(instrument_id: str, payload: dict) -> dict:
 def instrument_events() -> list[dict]:
     """Eventos de adquisición (26.20/26.24)."""
     return _instruments.importer.eventos()
+
+
+# ------------ Radiation Safety & Shielding Engine (cap. 36) ------------
+
+class _DosimetryState:
+    def __init__(self) -> None:
+        from app.domain.radiation_safety import DosimetryManager
+        self.manager = DosimetryManager()
+
+
+_dosimetry: _DosimetryState | None = None
+
+
+def init_dosimetry() -> None:
+    global _dosimetry
+    _dosimetry = _DosimetryState()
+
+
+@router.get("/radiation/constants")
+def radiation_constants() -> dict:
+    """Constantes físicas versionadas del motor (36.6)."""
+    from app.domain import radiation_safety as rs
+    return {"version_constantes": rs.CONSTANTES_VERSION,
+            "gamma_f18_usv_m2_per_gbq_h": rs.GAMMA_F18_USV_M2_PER_GBQ_H,
+            "limite_ocupacional_msv_ano": rs.LIMITE_OCUPACIONAL_MSV_ANO,
+            "materiales": sorted(rs._MATERIALES),
+            "umbrales_zona_version": rs.UMBRALES_ZONA_VERSION,
+            "nota": "cálculos de ingeniería con referencias explícitas; "
+                    "no sustituyen al Servicio de Protección Radiológica"}
+
+
+@router.post("/radiation/dose-rate")
+def radiation_dose_rate(payload: dict) -> dict:
+    """Tasa de dosis de fuente puntual ¹⁸F (36.6)."""
+    from app.domain.radiation_safety import (ProteccionInvalida,
+                                             tasa_dosis_fuente_puntual)
+    try:
+        tasa = tasa_dosis_fuente_puntual(float(payload["actividad_gbq"]),
+                                         float(payload["distancia_m"]))
+        return {"tasa_usv_h": tasa, "modelo": "fuente puntual, Γ(¹⁸F)"}
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.post("/radiation/attenuation")
+def radiation_attenuation(payload: dict) -> dict:
+    """Fracción transmitida con buildup (36.7)."""
+    from app.domain.radiation_safety import (ProteccionInvalida, atenuacion,
+                                             CONSTANTES_VERSION)
+    try:
+        frac = atenuacion(float(payload["espesor_cm"]), payload["material"])
+        return {"fraccion_transmitida": frac,
+                "version_constantes": CONSTANTES_VERSION}
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.post("/radiation/shielding")
+def radiation_shielding(payload: dict) -> dict:
+    """Espesor requerido de blindaje (36.7)."""
+    from app.domain.radiation_safety import (ProteccionInvalida,
+                                             espesor_requerido_cm)
+    try:
+        return espesor_requerido_cm(float(payload["tasa_objetivo_usv_h"]),
+                                    float(payload["tasa_inicial_usv_h"]),
+                                    payload["material"])
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.post("/radiation/area-classification")
+def radiation_area(payload: dict) -> dict:
+    """Clasificación de áreas 36.8 (umbrales GSR Part 3 versionados)."""
+    from app.domain.radiation_safety import (ProteccionInvalida,
+                                             clasificar_area)
+    try:
+        return clasificar_area(float(payload["tasa_usv_h"]))
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.post("/radiation/contamination", status_code=201)
+def radiation_contamination(payload: dict) -> dict:
+    """Registro auditado de medición de contaminación superficial (36.9)."""
+    from app.domain.radiation_safety import (MedicionContaminacion,
+                                             ProteccionInvalida)
+    try:
+        return MedicionContaminacion(
+            punto=payload["punto"], bq_cm2=float(payload["bq_cm2"]),
+            limite_bq_cm2=float(payload["limite_bq_cm2"]),
+            operador=payload.get("operador", "sistema")).evaluar()
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.post("/radiation/dosimetry/records", status_code=201)
+def dosimetry_register(payload: dict) -> dict:
+    """Registro dosimétrico auditado (36.10/36.22)."""
+    from app.domain.radiation_safety import (DosimetryRecord,
+                                             ProteccionInvalida)
+    try:
+        return _dosimetry.manager.registrar(DosimetryRecord(
+            trabajador_id=payload["trabajador_id"],
+            dosis_msv=float(payload["dosis_msv"]),
+            periodo=payload["periodo"]))
+    except (ProteccionInvalida, KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
+@router.get("/radiation/dosimetry/{trabajador_id}/{ano}")
+def dosimetry_acumulada(trabajador_id: str, ano: str) -> dict:
+    """Dosis anual acumulada vs. límite ocupacional (36.10)."""
+    return _dosimetry.manager.dosis_acumulada(trabajador_id, ano)
+
+
+@router.get("/radiation/dosimetry/records")
+def dosimetry_records() -> list[dict]:
+    """Registro completo de dosimetría (36.22, ALCOA+)."""
+    return _dosimetry.manager.registros()
