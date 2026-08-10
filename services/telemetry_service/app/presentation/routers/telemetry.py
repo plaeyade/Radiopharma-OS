@@ -208,3 +208,55 @@ async def plc_read_endpoint(payload: dict,
         return await plc_read(series)
     except PlcUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+
+
+# ---------------- conectores SCADA MQTT/Modbus (cap. 31.7/31.8) ----------------
+
+@router.get("/scada/status")
+async def scada_status(_: Identity = Depends(current_identity)) -> dict:
+    """Estado honesto de los conectores SCADA (31.6-31.8)."""
+    from app.infrastructure.opcua.plc_client import plc_status
+    from app.infrastructure.scada.modbus_connector import modbus_status
+    from app.infrastructure.scada.mqtt_connector import mqtt_status
+    return {"opc_ua": plc_status(), "modbus": modbus_status(),
+            "mqtt": mqtt_status(),
+            "nota": "cap. 31: lecturas reales; sin dispositivo/broker se "
+                    "reporta honestamente y nunca se simula"}
+
+
+@router.post("/scada/modbus/read")
+async def scada_modbus_read(payload: dict,
+                            _: Identity = Depends(require_operator)) -> dict:
+    """Lectura real Modbus TCP normalizada; 503 honesto si no responde.
+
+    Body: {"registros": {"target_temperature": 10},
+           "tags": {"target_temperature": {"serie": ..., "unidad": "C"}}}
+    """
+    from app.infrastructure.scada.modbus_connector import (
+        ModbusUnavailable, leer_registros)
+    from app.infrastructure.scada.normalization import TagMap
+    registros = {k: int(v) for k, v in (payload.get("registros") or {}).items()}
+    tags = {k: TagMap(**v) for k, v in (payload.get("tags") or {}).items()}
+    if not registros:
+        raise HTTPException(status_code=422, detail="registros requeridos")
+    try:
+        return await leer_registros(registros, tags)
+    except ModbusUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.post("/scada/mqtt/listen")
+async def scada_mqtt_listen(payload: dict,
+                            _: Identity = Depends(require_operator)) -> dict:
+    """Escucha real de topics MQTT normalizada; 503 honesto si no hay broker."""
+    from app.infrastructure.scada.mqtt_connector import (MqttUnavailable,
+                                                         suscribir_lecturas)
+    from app.infrastructure.scada.normalization import TagMap
+    topics = payload.get("topics") or {}
+    tags = {k: TagMap(**v) for k, v in (payload.get("tags") or {}).items()}
+    if not topics:
+        raise HTTPException(status_code=422, detail="topics requeridos")
+    try:
+        return await suscribir_lecturas(topics, tags)
+    except MqttUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
