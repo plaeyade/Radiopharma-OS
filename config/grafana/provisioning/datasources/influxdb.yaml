@@ -1,0 +1,16 @@
+# Datasource InfluxDB para Grafana (EDS 6.17: Grafana consulta
+# directamente InfluxDB, nunca el PLC).
+apiVersion: 1
+datasources:
+  - name: radiopharma-influxdb
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: radiopharma
+      defaultBucket: telemetry
+      tlsSkipVerify: true
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}
+    editable: false

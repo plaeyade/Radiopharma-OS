@@ -1,0 +1,191 @@
+{
+ "title": "Radiopharma OS — Producción ciclotrón (6.17)",
+ "uid": "radiopharma-produccion",
+ "schemaVersion": 39,
+ "version": 1,
+ "refresh": "10s",
+ "time": {
+  "from": "now-3h",
+  "to": "now"
+ },
+ "tags": [
+  "radiopharma-os",
+  "fase-7"
+ ],
+ "annotations": {
+  "list": []
+ },
+ "panels": [
+  {
+   "id": 1,
+   "title": "Estado del ciclotrón (6.17)",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"beam_current\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    },
+    {
+     "refId": "B",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"beam_energy\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "amp"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 2,
+   "title": "Temperatura del blanco",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 0
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"target_temperature\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 3,
+   "title": "Presión del blanco",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"target_pressure\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "pressurembar"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 4,
+   "title": "Vacío",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"vacuum_pressure\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "pressurembar"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 5,
+   "title": "Consumo energético",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 16
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"power_consumption\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "watt"
+    },
+    "overrides": []
+   }
+  },
+  {
+   "id": 6,
+   "title": "Estado de producción",
+   "type": "timeseries",
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 16
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "query": "from(bucket: \"telemetry\") |> range(start: -3h) |> filter(fn: (r) => r._measurement == \"production_activity\")",
+     "datasource": {
+      "type": "influxdb",
+      "uid": "radiopharma-influxdb"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "GBq"
+    },
+    "overrides": []
+   }
+  }
+ ],
+ "description": "Interfaz principal de visualización en tiempo real (EDS 6.17): Grafana consulta directamente InfluxDB. Paneles canónicos: ciclotrón, blanco, presión, vacío, energía y producción."
+}

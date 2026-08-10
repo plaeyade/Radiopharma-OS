@@ -1,0 +1,42 @@
+# Overlay de Dashboards (Informe 18.11, Fase 7).
+#
+# Uso: docker compose -f docker-compose.yml -f docker-compose.dashboards.yml up grafana streamlit
+#
+# Grafana (6.17) consulta directamente InfluxDB; Streamlit (6.18)
+# obtiene los datos procesados desde las APIs — nunca del PLC.
+services:
+  grafana:
+    image: grafana/grafana:11.2.0
+    profiles: ["dashboards"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?definir en .env (nunca en el repo)}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-dev-token}
+    volumes:
+      - ./config/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./config/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+
+  streamlit:
+    image: python:3.12-slim
+    profiles: ["dashboards"]
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir streamlit httpx &&
+             streamlit run dashboard/streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
+    environment:
+      YE_URL: http://yield-engine:8002
+      QC_URL: http://qc-engine:8005
+      TEL_URL: http://telemetry-service:8006
+      PROCESS_URL: http://process-service:8007
+      SURROGATE_URL: http://surrogate-service:8008
+    volumes:
+      - .:/app:ro
+    ports:
+      - "8501:8501"
+    depends_on:
+      - yield-engine
+      - telemetry-service
+      - process-service
