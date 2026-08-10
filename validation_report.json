@@ -1,0 +1,140 @@
+{
+ "reporte": "Validación Radiopharma OS (Fase 9, Informe 18.13)",
+ "fecha": "2026-08-10T06:39:47.860214+00:00",
+ "niveles": {
+  "pruebas_unitarias_integracion": {
+   "por_servicio": {
+    "nuclear_data_service": {
+     "tests": 25,
+     "ok": true,
+     "duracion_s": 1.24,
+     "resumen": "25 passed in 0.62s"
+    },
+    "yield_engine": {
+     "tests": 179,
+     "ok": true,
+     "duracion_s": 2.6,
+     "resumen": "179 passed in 1.92s"
+    },
+    "data_lake_service": {
+     "tests": 106,
+     "ok": true,
+     "duracion_s": 8.11,
+     "resumen": "106 passed in 7.20s"
+    },
+    "auth_service": {
+     "tests": 35,
+     "ok": true,
+     "duracion_s": 8.82,
+     "resumen": "35 passed, 54 warnings in 8.07s"
+    },
+    "qc_engine": {
+     "tests": 46,
+     "ok": true,
+     "duracion_s": 1.4,
+     "resumen": "46 passed, 1 warning in 0.77s"
+    },
+    "telemetry_service": {
+     "tests": 36,
+     "ok": true,
+     "duracion_s": 2.71,
+     "resumen": "36 passed in 1.98s"
+    },
+    "process_service": {
+     "tests": 146,
+     "ok": true,
+     "duracion_s": 1.57,
+     "resumen": "146 passed in 0.93s"
+    },
+    "surrogate_service": {
+     "tests": 17,
+     "ok": true,
+     "duracion_s": 1.51,
+     "resumen": "17 passed in 0.82s"
+    }
+   },
+   "total_tests": 590,
+   "servicios_con_fallos": 0,
+   "ok": true
+  },
+  "validacion_cientifica": {
+   "ok": true,
+   "checks": [
+    {
+     "nombre": "reproducibilidad_yield_engine",
+     "ok": true,
+     "detalle": "Y_sat(16.5 MeV) = 8988.43 MBq/µA (dos ejecuciones idénticas)",
+     "referencia": "10.15: reproducibilidad bit a bit del modelo determinista"
+    },
+    {
+     "nombre": "magnitud_fisica_yield",
+     "ok": true,
+     "detalle": "Y_sat = 8988.43 MBq/µA dentro del rango físico esperado para 18O(p,n)18F en H2-18O enriquecida",
+     "referencia": "comparación con referencias: rendimientos típicos FDG (10.15)"
+    },
+    {
+     "nombre": "decaimiento_exacto",
+     "ok": true,
+     "detalle": "A(t-T½) corregido = 200.0000000000 (esperado 200 exacto)",
+     "referencia": "consistencia numérica: ley de decaimiento (10.15)"
+    },
+    {
+     "nombre": "monte_carlo_vs_determinista",
+     "ok": true,
+     "detalle": "desviación -2.10 % (evidencia persistida 2026-08-10T04:53:25.560138+00:00, solver python3 (+opengate))",
+     "referencia": "19.14: comparación independiente MC vs determinista"
+    },
+    {
+     "nombre": "puerta_8_11_elmer",
+     "ok": true,
+     "detalle": "binario Elmer no disponible: el servicio lo reporta honestamente (503); la puerta por diseño se verifica en las pruebas unitarias del servicio",
+     "referencia": "cap. 8.11 (estado honesto de disponibilidad)"
+    }
+   ]
+  },
+  "pruebas_rendimiento": {
+   "duracion_total_s": 28.89,
+   "por_servicio": {
+    "nuclear_data_service": 1.24,
+    "yield_engine": 2.6,
+    "data_lake_service": 8.11,
+    "auth_service": 8.82,
+    "qc_engine": 1.4,
+    "telemetry_service": 2.71,
+    "process_service": 1.57,
+    "surrogate_service": 1.51
+   },
+   "ok": true
+  },
+  "validacion_pre_despliegue": {
+   "ok": true,
+   "checks": [
+    {
+     "nombre": "dependencias",
+     "ok": true,
+     "detalle": "todas presentes"
+    },
+    {
+     "nombre": "integridad_artefacto",
+     "ok": true,
+     "detalle": "zip 2244667 B, sha256:5ecb70941b95f07a…"
+    },
+    {
+     "nombre": "disponibilidad_solvers",
+     "ok": true,
+     "detalle": "{\"talys\": false, \"opengate\": false, \"elmer\": false} (patrón honesto: 503 si no disponible)"
+    }
+   ]
+  },
+  "validacion_clinica": {
+   "estado": "no_iniciada",
+   "nota": "Requiere entorno clínico real y protocolos institucionales; el sistema nunca la declara completa (honestidad regulatoria)."
+  },
+  "validacion_regulatoria": {
+   "estado": "no_iniciada",
+   "nota": "Requiere organismo notificado / autoridad sanitaria; pendiente por definición en MVP."
+  }
+ },
+ "veredicto_obligatorio": "apto",
+ "nota": "Los niveles clínico y regulatorio permanecen abiertos y no bloquean el veredicto técnico del MVP."
+}

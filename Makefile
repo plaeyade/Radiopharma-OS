@@ -10,7 +10,10 @@ test:            ## corre todos los tests
 	cd services/telemetry_service && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/process_service && PYTHONPATH=. python -m pytest tests/ -q
 	cd services/surrogate_service && PYTHONPATH=. python -m pytest tests/ -q
-	python -m pytest pipelines/test_batch_cli.py pipelines/test_opcua.py -q
+	python -m pytest pipelines/test_batch_cli.py pipelines/test_opcua.py pipelines/test_validation.py -q
+
+validation:      ## reporte consolidado de validación (Fase 9, 18.13)
+	python pipelines/validation_report.py --out validation_report.json
 
 nds:             ## levanta Nuclear Data Service en :8001
 	cd services/nuclear_data_service && PYTHONPATH=. uvicorn app.main:app --port 8001
