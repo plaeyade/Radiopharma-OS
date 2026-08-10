@@ -38,7 +38,10 @@ No editar a mano: la configuración queda registrada en la auditoría
 (19.24) y en el Data Lake; regenerar desde la API para reproducir.
 """
 import json
+import re
 import sys
+from importlib.metadata import version as _pkg_version
+from pathlib import Path
 
 import numpy as np
 import opengate as gate
@@ -52,12 +55,18 @@ CASE = __CASE_JSON__
 
 results = {
     "case": CASE,
-    "versions": {"opengate": gate.__version__},
+    "versions": {"opengate": _pkg_version("opengate")},
     "batches_edep_mev": [],
     "batches_n": [],
 }
 try:
-    results["versions"]["geant4"] = opengate_core.get_G4_version_string()
+    _so = next(Path(opengate_core.__file__).parent.glob("opengate_core*.so"), None)
+    _b = _so.read_bytes() if _so else b""
+    _m = re.search(rb"geant4-(\d+)-(\d+)-patch-(\d+)", _b)
+    _m = _m or re.search(rb"geant4-(\d+)-(\d+)", _b)
+    results["versions"]["geant4"] = (
+        ".".join(str(int(g)) for g in _m.groups() if g) if _m else "unknown"
+    )
 except Exception:
     results["versions"]["geant4"] = "unknown"
 

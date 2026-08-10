@@ -63,9 +63,16 @@ class GateRunner:
         if self._available is not None and not force:
             return self._available
         code = (
-            "import json,opengate,opengate_core as c;"
-            "print(json.dumps({'opengate':opengate.__version__,"
-            "'geant4':c.get_G4_version_string() if hasattr(c,'get_G4_version_string') else 'unknown'}))"
+            "import json,re,opengate,opengate_core as c;"
+            "from importlib.metadata import version as _v;"
+            "from pathlib import Path;"
+            "g4='unknown';"
+            "_so=next(Path(c.__file__).parent.glob('opengate_core*.so'),None);"
+            "_b=_so.read_bytes() if _so else b'';"
+            "_m=re.search(rb'geant4-(\\d+)-(\\d+)-patch-(\\d+)',_b);"
+            "_m=_m or re.search(rb'geant4-(\\d+)-(\\d+)',_b);"
+            "g4='.'.join(str(int(g)) for g in _m.groups() if g) if _m else g4;"
+            "print(json.dumps({'opengate':_v('opengate'),'geant4':g4}))"
         )
         try:
             proc = subprocess.run(
