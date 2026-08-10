@@ -46,6 +46,24 @@ def compute_production(req: ProductionRequest) -> ProductionResponse:
     return ProductionResponse(**production_response_dict(r))
 
 
+@router.post("/production/optimize")
+def optimize_production(req: dict) -> dict:
+    """Optimización física de producción (Informe 18.10; cap. 41.9/41.13).
+
+    Recomendación calculada sobre el modelo físico determinista —
+    los surrogates nunca reemplazan al modelo de referencia (20.3)."""
+    from app.domain.optimizer import OptimizationConstraint
+    try:
+        constraints = OptimizationConstraint(**{
+            k: v for k, v in (req.get("restricciones") or {}).items()
+            if k in OptimizationConstraint.__dataclass_fields__})
+        return _service.optimize_production(
+            reaction_id=req["reaction_id"], target_id=req["target_id"],
+            constraints=constraints)
+    except (ValueError, KeyError, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+
 def production_response_dict(r) -> dict:
     """Mapeo único ProductionResult → dict de respuesta (compartido con el
     endpoint calibrado del Calibration Layer)."""

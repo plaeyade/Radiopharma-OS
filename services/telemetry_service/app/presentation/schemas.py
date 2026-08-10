@@ -99,3 +99,13 @@ class DeviationCheckOut(BaseModel):
     evaluated_points: int
     clean: bool
     events: list[DeviationEventOut]
+
+
+class AnomalyDetectIn(BaseModel):
+    """Detección de anomalías sobre valores explícitos (6.22)."""
+    series: str = ""
+    batch_id: str = ""
+    values: list[float | None]
+    timestamps: list[str] | None = None
+    umbral_mad: float | None = None
+    politica: str | None = None

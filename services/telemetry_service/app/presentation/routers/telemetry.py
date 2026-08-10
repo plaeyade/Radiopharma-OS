@@ -14,7 +14,8 @@ from app.application.telemetry_service import TelemetryService
 from app.domain.entities import TelemetryPoint
 from app.infrastructure.security.jwt_guard import (Identity, current_identity,
                                                    require_operator)
-from app.presentation.schemas import (BatchSummaryOut, DeviationCheckIn,
+from app.presentation.schemas import (AnomalyDetectIn, BatchSummaryOut,
+                                      DeviationCheckIn,
                                       DeviationCheckOut, DeviationEventOut,
                                       DeviationPackOut, DeviationRuleOut,
                                       IngestIn, IngestOut, PointOut,
@@ -130,3 +131,53 @@ async def deviation_check(batch_id: str, payload: DeviationCheckIn,
     return DeviationCheckOut(
         batch_id=batch_id, pack=pack_name, evaluated_points=n,
         clean=not eventos, events=[_evento_out(e) for e in eventos])
+
+
+# ---------------- detección de anomalías (6.22/6.23) ----------------
+
+@router.post("/anomalies/detect")
+async def anomaly_detect(payload: AnomalyDetectIn,
+                         _: Identity = Depends(require_operator)) -> dict:
+    """Detección robusta (MAD) con política externa versionada.
+
+    Las anomalías y los datos inválidos generan eventos de auditoría
+    (6.23). El detector reporta; nunca actúa sobre el proceso."""
+    from app.application.anomalies import (DeteccionInvalida,
+                                           PoliticaAnomalias, detectar_anomalias,
+                                           resultado_a_dict)
+    pol = PoliticaAnomalias(
+        version=payload.politica or PoliticaAnomalias().version,
+        umbral_mad=(payload.umbral_mad
+                    if payload.umbral_mad is not None
+                    else PoliticaAnomalias().umbral_mad))
+    try:
+        res = detectar_anomalias(payload.values, payload.timestamps,
+                                 series=payload.series, politica=pol,
+                                 batch_id=payload.batch_id)
+    except DeteccionInvalida as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return resultado_a_dict(res)
+
+
+@router.get("/anomalies/detect/{batch_id}/{series}")
+async def anomaly_detect_batch(batch_id: str, series: str,
+                               umbral_mad: float = Query(default=5.0),
+                               _: Identity = Depends(current_identity)) -> dict:
+    """Detección sobre una serie almacenada de un lote (6.22)."""
+    from app.application.anomalies import (DeteccionInvalida,
+                                           PoliticaAnomalias, detectar_anomalias,
+                                           resultado_a_dict)
+    pts = await _service.query(series=series, tags={"batch_id": batch_id},
+                               limit=100000)
+    if not pts:
+        raise HTTPException(status_code=404,
+                            detail=f"sin puntos para {series}/{batch_id}")
+    try:
+        res = detectar_anomalias(
+            [p.value for p in pts], [p.ts.isoformat() for p in pts],
+            series=series,
+            politica=PoliticaAnomalias(umbral_mad=umbral_mad),
+            batch_id=batch_id)
+    except DeteccionInvalida as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return resultado_a_dict(res)

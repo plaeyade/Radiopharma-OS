@@ -511,6 +511,36 @@ class ProductionService:
             product_nuclide=REACTIONS[reaction_id]["product"],
             beam=beam, target=target, irradiation_time_min=irradiation_time_min)
 
+    def optimize_production(
+        self,
+        reaction_id: str,
+        target_id: str,
+        constraints: "OptimizationConstraint | None" = None,
+    ) -> dict:
+        """Optimización operacional (Informe 18.10) sobre el modelo
+        físico determinista — nunca sobre un surrogate (20.3).
+        Devuelve una recomendación diferenciada de la decisión
+        operativa (41.9)."""
+        from dataclasses import asdict
+
+        from app.domain.optimizer import (OptimizationConstraint,
+                                          ProductionOptimizer)
+        if reaction_id not in REACTIONS:
+            raise ValueError(f"Reacción no soportada: {reaction_id}")
+        if target_id not in TARGET_CATALOG:
+            raise ValueError(f"Blanco no soportado: {target_id}")
+        if target_id not in REACTIONS[reaction_id]["targets"]:
+            raise ValueError(
+                f"Blanco {target_id} incompatible con {reaction_id}")
+        import math
+        lam = self._rxn.get_decay_constant(REACTIONS[reaction_id]["product"])
+        half_life_min = math.log(2.0) / lam
+        opt = ProductionOptimizer(self._calc)
+        res = opt.optimize_eob(reaction_id, TARGET_CATALOG[target_id],
+                               half_life_min,
+                               constraints or OptimizationConstraint())
+        return asdict(res)
+
     def stopping_curve(self, material_key: str, e_min: float, e_max: float, step: float):
         e = e_min
         out = []
