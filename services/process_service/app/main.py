@@ -17,7 +17,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
-from app.presentation.routers import (logistics_api, operations_api, process_api,
+from app.presentation.routers import (clinical_api, facility_api, logistics_api,
+                                  operations_api,
+                                  process_api,
                                         synthesis_api)
 
 app = FastAPI(
@@ -33,6 +35,8 @@ process_api.init(ProcessService())
 logistics_api.init(LogisticsService())
 synthesis_api.init(SynthesisService())
 operations_api.init()
+clinical_api.init()
+facility_api.init()
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -47,6 +51,8 @@ app.include_router(process_api.router)
 app.include_router(logistics_api.router)
 app.include_router(synthesis_api.router)
 app.include_router(operations_api.router)
+app.include_router(clinical_api.router)
+app.include_router(facility_api.router)
 
 
 @app.get("/health", tags=["meta"])
