@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.auth_service import AuthService
-from app.presentation.routers import zerotrust_api, iam_api
+from app.presentation.routers import zerotrust_api, iam_api, gateway_api
 from app.config import load_settings
 from app.infrastructure.db.sql_refresh_token_store import SqlRefreshTokenStore
 from app.infrastructure.db.sql_user_repository import SqlUserRepository
@@ -63,8 +63,10 @@ app.add_middleware(
 app.include_router(auth.router)
 zerotrust_api.init()
 iam_api.init()
+gateway_api.init()
 app.include_router(zerotrust_api.router)
 app.include_router(iam_api.router)
+app.include_router(gateway_api.router)
 
 
 @app.get("/health", tags=["meta"])
