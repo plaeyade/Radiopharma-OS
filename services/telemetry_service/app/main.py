@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.telemetry_service import TelemetryService
 from app.config import load_settings
-from app.presentation.routers import telemetry
+from app.presentation.routers import telemetry, events_api
 
 settings = load_settings()
 
@@ -57,6 +57,8 @@ app.add_middleware(
 )
 
 app.include_router(telemetry.router)
+events_api.init()
+app.include_router(events_api.router)
 
 
 @app.get("/health", tags=["meta"])
