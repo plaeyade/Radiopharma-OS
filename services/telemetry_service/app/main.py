@@ -16,7 +16,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.telemetry_service import TelemetryService
 from app.config import load_settings
-from app.presentation.routers import telemetry, events_api, observability_api
+from app.presentation.routers import (telemetry, events_api, observability_api,
+                                     scada_api)
 
 settings = load_settings()
 
@@ -61,6 +62,8 @@ events_api.init()
 app.include_router(events_api.router)
 observability_api.init()
 app.include_router(observability_api.router)
+scada_api.init()
+app.include_router(scada_api.router)
 
 
 @app.get("/health", tags=["meta"])

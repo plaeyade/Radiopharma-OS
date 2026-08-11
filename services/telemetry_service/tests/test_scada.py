@@ -1,133 +1,194 @@
-"""Pruebas de los conectores SCADA (EDS 31.7/31.8/31.13).
-
-Modbus se verifica con roundtrip real de protocolo contra un
-servidor Modbus TCP real en proceso; MQTT se verifica con
-honestidad de plataforma (sin broker en el sandbox).
-"""
+"""Tests del RTMSIL — SCADA Integration Layer (EDS cap. 31)."""
 from __future__ import annotations
 
-import asyncio
-import sys
-import warnings
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.infrastructure.scada.modbus_connector import (  # noqa: E402
-    ModbusConfig, ModbusUnavailable, leer_registros, modbus_status)
-from app.infrastructure.scada.mqtt_connector import (  # noqa: E402
-    MqttConfig, MqttUnavailable, mqtt_status, suscribir_lecturas)
-from app.infrastructure.scada.normalization import (  # noqa: E402
-    NormalizacionInvalida, TagMap, normalizar)
-from app.main import app  # noqa: E402
-from tests.test_jwt_guard import auth_headers  # noqa: E402
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+from app.domain.scada import ScadaEngine
+from app.main import app
+from app.presentation.routers import scada_api
 
 
-# ------------------------------------------------------- normalización 31.13
-def test_normalizacion_escala_offset():
-    tag = TagMap(serie="target_temperature", unidad="C", escala=0.1,
-                 offset=-40.0, rango_min=-40.0, rango_max=150.0)
-    r = normalizar(250.0, tag)  # 250 crudo → -15.0 °C... escala 0.1
-    assert r["valor"] == pytest.approx(250.0 * 0.1 - 40.0)
-    assert r["unidad"] == "C"
-    assert "31.13" in r["fuente"]
+class _ClienteFalso:
+    """Cliente industrial de prueba inyectado (31.6/31.7/31.8)."""
+
+    def __init__(self, endpoint, cfg, falla=False):
+        self.endpoint = endpoint
+        self.falla = falla
+        self.conectado = False
+
+    def conectar(self):
+        if self.falla:
+            raise ConnectionError("timeout real simulado por el cliente")
+        self.conectado = True
+
+    def leer(self, variable):
+        if not self.conectado:
+            raise RuntimeError("no conectado")
+        return {"valor": 42.0, "variable": variable}
 
 
-def test_normalizacion_fuera_de_rango_rechazada():
-    tag = TagMap(serie="beam_current", unidad="uA", rango_max=100.0)
-    with pytest.raises(NormalizacionInvalida, match="6.23"):
-        normalizar(250.0, tag)
+@pytest.fixture()
+def engine():
+    eng = ScadaEngine(fabricas_clientes={
+        "opcua": lambda ep, cfg: _ClienteFalso(ep, cfg),
+        "modbus_tcp": lambda ep, cfg: _ClienteFalso(ep, cfg, falla=True),
+    })
+    scada_api.init(eng)
+    return eng
 
 
-# ---------------------------------------------------------- Modbus 31.8
-async def _roundtrip_modbus() -> dict:
-    from pymodbus.datastore import (ModbusDeviceContext,
-                                    ModbusSequentialDataBlock,
-                                    ModbusServerContext)
-    from pymodbus.server import StartAsyncTcpServer
-    dev = ModbusDeviceContext(hr=ModbusSequentialDataBlock(1, [0] * 100))
-    ctx = ModbusServerContext(devices=dev, single=True)
-    task = asyncio.create_task(
-        StartAsyncTcpServer(context=ctx, address=("127.0.0.1", 15030)))
-    await asyncio.sleep(1.0)
-    try:
-        from pymodbus.client import AsyncModbusTcpClient
-        c = AsyncModbusTcpClient("127.0.0.1", port=15030, timeout=2)
-        await c.connect()
-        await c.write_register(10, 250, device_id=1)  # 25.0 °C con escala 0.1
-        c.close()
-        cfg = ModbusConfig(host="127.0.0.1", port=15030, timeout_s=2.0)
-        tag = TagMap(serie="target_temperature", unidad="C", escala=0.1,
-                     rango_min=-40.0, rango_max=150.0)
-        return await leer_registros({"target_temperature": 10},
-                                    {"target_temperature": tag}, config=cfg)
-    finally:
-        task.cancel()
+@pytest.fixture()
+def client(engine):
+    return TestClient(app)
 
 
-def test_modbus_roundtrip_real():
-    res = asyncio.run(_roundtrip_modbus())
-    lectura = res["lecturas"]["target_temperature"]
-    assert lectura["valor"] == pytest.approx(25.0)
-    assert "31.8" in res["fuente"]
+def _conector(client, cid="plc-ciclotron", tipo="opcua",
+              endpoint="opc.tcp://127.0.0.1:4840"):
+    r = client.post("/api/v1/scada/connectors", json={
+        "conector_id": cid, "tipo": tipo, "endpoint": endpoint,
+        "configuracion": {"timeout_s": 2}, "responsable": "automatizacion"})
+    assert r.status_code == 201
+    return cid
 
 
-def test_modbus_inalcanzable_503_honesto():
-    async def _run():
-        cfg = ModbusConfig(host="127.0.0.1", port=19999, timeout_s=0.5)
-        with pytest.raises(ModbusUnavailable):
-            await leer_registros({"x": 1},
-                                 {"x": TagMap(serie="x", unidad="u")},
-                                 config=cfg)
-    asyncio.run(_run())
+def test_conector_versionado_y_endpoint_obligatorio(client):
+    _conector(client)
+    r = client.post("/api/v1/scada/connectors", json={
+        "conector_id": "plc-ciclotron", "tipo": "opcua",
+        "endpoint": "opc.tcp://127.0.0.1:4841", "configuracion": {},
+        "responsable": "automatizacion"})
+    assert r.status_code == 201 and r.json()["version"] == 2
+    historial = client.get(
+        "/api/v1/scada/connectors/plc-ciclotron/history").json()
+    assert [h["version"] for h in historial] == [1, 2]
+    r = client.post("/api/v1/scada/connectors", json={
+        "conector_id": "x", "tipo": "opcua", "endpoint": "",
+        "configuracion": {}, "responsable": "a"})
+    assert r.status_code == 422  # sin endpoint sería simulación
 
 
-def test_modbus_sin_configurar():
-    async def _run():
-        with pytest.raises(ModbusUnavailable, match="MODBUS_HOST"):
-            await leer_registros({"x": 1},
-                                 {"x": TagMap(serie="x", unidad="u")},
-                                 config=ModbusConfig(host=None))
-    asyncio.run(_run())
-
-
-# ------------------------------------------------------------- MQTT 31.7
-def test_mqtt_status_honesto(monkeypatch):
-    monkeypatch.delenv("MQTT_HOST", raising=False)
-    st = mqtt_status()
-    assert st["mqtt_configurado"] is False
-    assert "nunca" in st["nota"]
-
-
-def test_mqtt_broker_inalcanzable():
-    async def _run():
-        cfg = MqttConfig(host="127.0.0.1", port=19998, timeout_s=0.5)
-        with pytest.raises(MqttUnavailable):
-            await suscribir_lecturas(
-                {"beam_current": "ciclotron/beam_current"},
-                {"beam_current": TagMap(serie="beam_current", unidad="uA")},
-                config=cfg)
-    asyncio.run(_run())
-
-
-# ------------------------------------------------------------ endpoints
-def test_endpoint_scada_status():
-    client = TestClient(app)
-    r = client.get("/api/v1/telemetry/scada/status", headers=auth_headers())
-    assert r.status_code == 200
+def test_sondeo_real_exito_y_fallo_honesto(client):
+    _conector(client)
+    r = client.post("/api/v1/scada/connectors/plc-ciclotron/probe")
+    assert r.json()["estado"] == "conectado"
+    _conector(client, "plc-sintesis", "modbus_tcp",
+              "modbus://127.0.0.1:502")
+    r = client.post("/api/v1/scada/connectors/plc-sintesis/probe")
     cuerpo = r.json()
-    assert set(cuerpo) >= {"opc_ua", "modbus", "mqtt"}
+    assert cuerpo["estado"] == "fallo_conexion"
+    assert "ConnectionError" in cuerpo["detalle"]
+    # el fallo genera evento de pérdida de comunicación (31.11)
+    eventos = client.get("/api/v1/scada/events").json()
+    assert any(e["tipo"] == "perdida_comunicacion"
+               and e["dispositivo"] == "plc-sintesis" for e in eventos)
 
 
-def test_endpoint_modbus_sin_config_503(monkeypatch):
-    monkeypatch.delenv("MODBUS_HOST", raising=False)
-    client = TestClient(app)
-    r = client.post("/api/v1/telemetry/scada/modbus/read",
-                    json={"registros": {"t": 1},
-                          "tags": {"t": {"serie": "t", "unidad": "C"}}},
-                    headers=auth_headers("operador", "operador.ciclotron"))
-    assert r.status_code == 503
+def test_lectura_sin_conexion_503_y_con_conexion_real(client):
+    _conector(client)
+    r = client.post("/api/v1/scada/connectors/plc-ciclotron/read",
+                    params={"variable": "ns://2;i=3"})
+    assert r.status_code == 503  # honesto: sin conexión viva
+    client.post("/api/v1/scada/connectors/plc-ciclotron/probe")
+    r = client.post("/api/v1/scada/connectors/plc-ciclotron/read",
+                    params={"variable": "ns://2;i=3"})
+    assert r.status_code == 200
+    assert r.json()["lectura"]["valor"] == 42.0
+
+
+def test_adaptador_plc_traduccion_real(client):
+    r = client.post("/api/v1/scada/adapters", json={
+        "fabricante": "siemens-s7",
+        "mapeo": {"DB1.TEMP": "temperatura", "DB1.PRES": "presion"},
+        "responsable": "automatizacion"})
+    assert r.status_code == 201
+    r = client.post("/api/v1/scada/adapters/siemens-s7/translate",
+                    json={"datos_externos": {
+                        "DB1.TEMP": 63.5, "DB1.PRES": 101325,
+                        "DB1.OTRO": 1}})
+    assert r.json() == {"temperatura": 63.5, "presion": 101325}
+    r = client.post("/api/v1/scada/adapters/abb/translate",
+                    json={"datos_externos": {}})
+    assert r.status_code == 422
+
+
+def _medicion(valor, variable="temperatura", minutos=0):
+    ts = (datetime.now(timezone.utc)
+          - timedelta(minutes=minutos)).isoformat()
+    return {"dispositivo": "modulo-sintesis-1", "variable": variable,
+            "valor": valor, "unidad": "°C", "timestamp": ts,
+            "origen": "plc-ciclotron", "calidad": "buena"}
+
+
+def test_validacion_rango_y_evento_de_anomalia(client):
+    client.post("/api/v1/scada/validations", json={
+        "variable": "temperatura", "minimo": 0, "maximo": 120,
+        "responsable": "automatizacion"})
+    r = client.post("/api/v1/scada/measurements", json=_medicion(63.5))
+    assert r.status_code == 201
+    r = client.post("/api/v1/scada/measurements", json=_medicion(250.0))
+    assert r.status_code == 422  # fuera de rango: NO se acepta (31.22)
+    eventos = client.get("/api/v1/scada/events").json()
+    assert any(e["tipo"] == "validacion" and "rango" in
+               e["detalle"]["motivo"] for e in eventos)
+    serie = client.get("/api/v1/scada/series/temperatura").json()
+    assert len(serie) == 1  # la anomalía no entró en la serie
+
+
+def test_consistencia_temporal_y_normalizacion_utc(client):
+    r = client.post("/api/v1/scada/measurements", json=_medicion(60.0))
+    assert r.status_code == 201
+    assert r.json()["timestamp"].endswith("+00:00")  # 31.13
+    # timestamp anterior a la última medición → rechazado (31.22)
+    r = client.post("/api/v1/scada/measurements",
+                    json=_medicion(61.0, minutos=10))
+    assert r.status_code == 422
+    # timestamp futuro → rechazado
+    futuro = (datetime.now(timezone.utc)
+              + timedelta(hours=1)).isoformat()
+    m = _medicion(62.0)
+    m["timestamp"] = futuro
+    r = client.post("/api/v1/scada/measurements", json=m)
+    assert r.status_code == 422
+
+
+def test_alarmas_historial_completo(client):
+    r = client.post("/api/v1/scada/alarms", json={
+        "alarma_id": "alm-001", "criticidad": "alta",
+        "origen": "celda-caliente-1", "responsable": "operador-1",
+        "detalle": "presión fuera de rango"})
+    assert r.status_code == 201
+    client.post("/api/v1/scada/alarms/alm-001/transition", json={
+        "estado": "reconocida", "actor": "operador-1"})
+    r = client.post("/api/v1/scada/alarms/alm-001/transition", json={
+        "estado": "cerrada", "actor": "supervisor",
+        "detalle": "presión restablecida"})
+    historial = r.json()["historial"]
+    assert [h["estado"] for h in historial] == [
+        "activa", "reconocida", "cerrada"]
+    # una alarma cerrada no se reabre (31.12)
+    r = client.post("/api/v1/scada/alarms/alm-001/transition", json={
+        "estado": "reconocida", "actor": "x"})
+    assert r.status_code == 422
+    # duplicado → 422 (el historial nunca se reinicia)
+    r = client.post("/api/v1/scada/alarms", json={
+        "alarma_id": "alm-001", "criticidad": "baja", "origen": "x",
+        "responsable": "y"})
+    assert r.status_code == 422
+
+
+def test_eventos_operativos_y_estado_honesto(client):
+    r = client.post("/api/v1/scada/events", json={
+        "tipo": "paro", "dispositivo": "ciclotron-1",
+        "detalle": {"motivo": "interlock vacuum"}, "actor": "scada"})
+    assert r.status_code == 201
+    estado = client.get("/api/v1/scada/status").json()
+    assert estado["persistencia_31_23"]["influxdb"] == "no_configurado"
+    assert estado["bus_eventos"] == "no_inyectado"
+    meta = client.get("/api/v1/scada/meta").json()
+    assert set(meta["tipos_conector"]) == {
+        "opcua", "mqtt", "modbus_tcp", "modbus_rtu"}
+    audit = client.get("/api/v1/scada/audit").json()
+    assert all("evento_id" in a and "resultado" in a for a in audit)
