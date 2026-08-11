@@ -19,7 +19,7 @@ from app.application.calibration_service import (CalibrationService,
 from app.application.production_service import ProductionService
 from app.infrastructure.repositories.factory import build_reaction_provider
 from app.infrastructure.stopping.factory import build_stopping_provider
-from app.presentation.routers import equipment_api, yield_api
+from app.presentation.routers import equipment_api, hpc_api, yield_api
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
@@ -55,6 +55,8 @@ app.add_middleware(
 
 app.include_router(yield_api.router)
 app.include_router(equipment_api.router)
+hpc_api.init()
+app.include_router(hpc_api.router)
 
 
 @app.get("/health", tags=["meta"])
