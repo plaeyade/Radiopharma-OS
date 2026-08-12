@@ -42,7 +42,7 @@ rag_api.init()
 mlops_api.init()
 ei_api.init()
 serving_api.init()
-genai_api.init()
+genai_api.init(rag_engine=rag_api._engine)
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
