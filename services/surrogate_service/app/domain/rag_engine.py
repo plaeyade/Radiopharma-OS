@@ -126,6 +126,16 @@ class RagEngine:
                  "idioma": d.idioma, "estado": d.estado}
                 for d in self._docs.values()]
 
+    def contenido_documento(self, documento_id: str) -> dict:
+        """Contenido completo para indexado semántico y contexto RAG
+        (45.8/45.20); el original nunca se modifica (45.7)."""
+        d = self._docs.get(documento_id)
+        if d is None:
+            raise RagInvalido(f"documento desconocido: {documento_id}")
+        return {"documento_id": d.documento_id, "titulo": d.titulo,
+                "contenido_texto": d.contenido_texto,
+                "origen": d.origen, "estado": d.estado}
+
     def marcar_obsoleto(self, documento_id: str, usuario: str) -> dict:
         if documento_id not in self._docs:
             raise RagInvalido(f"documento inexistente: {documento_id}")
