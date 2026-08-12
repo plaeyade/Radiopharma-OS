@@ -226,7 +226,66 @@ services:
     profiles: ["calidad"]
     volumes: ["./out:/data"]
 
+  # ── Fase 1: infraestructura de conectores externos ─────────────────────
+  # Cada pieza activa un marcador honesto `no_configurado` → ver
+  # docs/despliegue_fase1.md y scripts/verificar_despliegue.py.
+
+  # Redis: caché/colas auxiliar de plataforma (capa 59).
+  redis:
+    image: redis:7-alpine
+    container_name: rpos-redis
+    command: redis-server --appendonly yes
+    ports: ["6379:6379"]
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Broker MQTT (EDS cap. 31 RTMSIL): activa el conector `mqtt` real del
+  # SCADA engine. En producción el broker vive en la red del acelerador.
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: rpos-mosquitto
+    profiles: ["conectores"]
+    ports:
+      - "1883:1883"   # MQTT
+      - "9002:9002"   # websockets
+    volumes:
+      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquittodata:/mosquitto/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/broker/uptime' -C 1 -W 5"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # Servidor OSRM propio (logistics twin): la imagen NO incluye mapa —
+  # hay que prepararlo una vez (perfil "mapa", ver docs/despliegue_fase1.md).
+  # Hasta entonces el conector OSRM reporta honestamente `fallo_conexion`.
+  osrm:
+    image: osrm/osrm-backend:latest
+    container_name: rpos-osrm
+    profiles: ["mapa"]
+    command: osrm-routed --algorithm mld --max-table-size 100 /data/mapa.osrm
+    ports: ["5000:5000"]
+    volumes:
+      - osrmdata:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/route/v1/driving/13.388860,52.517037;13.388860,52.517037?overview=false | grep -q Ok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   pgdata:
   miniodata:
   influxdata:
+  redisdata:
+  mosquittodata:
+  osrmdata:
