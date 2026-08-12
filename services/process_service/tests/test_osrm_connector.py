@@ -89,7 +89,7 @@ def test_sonda_real_exito_y_fallo_honesto(client, conector):
     _servidor(client)
     r = client.post("/api/v1/osrm/servers/osrm-1/probe")
     assert r.json()["estado"] == "conectado"
-    assert any("/route/v1/driving/0,0;0,0" in u for u in http.gets)
+    assert any("/route/v1/driving/13.388860,52.517037" in u for u in http.gets)
     http.vivo = False
     r = client.post("/api/v1/osrm/servers/osrm-1/probe")
     assert r.json()["estado"] == "fallo_conexion"

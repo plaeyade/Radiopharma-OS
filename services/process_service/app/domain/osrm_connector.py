@@ -125,10 +125,14 @@ class OsrmConnector:
         return versiones[-1]
 
     def sondear(self, servidor_id: str, actor: str = "sistema") -> dict:
-        """Sonda REAL: GET /route/v1/{perfil}/0,0;0,0?overview=false."""
+        """Sonda REAL: auto-ruta sobre un punto transitable (un punto en el océano como 0,0 devuelve NoRoute en servidores reales)."""
         srv = self._vigente(servidor_id)
         try:
-            url = (f"{srv.endpoint}/route/v1/{srv.perfil}/0,0;0,0"
+            # auto-ruta sobre un punto transitable (Berlín, ejemplo de
+            # referencia de la API OSRM): 0,0 está en el océano y los
+            # servidores reales responden NoRoute/400
+            url = (f"{srv.endpoint}/route/v1/{srv.perfil}/"
+                   "13.388860,52.517037;13.388860,52.517037"
                    "?overview=false")
             with self._http() as http:
                 resp = http.get(url)
