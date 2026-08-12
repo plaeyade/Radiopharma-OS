@@ -112,6 +112,17 @@ class RagEngine:
                     "paginas_ocr": ext["paginas_ocr"],
                     "paginas_sin_texto": ext["paginas_sin_texto"],
                     "ocr_utilizado": ext["ocr_utilizado"]}
+        elif nombre.endswith(".docx"):
+            # extracción REAL 45.7: párrafos y tablas con python-docx
+            from . import document_extractor as de
+            try:
+                ext = de.extraer_docx(contenido)
+            except de.ExtraccionInvalida as exc:
+                raise RagInvalido(str(exc)) from exc
+            return {"texto": ext["texto"], "sha256_original": sha,
+                    "formato": "docx", "extractor": ext["extractor"],
+                    "parrafos": ext["parrafos"], "tablas": ext["tablas"],
+                    "ocr_utilizado": False}
         elif nombre.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")):
             from . import document_extractor as de
             try:
@@ -125,8 +136,7 @@ class RagEngine:
         else:
             raise RagInvalido(
                 "formato no soportado por el parser (45.7): "
-                "texto/HTML/PDF/imagen-OCR; Word queda honestamente "
-                "pendiente de runtime documental")
+                "texto/HTML/PDF/DOCX/imagen-OCR (45.7)")
         return {"texto": texto, "sha256_original": sha,
                 "formato": nombre_archivo.rsplit(".", 1)[-1].lower()}
 

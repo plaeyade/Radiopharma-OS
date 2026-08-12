@@ -124,3 +124,42 @@ def test_estado_extractor_honesto(client):
     assert "eng" in cuerpo["tesseract_idiomas"]
     assert cuerpo["poppler"] is True
     assert "nunca se rellenan" in cuerpo["nota"]
+
+def test_extraccion_docx_real(client):
+    """DOCX REAL generado con python-docx: párrafos + tabla."""
+    import io
+    import docx
+    doc = docx.Document()
+    doc.add_heading("Protocolo de irradiación F-18", level=1)
+    doc.add_paragraph("Blanco de O-18 enriquecido, corriente 70 µA.")
+    tabla = doc.add_table(rows=2, cols=2)
+    tabla.rows[0].cells[0].text = "Parámetro"
+    tabla.rows[0].cells[1].text = "Valor"
+    tabla.rows[1].cells[0].text = "Tiempo"
+    tabla.rows[1].cells[1].text = "120 min"
+    buf = io.BytesIO()
+    doc.save(buf)
+    r = client.post("/api/v1/rag/documents/parse", json={
+        "nombre_archivo": "protocolo_f18.docx",
+        "contenido_b64": base64.b64encode(buf.getvalue()).decode()})
+    assert r.status_code == 201, r.text
+    cuerpo = r.json()
+    assert "corriente 70 µA" in cuerpo["texto"]
+    assert "Tiempo | 120 min" in cuerpo["texto"]  # tabla real
+    assert cuerpo["formato"] == "docx"
+    assert cuerpo["tablas"] == 1
+
+
+def test_docx_vacio_en_revision(client):
+    import io
+    import docx
+    doc = docx.Document()
+    doc.add_paragraph("")
+    buf = io.BytesIO()
+    doc.save(buf)
+    r = client.post("/api/v1/rag/documents/parse", json={
+        "nombre_archivo": "vacio.docx",
+        "contenido_b64": base64.b64encode(buf.getvalue()).decode()})
+    assert r.status_code == 422  # 45.21: permanece en revisión
+    assert "NO se inventa" in r.json()["detail"]
+

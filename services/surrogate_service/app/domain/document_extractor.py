@@ -144,6 +144,7 @@ def estado_extractor() -> dict:
     return {"version": EXTRACTOR_VERSION,
             "pypdf": _modulo_ok("pypdf"),
             "tesseract_idiomas": idiomas_ocr(),
+            "python_docx": _modulo_ok("docx"),
             "poppler": bool(subprocess.run(
                 ["which", "pdftoppm"], capture_output=True).stdout),
             "nota": ("extracción REAL; páginas sin capa de texto ni OCR "
@@ -157,3 +158,33 @@ def _modulo_ok(nombre: str) -> bool:
         return True
     except ImportError:
         return False
+
+def extraer_docx(contenido: bytes) -> dict:
+    """Extracción REAL de Word .docx (45.7): párrafos y tablas con
+    python-docx. Documentos sin texto extraíble permanecen en revisión
+    (45.21) — el contenido nunca se inventa."""
+    import docx
+    try:
+        doc = docx.Document(io.BytesIO(contenido))
+    except Exception as exc:
+        raise ExtraccionInvalida(
+            f"DOCX ilegible: {type(exc).__name__}: {exc}") from exc
+    partes: list[str] = []
+    for p in doc.paragraphs:
+        if p.text.strip():
+            partes.append(p.text.strip())
+    for tabla in doc.tables:
+        for fila in tabla.rows:
+            celdas = [c.text.strip() for c in fila.cells]
+            if any(celdas):
+                partes.append(" | ".join(celdas))
+    if not partes:
+        raise ExtraccionInvalida(
+            "DOCX sin texto extraíble; el contenido NO se inventa — el "
+            "documento permanece en revisión (45.21)")
+    return {"texto": "\n\n".join(partes),
+            "parrafos": len([p for p in doc.paragraphs if p.text.strip()]),
+            "tablas": len(doc.tables),
+            "ocr_utilizado": False,
+            "extractor": EXTRACTOR_VERSION}
+
