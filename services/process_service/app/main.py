@@ -18,6 +18,7 @@ from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
 from app.presentation.routers import (beme_api, clinical_api, facility_api,
+                                  osrm_api,
                                   financial_api,
                                   simulation_api,
                                   logistics_api,
@@ -36,6 +37,7 @@ app = FastAPI(
 
 process_api.init(ProcessService())
 logistics_api.init(LogisticsService())
+osrm_api.init()
 synthesis_api.init(SynthesisService())
 operations_api.init()
 clinical_api.init()
@@ -55,6 +57,7 @@ app.add_middleware(
 
 app.include_router(process_api.router)
 app.include_router(logistics_api.router)
+app.include_router(osrm_api.router)
 app.include_router(synthesis_api.router)
 app.include_router(operations_api.router)
 app.include_router(clinical_api.router)

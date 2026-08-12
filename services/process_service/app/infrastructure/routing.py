@@ -163,3 +163,87 @@ class OsrmRoutingProvider:
         # aquí se aproxima con la velocidad configurada (documentado).
         del origin
         return self._speed * (minutes / 60.0) / ROAD_FACTOR
+
+class OsrmRoutingProvider:
+    """Routing REAL contra un servidor OSRM (HTTP).
+
+    Usa la API pública OSRM:
+      - ``GET /route/v1/{perfil}/{lon},{lat};{lon},{lat}`` para tiempos y
+        distancias por carretera reales;
+      - ``GET /table/v1/{perfil}/{origen};{anillo}?sources=0`` para
+        isócronas (radio alcanzable en N minutos).
+
+    Cualquier fallo de red se propaga como excepción real — el Logistics
+    Twin nunca sustituye silenciosamente el resultado por una estimación.
+    """
+
+    name = "osrm-http"
+
+    def __init__(self, base_url: str, perfil: str = "driving",
+                 http_factory=None, timeout_s: float = 10.0) -> None:
+        if not base_url.startswith(("http://", "https://")):
+            raise ValueError("base_url OSRM debe ser URL http(s)")
+        self._base = base_url.rstrip("/")
+        self._perfil = perfil
+        self._http_factory = http_factory
+        self._timeout_s = timeout_s
+
+    def _http(self):
+        if self._http_factory is not None:
+            return self._http_factory()
+        import httpx
+        return httpx.Client(timeout=self._timeout_s)
+
+    def road_time(self, origin: GeoPoint, dest: GeoPoint) -> tuple[float, float]:
+        """(minutos, km) por carretera REAL según OSRM."""
+        url = (f"{self._base}/route/v1/{self._perfil}/"
+               f"{origin.lon},{origin.lat};{dest.lon},{dest.lat}"
+               "?overview=false")
+        with self._http() as http:
+            resp = http.get(url)
+        if resp.status_code >= 400:
+            raise ConnectionError(f"OSRM HTTP {resp.status_code}")
+        cuerpo = resp.json()
+        if cuerpo.get("code") != "Ok" or not cuerpo.get("routes"):
+            raise RuntimeError(
+                f"OSRM sin ruta: {cuerpo.get('code', 'respuesta inválida')}")
+        ruta = cuerpo["routes"][0]
+        return ruta["duration"] / 60.0, ruta["distance"] / 1000.0
+
+    def reachable_radius_km(self, origin: GeoPoint, minutes: float) -> float:
+        """Radio real alcanzable en `minutes` vía OSRM table sobre un
+        anillo de 12 puntos; devuelve la máxima distancia cuya duración
+        OSRM real sea ≤ minutes."""
+        if minutes <= 0:
+            return 0.0
+        import math
+        # anillo estimado a velocidad de mensajería × margen vial
+        radio_est_km = DEFAULT_SPEED_KMH * (minutes / 60.0) * 1.6
+        puntos = []
+        for k in range(12):
+            ang = math.radians(k * 30)
+            dlat = (radio_est_km / 111.32) * math.sin(ang)
+            dlon = (radio_est_km / (111.32 *
+                    max(0.01, math.cos(math.radians(origin.lat))))) \
+                * math.cos(ang)
+            puntos.append(GeoPoint(origin.lat + dlat, origin.lon + dlon))
+        coords = ";".join(
+            [f"{origin.lon},{origin.lat}"]
+            + [f"{p.lon},{p.lat}" for p in puntos])
+        url = (f"{self._base}/table/v1/{self._perfil}/{coords}"
+               "?sources=0")
+        with self._http() as http:
+            resp = http.get(url)
+        if resp.status_code >= 400:
+            raise ConnectionError(f"OSRM HTTP {resp.status_code}")
+        cuerpo = resp.json()
+        if cuerpo.get("code") != "Ok" or not cuerpo.get("durations"):
+            raise RuntimeError(
+                f"OSRM table sin resultado: "
+                f"{cuerpo.get('code', 'respuesta inválida')}")
+        duraciones = cuerpo["durations"][0][1:]  # saltar origen-origen
+        alcanzables = [haversine_km(origin, p)
+                       for p, d in zip(puntos, duraciones)
+                       if d is not None and d <= minutes * 60.0]
+        return max(alcanzables) if alcanzables else 0.0
+

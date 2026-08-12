@@ -113,6 +113,12 @@ class LogisticsService:
     def routing(self) -> RoutingProvider:
         return self._routing
 
+    def set_routing(self, routing: RoutingProvider) -> None:
+        """Cambia el proveedor de routing (p. ej. activación OSRM real).
+        El campo routing_source de cada ruta refleja el proveedor vigente
+        — la trazabilidad del cálculo nunca se oculta."""
+        self._routing = routing
+
     def list_facilities(self) -> list[Facility]:
         return list(self._facilities.values())
 
