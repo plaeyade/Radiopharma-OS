@@ -60,12 +60,12 @@ def test_parser_sha256_y_formatos_honestos(client: TestClient) -> None:
     assert r.status_code == 201
     assert "<h1>" not in r.json()["texto"]
     assert len(r.json()["sha256_original"]) == 64
-    # PDF: honestamente pendiente de runtime, nunca parseo ficticio
+    # PDF ilegible: error real del extractor, nunca parseo ficticio
     r2 = client.post("/api/v1/rag/documents/parse", json={
         "nombre_archivo": "paper.pdf",
         "contenido_b64": base64.b64encode(b"%PDF-1.4 fake").decode()})
     assert r2.status_code == 422
-    assert "pendientes" in r2.json()["detail"]
+    assert "PDF" in r2.json()["detail"]
 
 
 def test_recuperacion_coseno_real(client: TestClient) -> None:

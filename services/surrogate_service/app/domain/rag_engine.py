@@ -91,16 +91,42 @@ class RagEngine:
         """Extracción de texto (45.7): el original NUNCA se modifica;
         se registra su sha256."""
         sha = hashlib.sha256(contenido).hexdigest()
-        if nombre_archivo.lower().endswith((".html", ".htm")):
+        nombre = nombre_archivo.lower()
+        if nombre.endswith((".html", ".htm")):
             texto = _TAG.sub(" ", contenido.decode("utf-8",
                                                    errors="replace"))
-        elif nombre_archivo.lower().endswith((".txt", ".md")):
+        elif nombre.endswith((".txt", ".md")):
             texto = contenido.decode("utf-8", errors="replace")
+        elif nombre.endswith(".pdf"):
+            # extracción REAL 45.7: capa de texto (pypdf) + OCR real
+            # (Tesseract) para páginas escaneadas; las páginas sin
+            # resultado se reportan honestamente
+            from . import document_extractor as de
+            try:
+                ext = de.extraer_pdf(contenido)
+            except de.ExtraccionInvalida as exc:
+                raise RagInvalido(str(exc)) from exc
+            return {"texto": ext["texto"], "sha256_original": sha,
+                    "formato": "pdf", "extractor": ext["extractor"],
+                    "paginas": ext["paginas"],
+                    "paginas_ocr": ext["paginas_ocr"],
+                    "paginas_sin_texto": ext["paginas_sin_texto"],
+                    "ocr_utilizado": ext["ocr_utilizado"]}
+        elif nombre.endswith((".png", ".jpg", ".jpeg", ".tiff", ".bmp")):
+            from . import document_extractor as de
+            try:
+                ext = de.extraer_imagen(contenido)
+            except de.ExtraccionInvalida as exc:
+                raise RagInvalido(str(exc)) from exc
+            return {"texto": ext["texto"], "sha256_original": sha,
+                    "formato": nombre.rsplit(".", 1)[-1],
+                    "extractor": ext["extractor"],
+                    "ocr_utilizado": True}
         else:
             raise RagInvalido(
-                "formato no soportado por el parser MVP (45.7): "
-                "texto/HTML; PDF/Word/OCR quedan honestamente pendientes "
-                "de runtime documental")
+                "formato no soportado por el parser (45.7): "
+                "texto/HTML/PDF/imagen-OCR; Word queda honestamente "
+                "pendiente de runtime documental")
         return {"texto": texto, "sha256_original": sha,
                 "formato": nombre_archivo.rsplit(".", 1)[-1].lower()}
 

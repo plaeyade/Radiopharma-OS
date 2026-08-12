@@ -76,6 +76,14 @@ def citar(payload: dict) -> dict:
                   payload["documentos"], payload.get("usuario", "sistema"))
 
 
+@router.get("/extractor-status")
+def estado_extractor():
+    """Estado real del extractor documental (45.7): pypdf, Tesseract
+    (idiomas instalados), poppler."""
+    from app.domain.document_extractor import estado_extractor as _est
+    return _est()
+
+
 @router.get("/citations")
 def citas() -> list[dict]:
     return _engine.citas()
