@@ -82,6 +82,28 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 7 — Runtimes científicos servidos por la plataforma (v0.73.0)
+
+Los tres motores, ya instalados (Fase 6), ahora **servidos vía HTTP por los
+microservicios vivos** — no funciones locales, sino la plataforma real con
+`TALYS_CMD`/`ELMER_CMD`/`OPENGATE_PYTHON` cableados por entorno:
+
+- NDS :8001 `GET /api/v1/cross-sections/compare/o18_p_n_f18` → TALYS 2.2 real
+  (IAEA pico 533,4 mb @ 5,04 MeV vs TALYS 331,3 mb @ 8,6 MeV; 76 puntos,
+  rms 0,689; caché versionado que nunca sobrescribe).
+- YE :8002 `POST /api/v1/elmer/thermal/compare` → pipeline yield→burnup→
+  ElmerSolver real: T_peak FEM 26 951,7 K vs reducido 52 389,2 K — cota
+  conservadora verificada.
+- YE :8002 `POST /api/v1/mc/target` → OpenGATE/Geant4 11.4.2 real (FTFP_BERT,
+  2000 historias, 3 lotes): 16,16 MeV/historia, MC 598,0 W vs determinista
+  610,5 W (−2,04 %), incertidumbre estadística real 0,007 %, y
+  `review_required=True` honesto cuando la validación 19.21 lo exige —
+  nunca se declara validado sin cumplirla.
+
+`make demo-runtimes` reproduce la evidencia (`scripts/demo_runtimes_e2e.py` →
+`out/demo_runtimes_e2e.json`, 0 fallos). Expediente de inspección actualizado
+contra la plataforma viva (`out/expediente_fase7.json`). Suite: 910+34 verde.
+
 ## Fase 6 — Runtimes científicos reales y despliegue endurecido (v0.72.0)
 
 Los tres motores científicos externos — integrados desde el inicio con 503 honesto —

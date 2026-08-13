@@ -48,5 +48,8 @@ down:
 demo:            ## demo de UN comando: docker compose o modo local + puerta de salud honesta
 	./scripts/demo_un_comando.sh
 
+demo-runtimes:   ## E2E real: TALYS/ElmerFEM/OpenGATE servidos vía HTTP (servicios vivos)
+	python3 scripts/demo_runtimes_e2e.py localhost
+
 qualification:   ## calificación DQ/IQ/OQ (Informe 14.9; PQ honestamente no iniciada)
 	python pipelines/qualification.py --out qualification_report.json
