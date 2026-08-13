@@ -14,8 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.application.qc_release_service import QcReleaseService
 from app.application.qc_service import QcService
-from app.presentation.routers import (compliance_api, governance_api, qc_api,
-                                        qualification_api)
+from app.presentation.routers import (compliance_api, governance_api, pq_api,
+                                      qc_api, qualification_api)
 
 app = FastAPI(
     title="Radiopharma OS - QC Engine",
@@ -32,6 +32,9 @@ qc_api.init_dosimetry()
 compliance_api.init()
 governance_api.init()
 qualification_api.init()
+# el ejecutor PQ comparte el mismo motor de calificación (14.9): el estado
+# y el expediente reflejan las ejecuciones PQ reales
+pq_api.init(engine=qualification_api._engine)
 # CORS: la consola web (origen distinto) consume estas APIs desde el navegador
 _cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
@@ -46,6 +49,7 @@ app.include_router(qc_api.router)
 app.include_router(compliance_api.router)
 app.include_router(governance_api.router)
 app.include_router(qualification_api.router)
+app.include_router(pq_api.router)
 
 
 @app.get("/health", tags=["meta"])
