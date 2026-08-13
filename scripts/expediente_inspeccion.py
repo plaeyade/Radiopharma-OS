@@ -19,6 +19,10 @@ import json
 import urllib.request
 from datetime import datetime, timezone
 
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 
 def _get(url: str, token: str | None = None):
     try:
@@ -78,6 +82,27 @@ def main() -> None:
         exp["fuentes"][nombre] = (r if r["ok"] else {
             "sin_evidencia": True, "motivo": r["error"], "url": url})
 
+    # Historial PQ periódico (out/pq_historico.jsonl) — evidencia de estado
+    # de control continuo generada por scripts/pq_periodico.py.
+    pq_path = os.path.join(ROOT, "out", "pq_historico.jsonl")
+    try:
+        with open(pq_path, encoding="utf-8") as fh:
+            lineas = [json.loads(ln) for ln in fh if ln.strip()]
+        exp["fuentes"]["pq_historico"] = {
+            "ok": True,
+            "datos": {
+                "ejecuciones": len(lineas),
+                "ultima": lineas[-1] if lineas else None,
+                "archivo": "out/pq_historico.jsonl",
+            },
+        }
+    except Exception as exc:
+        exp["fuentes"]["pq_historico"] = {
+            "sin_evidencia": True,
+            "motivo": f"{type(exc).__name__}: {exc}",
+            "archivo": "out/pq_historico.jsonl",
+        }
+
     sin_evidencia = [k for k, v in exp["fuentes"].items() if not v.get("ok")]
     exp["resumen"] = {
         "fuentes_consultadas": len(puntos),
@@ -86,7 +111,6 @@ def main() -> None:
                  "fuentes sin evidencia se declaran, nunca se suplen "
                  "(49.11/49.18 — marcador no_demostrable)"),
     }
-    import os
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
     with open(a.out, "w", encoding="utf-8") as fh:
         json.dump(exp, fh, ensure_ascii=False, indent=2)

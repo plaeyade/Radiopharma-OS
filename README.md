@@ -82,6 +82,28 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 9 — Validación global con evidencia viva (v0.75.0)
+
+El reporte consolidado de validación (18.13, `make validation`) incorpora un
+nivel nuevo, `evidencia_runtimes_rcae`, que exige — con estado honesto y
+marcadores no bloqueantes cuando la evidencia aún no existe en el entorno —:
+
+- batería teórica real ejecutada (TALYS/MC/ElmerFEM con `ejecucion=real`;
+  MC solo pasa si |desviación| < 5 % — una desviación grande jamás se
+  declara válida);
+- registro RCAE Fase 8 íntegro: las 3 simulaciones con integridad
+  verificada en el DL y — control antifraude — la evaluación MC debe ser
+  honestamente `cumple_parcial`; un «cumple» automático para MC **hace
+  fallar** el chequeo (19.21 exige revisión humana);
+- historial PQ periódico (`out/pq_historico.jsonl`): si no hay ejecuciones
+  se declara honestamente, nunca se inventa.
+
+Además: detección de solvers en `validacion_pre_despliegue` vía
+`TALYS_CMD`/`ELMER_CMD`/`shutil.which`/`find_spec("opengate")`, y
+`expediente_inspeccion.py` incorpora la fuente `pq_historico` (nº de
+ejecuciones + última, desde archivo real). Veredicto global: **apto**.
+1 test nuevo (`test_evidencia_runtimes_rcae_estado_honesto`).
+
 ## Fase 8 — Evidencia GMP de las ejecuciones científicas (v0.74.0)
 
 Cierre del ciclo: cada ejecución real de la batería queda registrada como

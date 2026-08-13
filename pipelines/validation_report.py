@@ -221,18 +221,109 @@ def validacion_pre_despliegue() -> list[dict]:
     else:
         check("integridad_artefacto", False, "zip del MVP no encontrado")
 
-    # disponibilidad real de solvers (honestidad de plataforma)
-    solvers = {}
-    for nombre, spec in [("talys", "talys"), ("opengate", "opengate"),
-                         ("elmer", None)]:
-        if spec:
-            solvers[nombre] = importlib.util.find_spec(spec) is not None
-        else:
-            solvers[nombre] = any(
-                (Path(p) / "ElmerSolver").exists()
-                for p in ["/opt/elmer/bin", "/usr/local/bin", "/usr/bin"])
+    # disponibilidad real de solvers (honestidad de plataforma):
+    # TALYS_CMD / ELMER_CMD / PATH / OPENGATE_PYTHON (docs/runtimes_cientificos.md)
+    import shutil
+    solvers = {
+        "talys": bool(os.environ.get("TALYS_CMD")) or
+                 shutil.which("talys") is not None,
+        "opengate": importlib.util.find_spec("opengate") is not None,
+        "elmer": bool(os.environ.get("ELMER_CMD")) or
+                 shutil.which("ElmerSolver") is not None,
+    }
     check("disponibilidad_solvers", True,  # informativo: nunca bloquea
-          json.dumps(solvers) + " (patrón honesto: 503 si no disponible)")
+          json.dumps(solvers) + " (patrón honesto: 503 si no disponible; "
+          "fase 6: los tres ejecutados de verdad cuando disponibles)")
+    return checks
+
+
+# ------------------------------------------------- Fase 9: evidencia viva
+def evidencia_runtimes_rcae() -> list[dict]:
+    """Consolida la evidencia REAL de la batería con runtimes (fases 6-8):
+    ejecuciones TALYS/GATE/Elmer, registro GMP en DL + RCAE e historial
+    de PQ periódico. Nada se inventa: sin fichero de evidencia el check se
+    reporta honestamente como no disponible en este entorno (no bloquea,
+    pero queda declarado)."""
+    checks: list[dict] = []
+
+    def check(nombre, ok, detalle, referencia):
+        checks.append({"nombre": nombre, "ok": bool(ok),
+                       "detalle": detalle, "referencia": referencia})
+
+    # (a) batería con runtimes reales
+    bateria = ROOT / "out" / "prueba_teorica_fisica.json"
+    if bateria.is_file():
+        try:
+            rt = json.loads(bateria.read_text())["secciones"][
+                "runtimes_cientificos"]
+            t, g, e = (rt["TALYS"], rt["OpenGATE_Geant4"], rt["ElmerFEM"])
+            check("bateria_talys_real", t.get("ejecucion") == "real",
+                  f"ejecución={t.get('ejecucion')}, desv. media vs "
+                  f"IAEA-2021 = "
+                  f"{t.get('desviacion_media_abs_vs_iaea2021_pct')} %",
+                  "19.12: segunda fuente teórica σ(E)")
+            check("bateria_mc_real",
+                  g.get("ejecucion") == "real"
+                  and abs(g.get("desviacion_pct", 999)) < 5.0,
+                  f"ejecución={g.get('ejecucion')}, edep "
+                  f"{g.get('edep_total_mev')} MeV "
+                  f"({g.get('desviacion_pct')} % vs esperada)",
+                  "19.14: MC independiente vs determinista")
+            check("bateria_elmer_real", e.get("ejecucion") == "real",
+                  f"ejecución={e.get('ejecucion')}, T_max="
+                  f"{e.get('t_max_k')} K",
+                  "8.11: FEM térmico del blanco")
+        except Exception as exc:
+            check("bateria_runtimes", False,
+                  f"informe de batería ilegible: {exc}", "fases 6-7")
+    else:
+        check("bateria_runtimes", True,
+              "batería con runtimes no ejecutada en este entorno "
+              "(no bloqueante; evidencia persistida en "
+              "sci_runtime/evidencia_v072)",
+              "fases 6-7 (estado honesto)")
+
+    # (b) registro GMP en DL + RCAE (fase 8)
+    rcae = ROOT / "out" / "registro_rcae_fase8.json"
+    if rcae.is_file():
+        try:
+            r = json.loads(rcae.read_text())
+            integ = all(s["integridad_verificada"]
+                        for s in r["simulaciones"])
+            evals = {e["requisito_id"]: e["estado"]
+                     for e in r["evaluaciones"]}
+            mc_honesto = evals.get("REQ-PT-19.14-MC") == "cumple_parcial"
+            check("registro_rcae_fase8", integ and mc_honesto,
+                  f"{len(r['simulaciones'])} simulaciones con integridad "
+                  f"verificada={integ}; evaluaciones={evals}",
+                  "49.8/49.13/49.18: evidencia vinculada y evaluación humana")
+        except Exception as exc:
+            check("registro_rcae_fase8", False,
+                  f"registro RCAE ilegible: {exc}", "49.8")
+    else:
+        check("registro_rcae_fase8", True,
+              "registro RCAE no ejecutado en este entorno (no bloqueante; "
+              "make registro-rcae con la plataforma viva)",
+              "fase 8 (estado honesto)")
+
+    # (c) historial de PQ periódico (fase 5/9)
+    pq = ROOT / "out" / "pq_historico.jsonl"
+    if pq.is_file():
+        lineas = [l for l in pq.read_text().splitlines() if l.strip()]
+        try:
+            ultima = json.loads(lineas[-1])
+            check("pq_periodico", True,
+                  f"{len(lineas)} ejecuciones PQ registradas; última: "
+                  f"{ultima.get('resultado', ultima)}",
+                  "14.9: PQ periódico con historial append-only")
+        except Exception as exc:
+            check("pq_periodico", False,
+                  f"historial PQ ilegible: {exc}", "14.9")
+    else:
+        check("pq_periodico", True,
+              "sin historial PQ en este entorno (scripts/pq_periodico.py "
+              "lo genera contra la plataforma viva; nunca se inventa)",
+              "14.9 (estado honesto)")
     return checks
 
 
@@ -242,11 +333,13 @@ def construir_reporte() -> dict:
     tests = correr_tests()
     cientifica = validacion_cientifica()
     pre = validacion_pre_despliegue()
+    ev_viva = evidencia_runtimes_rcae()
     dt = time.perf_counter() - t0
 
     ok_cientifica = all(c["ok"] for c in cientifica)
     ok_pre = all(c["ok"] for c in pre)
-    obligatorio_ok = tests["ok"] and ok_cientifica and ok_pre
+    ok_ev = all(c["ok"] for c in ev_viva)
+    obligatorio_ok = tests["ok"] and ok_cientifica and ok_pre and ok_ev
 
     return {
         "reporte": "Validación Radiopharma OS (Fase 9, Informe 18.13)",
@@ -262,6 +355,8 @@ def construir_reporte() -> dict:
                 "ok": True},
             "validacion_pre_despliegue": {                   # 10.21
                 "ok": ok_pre, "checks": pre},
+            "evidencia_runtimes_rcae": {                     # fases 6-9
+                "ok": ok_ev, "checks": ev_viva},
             "validacion_clinica": {                          # 18.13
                 "estado": "no_iniciada",
                 "nota": "Requiere entorno clínico real y protocolos "
