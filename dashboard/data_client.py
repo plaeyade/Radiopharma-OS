@@ -19,6 +19,8 @@ QC_URL = os.environ.get("QC_URL", "http://localhost:8005")
 TEL_URL = os.environ.get("TEL_URL", "http://localhost:8006")
 PROCESS_URL = os.environ.get("PROCESS_URL", "http://localhost:8007")
 SURROGATE_URL = os.environ.get("SURROGATE_URL", "http://localhost:8008")
+NDS_URL = os.environ.get("NDS_URL", "http://localhost:8001")
+DL_URL = os.environ.get("DL_URL", "http://localhost:8003")
 
 _TIMEOUT = 60.0
 
@@ -92,3 +94,74 @@ def estado_plataforma() -> dict:
         except Exception as exc:
             estados[nombre] = {"error": str(exc)}
     return estados
+
+
+# ------------------------------------------------------ fase 4: producción
+# clínica — paneles alimentados SOLO desde las APIs; cada fallo se muestra
+# honestamente (nunca se maquilla un servicio caído).
+
+def _consulta(url: str, timeout: float = 10.0, **kw) -> dict:
+    """GET real con resultado honesto: datos o error real."""
+    try:
+        r = httpx.get(url, timeout=timeout, **kw)
+        if r.status_code == 200:
+            return {"ok": True, "datos": r.json()}
+        return {"ok": False, "error": f"HTTP {r.status_code}",
+                "detalle": r.text[:300]}
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def estado_conectores() -> dict:
+    """Estado REAL de los conectores externos (fases 1-2): nuclear
+    (EXFOR/SRIM/NNDC), SCADA/MQTT, OSRM, BentoML serving, GenAI y
+    extractor documental. Cada bloque muestra sus marcadores honestos."""
+    return {
+        "nuclear_exfor_srim_nndc":
+            _consulta(f"{NDS_URL}/api/v1/connectors/status"),
+        "scada_rtmsil_mqtt":
+            _consulta(f"{TEL_URL}/api/v1/scada/status"),
+        "osrm_logistica":
+            _consulta(f"{PROCESS_URL}/api/v1/osrm/status"),
+        "bentoml_serving":
+            _consulta(f"{SURROGATE_URL}/api/v1/serving/status"),
+        "genai_embeddings_llm":
+            _consulta(f"{SURROGATE_URL}/api/v1/genai/status"),
+        "extractor_documental":
+            _consulta(f"{SURROGATE_URL}/api/v1/rag/extractor-status"),
+    }
+
+
+def protocolos_pq() -> dict:
+    """Protocolos PQ definidos (Informe 14.9) — fase 3."""
+    return _consulta(f"{QC_URL}/api/v1/qualification/pq/protocols")
+
+
+def estado_calificacion(componente_id: str) -> dict:
+    """Estado real DQ/IQ/OQ/PQ de un componente (14.9)."""
+    return _consulta(
+        f"{QC_URL}/api/v1/qualification/components/{componente_id}/status")
+
+
+def lotes_clinicos(token: str) -> dict:
+    """Lotes de producción clínica (Data Lake, cap. 32/33). Requiere JWT
+    real: sin token se muestra honestamente el 401 — el dashboard nunca
+    elude la autenticación (cap. 47/48)."""
+    if not token:
+        return {"ok": False, "error": "autenticacion_requerida",
+                "detalle": "introduzca un JWT válido del auth-service "
+                           "(47.10); el dashboard nunca elude la "
+                           "autenticación"}
+    return _consulta(f"{DL_URL}/api/v1/batches",
+                     headers={"Authorization": f"Bearer {token}"})
+
+
+def verificar_ebr(batch_id: str, token: str) -> dict:
+    """Verificación de integridad del eBR (hash real, cadena de firma).
+    La conformidad PDF/A se valida con veraPDF (perfil calidad del
+    compose) — el panel muestra el resultado real, nunca lo declara."""
+    if not token:
+        return {"ok": False, "error": "autenticacion_requerida",
+                "detalle": "introduzca un JWT válido del auth-service"}
+    return _consulta(f"{DL_URL}/api/v1/batches/{batch_id}/ebr/verify",
+                     headers={"Authorization": f"Bearer {token}"})

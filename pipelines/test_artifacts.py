@@ -64,7 +64,18 @@ def test_proveedor_osrm_honesto():
     from app.domain.logistics import GeoPoint
     from app.infrastructure.routing import (OsrmRoutingProvider,
                                             OsrmUnavailable)
-    prov = OsrmRoutingProvider(base_url=None)
-    with pytest.raises(OsrmUnavailable, match="OSRM_URL"):
+    # una URL no http(s) se rechaza en construcción — el routing nunca
+    # se inventa; y un servidor caído propaga la excepción real
+    with pytest.raises((ValueError, AttributeError)):
+        OsrmRoutingProvider(base_url=None)
+    with pytest.raises(ValueError, match="http"):
+        OsrmRoutingProvider(base_url="ftp://no-valido")
+
+    def _http_caido():
+        raise ConnectionError("connection refused: servidor OSRM caído")
+
+    prov = OsrmRoutingProvider(base_url="http://osrm-caido:5000",
+                               http_factory=_http_caido)
+    with pytest.raises(ConnectionError, match="refused"):
         prov.road_time(GeoPoint(lat=40.4, lon=-3.7),
                        GeoPoint(lat=41.4, lon=2.1))

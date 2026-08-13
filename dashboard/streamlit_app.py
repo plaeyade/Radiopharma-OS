@@ -38,6 +38,17 @@ PANELES = [
     {"id": "plataforma", "titulo": "Estado de plataforma",
      "fuente": "health de los servicios",
      "nota": "estado honesto de solvers y runtimes"},
+    # -------------------------------------------------- fase 4: producción
+    # clínica
+    {"id": "conectores", "titulo": "Conectores externos (fases 1-2)",
+     "fuente": "status real de NDS/TEL/PROCESS/SURROGATE",
+     "nota": "marcadores honestos no_configurado/fallo_conexion visibles"},
+    {"id": "pq", "titulo": "Calificación PQ (14.9)",
+     "fuente": "QC Engine — ejecutor PQ real (fase 3)"},
+    {"id": "produccion_clinica", "titulo": "Producción clínica (lotes/eBR)",
+     "fuente": "Data Lake API",
+     "nota": "requiere JWT real; el dashboard nunca elude la "
+             "autenticación (cap. 47/48)"},
 ]
 
 
@@ -106,6 +117,33 @@ def main() -> None:  # pragma: no cover - requiere runtime Streamlit
     with tabs[6]:
         st.header("Estado honesto de plataforma")
         st.json(dc.estado_plataforma())
+
+    with tabs[7]:
+        st.header("Conectores externos — estado real")
+        st.caption("Marcadores honestos visibles: no_configurado / "
+                   "fallo_conexion / sin_runtime.")
+        if st.button("Refrescar conectores"):
+            for nombre, res in dc.estado_conectores().items():
+                with st.expander(nombre, expanded=not res["ok"]):
+                    st.json(res)
+
+    with tabs[8]:
+        st.header("Calificación PQ — Informe 14.9")
+        if st.button("Protocolos PQ"):
+            st.json(dc.protocolos_pq())
+        comp = st.text_input("componente_id", "plataforma_base")
+        if comp and st.button("Estado de calificación"):
+            st.json(dc.estado_calificacion(comp))
+
+    with tabs[9]:
+        st.header("Producción clínica — lotes y eBR")
+        st.caption("Requiere JWT real del auth-service (47.10).")
+        token = st.text_input("JWT", "", type="password")
+        if st.button("Listar lotes clínicos"):
+            st.json(dc.lotes_clinicos(token))
+        batch = st.text_input("batch_id para verificar eBR", "")
+        if batch and st.button("Verificar eBR"):
+            st.json(dc.verificar_ebr(batch, token))
 
 
 if __name__ == "__main__":  # pragma: no cover

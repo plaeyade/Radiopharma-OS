@@ -27,9 +27,12 @@ def test_streamlit_importable_sin_runtime_y_paneles():
     app = _cargar("streamlit_app", ROOT / "dashboard" / "streamlit_app.py")
     ids = [p["id"] for p in app.PANELES]
     assert ids == ["produccion", "optimizacion", "qc", "inventario",
-                   "kpis", "telemetria", "plataforma"]
+                   "kpis", "telemetria", "plataforma", "conectores", "pq",
+                   "produccion_clinica"]
     tel = [p for p in app.PANELES if p["id"] == "telemetria"][0]
     assert "no consulta directamente el PLC" in tel["nota"]  # 6.18
+    clinica = [p for p in app.PANELES if p["id"] == "produccion_clinica"][0]
+    assert "nunca elude la autenticación" in clinica["nota"]  # 47/48
     if not app.STREAMLIT_DISPONIBLE:
         with pytest.raises(RuntimeError, match="Streamlit"):
             app.main()
@@ -40,6 +43,55 @@ def test_data_client_apunta_a_apis_nunca_plc():
     assert "8002" in fuente and "8007" in fuente  # YE + Process
     assert "opc.tcp" not in fuente  # nunca OPC-UA directo (6.18)
     assert "PLC" in fuente  # documentado
+
+
+def test_data_client_fase4_conectores_pq_y_clinica():
+    dc = _cargar("data_client_f4", ROOT / "dashboard" / "data_client.py")
+
+    class _Resp:
+        def __init__(self, status_code=200, payload=None, text=""):
+            self.status_code = status_code
+            self._payload = payload or {}
+            self.text = text
+
+        def json(self):
+            return self._payload
+
+    llamadas = []
+
+    def _get_falso(url, timeout=0, **kw):
+        llamadas.append(url)
+        if "caido" in url:
+            raise ConnectionError("connection refused")
+        if "batches" in url and not kw.get("headers"):
+            return _Resp(401, text="unauthorized")
+        return _Resp(200, {"url": url})
+
+    dc.httpx = type("H", (), {"get": staticmethod(_get_falso),
+                              "post": staticmethod(lambda *a, **k: None)})
+
+    estados = dc.estado_conectores()
+    assert set(estados) == {"nuclear_exfor_srim_nndc", "scada_rtmsil_mqtt",
+                            "osrm_logistica", "bentoml_serving",
+                            "genai_embeddings_llm", "extractor_documental"}
+    assert all(v["ok"] for v in estados.values())
+    assert any("/api/v1/scada/status" in u for u in llamadas)
+    assert any("/api/v1/osrm/status" in u for u in llamadas)
+
+    # servicio caído → error honesto, nunca maquillado
+    caido = dc._consulta("http://caido:9999/status")
+    assert caido["ok"] is False and "ConnectionError" in caido["error"]
+
+    # sin token → autenticación requerida, nunca eludida (47/48)
+    sin_token = dc.lotes_clinicos("")
+    assert sin_token["error"] == "autenticacion_requerida"
+    # con token → cabecera Bearer real propagada
+    con_token = dc.lotes_clinicos("jwt-real")
+    assert con_token["ok"] is True
+    assert any("/api/v1/batches" in u for u in llamadas)
+
+    assert dc.protocolos_pq()["ok"] is True
+    assert dc.estado_calificacion("plataforma_base")["ok"] is True
 
 
 # --------------------------------------------------------------- PyVista

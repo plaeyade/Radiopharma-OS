@@ -32,6 +32,8 @@ services:
       TEL_URL: http://telemetry-service:8006
       PROCESS_URL: http://process-service:8007
       SURROGATE_URL: http://surrogate-service:8008
+      NDS_URL: http://nuclear-data-service:8001
+      DL_URL: http://data-lake-service:8003
     volumes:
       - .:/app:ro
     ports:
