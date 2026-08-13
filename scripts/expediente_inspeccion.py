@@ -20,9 +20,12 @@ import urllib.request
 from datetime import datetime, timezone
 
 
-def _get(url: str):
+def _get(url: str, token: str | None = None):
     try:
-        with urllib.request.urlopen(url, timeout=8) as r:
+        req = urllib.request.Request(url)
+        if token:
+            req.add_header("Authorization", f"Bearer {token}")
+        with urllib.request.urlopen(req, timeout=8) as r:
             return {"ok": True, "datos": json.loads(r.read().decode())}
     except Exception as exc:
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
@@ -33,6 +36,9 @@ def main() -> None:
     ap.add_argument("--host", default="localhost")
     ap.add_argument("--componente", default="plataforma_rpos")
     ap.add_argument("--out", default="out/expediente_inspeccion.json")
+    ap.add_argument("--token", default=None,
+                    help="JWT para fuentes autenticadas (p. ej. simulaciones "
+                         "del Data Lake); sin él se marcan sin_evidencia")
     a = ap.parse_args()
     h = a.host
 
@@ -62,9 +68,13 @@ def main() -> None:
             f"http://{h}:8008/api/v1/serving/status",
         "genai":
             f"http://{h}:8008/api/v1/genai/status",
+        "cumplimiento_rcae":
+            f"http://{h}:8005/api/v1/compliance/dashboard",
+        "simulaciones_cientificas":
+            f"http://{h}:8003/api/v1/simulations",
     }
     for nombre, url in puntos.items():
-        r = _get(url)
+        r = _get(url, token=a.token)
         exp["fuentes"][nombre] = (r if r["ok"] else {
             "sin_evidencia": True, "motivo": r["error"], "url": url})
 

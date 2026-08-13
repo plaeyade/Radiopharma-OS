@@ -82,6 +82,31 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 8 — Evidencia GMP de las ejecuciones científicas (v0.74.0)
+
+Cierre del ciclo: cada ejecución real de la batería queda registrada como
+evidencia regulatoria, contra servicios vivos:
+
+- `scripts/registrar_bateria_rcae.py` (`make registro-rcae`): lee los
+  artefactos REALES de la batería (rp009018.tot, resultado_mc.json,
+  scalars.dat + elmer.log), calcula su sha256 y registra cada ejecución en
+  el Data Lake (`/api/v1/simulations`, ALCOA+, hash de integridad propio,
+  nunca sobrescribe): SIM-526CF6599F5D (TALYS), SIM-30378BCD29A3 (MC),
+  SIM-0C423E5750B7 (ElmerFEM) — integridad verificada vía `/verify`.
+- RCAE (qc_engine 49.8/49.13/49.18): requisitos del Physics Twin
+  versionados (REQ-PT-19.12-TALYS, REQ-PT-19.14-MC, REQ-PT-8.11-TERM),
+  evidencias vinculadas a su origen real (`data_lake:/simulations/SIM-…`)
+  con el hash del registro, y evaluación humana: **cumple** TALYS y FEM;
+  **cumple_parcial** honesto para MC (la validación 19.21 exige revisión
+  humana — nunca se declara cumplimiento pleno automático).
+- Tablero de cumplimiento en vivo: 2 cumple / 1 cumple_parcial, cobertura
+  66,7 % (sin inflar: excluye lo no demostrable).
+- `expediente_inspeccion.py` ampliado: fuentes `cumplimiento_rcae` y
+  `simulaciones_cientificas` (JWT opcional `--token`; sin él, marcador
+  honesto `sin_evidencia`).
+- 7 tests nuevos (`pipelines/test_registro_rcae.py`): sin artefactos reales
+  NO hay registro; MC nunca «cumple» automático; requisitos nunca recreados.
+
 ## Fase 7 — Runtimes científicos servidos por la plataforma (v0.73.0)
 
 Los tres motores, ya instalados (Fase 6), ahora **servidos vía HTTP por los
