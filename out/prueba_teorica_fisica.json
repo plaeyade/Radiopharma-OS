@@ -1,0 +1,108 @@
+{
+  "generado_en": "2026-08-13T15:35:55.326224+00:00",
+  "tipo": "prueba_teorica_fisica",
+  "nota": "cálculos reales del motor; referencias IAEA-NDS Medical Portal May-2021; sin ciclotrón operativo no existen datos reales de haz — esto NO los sustituye",
+  "secciones": {
+    "rendimiento_saturacion_o18_p_n_f18": {
+      "filas": [
+        {
+          "e_mev": 8.0,
+          "motor_gbq_ua": 3.435
+        },
+        {
+          "e_mev": 12.0,
+          "motor_gbq_ua": 6.599
+        },
+        {
+          "e_mev": 16.0,
+          "motor_gbq_ua": 9.113
+        },
+        {
+          "e_mev": 16.5,
+          "motor_gbq_ua": 9.337
+        },
+        {
+          "e_mev": 18.0,
+          "motor_gbq_ua": 9.903
+        }
+      ],
+      "referencia_canonica_16_5": 9.5,
+      "desviacion_pct": -1.7,
+      "curva_monotona": true,
+      "metodo": "integración numérica real σ(E)×(dE/dx)^-1 (ATIMA)"
+    },
+    "rendimiento_saturacion_n14_p_a_c11": {
+      "filas": [
+        {
+          "e_mev": 8.0,
+          "motor_gbq_ua": 1.682,
+          "iaea_gbq_ua": 1.76,
+          "desviacion_pct": -4.4
+        },
+        {
+          "e_mev": 10.0,
+          "motor_gbq_ua": 2.662,
+          "iaea_gbq_ua": 2.71,
+          "desviacion_pct": -1.8
+        },
+        {
+          "e_mev": 12.0,
+          "motor_gbq_ua": 3.999,
+          "iaea_gbq_ua": 4.08,
+          "desviacion_pct": -2.0
+        },
+        {
+          "e_mev": 16.0,
+          "motor_gbq_ua": 7.373,
+          "iaea_gbq_ua": 7.47,
+          "desviacion_pct": -1.3
+        },
+        {
+          "e_mev": 20.0,
+          "motor_gbq_ua": 9.744,
+          "iaea_gbq_ua": 9.84,
+          "desviacion_pct": -1.0
+        }
+      ],
+      "desviacion_max_pct": 4.4,
+      "metodo": "integración numérica real σ(E)×(dE/dx)^-1 (ATIMA)"
+    },
+    "caso_operativo_f18": {
+      "eob_gbq": 108.94736824020598,
+      "parametros": {
+        "E": 16.5,
+        "I_uA": 37.0,
+        "t_min": 60.0
+      },
+      "nota": "EOB real del motor; EOS = EOB·2^(-Δt/109,77 min)"
+    },
+    "monte_carlo_interfaz": {
+      "validacion_caso_incumplimientos": [],
+      "comparacion_mc_vs_determinista": {
+        "power_mc_w": 488.3999999639452,
+        "power_determinista_w": 610.5,
+        "desviacion_rel": -0.2000000000590578,
+        "desviacion_pct": -20.00000000590578,
+        "nota": "referencia independiente MC vs determinista (19.14/19.16); no se aplica automáticamente"
+      },
+      "nota": "la interfaz MC valida y compara con aritmética real; el transporte de historias requiere OpenGATE/Geant4 (ver estado de runtimes)"
+    },
+    "runtimes_cientificos": {
+      "TALYS": {
+        "integracion": "services/nuclear_data_service/app/infrastructure/talys/talys_runner.py",
+        "disponible": false,
+        "motivo_no_disponible": "requiere compilación Fortran (gfortran) — sin root en sandbox"
+      },
+      "OpenGATE_Geant4": {
+        "integracion": "services/yield_engine/app/infrastructure/gate/",
+        "disponible": false,
+        "motivo_no_disponible": "wheel ~1 GB + datos Geant4; red del sandbox ~15 KB/s"
+      },
+      "ElmerFEM": {
+        "integracion": "services/yield_engine/app/infrastructure/elmer/elmer_runner.py",
+        "disponible": false,
+        "motivo_no_disponible": "paquete apt sin root en sandbox"
+      }
+    }
+  }
+}
