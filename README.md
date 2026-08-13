@@ -82,6 +82,32 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 6 — Runtimes científicos reales y despliegue endurecido (v0.72.0)
+
+Los tres motores científicos externos — integrados desde el inicio con 503 honesto —
+**instalados y ejecutados de verdad** en esta fase:
+
+- **TALYS 2.2** (IAEA-NDS/A. Koning): compilado desde fuente con toolchain gfortran-12
+  sin root; cálculo real σ(E) ¹⁸O(p,n)¹⁸F 8–18 MeV (21 puntos), desviación media 23,6 %
+  frente al dataset canónico IAEA-NDS 2021 del repo — la desviación típica del modelo
+  óptico por defecto; la cadena determinista sigue usando σ(E) IAEA evaluada (19.12:
+  prioridad explícita de datos experimentales sobre modelos).
+- **OpenGATE/Geant4 10.1.1**: transporte Monte Carlo real (2000 protones, 16 MeV, blanco
+  de agua, semilla fija): energía depositada 31 980,9 MeV vs 32 000,0 esperadas (−0,06 %).
+- **ElmerFEM 26.2**: caso térmico FEM real del blanco (HeatSolver axisimétrico, malla
+  nativa generada por `elmer_case.py`): `ALL DONE` — T_max/T_mean reales por SaveScalars.
+
+Batería actualizada: `scripts/prueba_teorica_fisica.py` ejecuta los runtimes reales
+cuando están disponibles (`TALYS_CMD`, `OPENGATE_PYTHON`, `ELMER_CMD`) y declara
+honestamente cuando no — nunca simula. Helper MC real: `scripts/gate_sim_minima.py`.
+Sin ciclotrón operativo (restricción registrada): validación teórica con referencias
+publicadas; calibración con haz real (19.16) diferida, nunca bloqueante.
+
+Despliegue endurecido (v0.71.0): `make demo` — un comando levanta la plataforma
+(docker compose o modo local sin docker), espera healthchecks reales y cierra con la
+puerta de salud honesta `scripts/verificar_despliegue.py`. Probado: 8/8 servicios
+saludables, 0 caídos.
+
 ## Fase 5 — Persistencia real, broker real y evidencia continua (v0.70.0)
 
 TEL: persistencia SCADA 31.23 real — InfluxDB vía API HTTP (line protocol)
