@@ -122,6 +122,8 @@ class ScadaEngine:
         self._alarmas: dict[str, Alarma] = {}
         self._clientes_vivos: dict[str, object] = {}
         self._ultimo_estado: dict[str, dict] = {}
+        self._suscripciones: dict[str, dict] = {}
+        self._mensajes_ingestados: dict[str, int] = {}
         self._auditoria: list[dict] = []
 
     # ------------------------------------------------------------ núcleo
@@ -280,6 +282,88 @@ class ScadaEngine:
         mapeo = versiones[-1].mapeo
         return {mapeo[k]: v for k, v in datos_externos.items()
                 if k in mapeo}
+
+    def registrar_adaptador_desde_perfil(self, perfil_id: str,
+                                         responsable: str) -> AdaptadorPLC:
+        """Crea el adaptador de un fabricante desde un perfil real y
+        documentado (31.9, fase 2). Perfil desconocido → error honesto:
+        el mapeo nunca se inventa."""
+        from .plc_profiles import obtener_perfil
+        perfil = obtener_perfil(perfil_id)
+        if perfil is None:
+            raise ScadaInvalido(
+                f"perfil PLC desconocido: {perfil_id}; registre un "
+                "adaptador a medida con /adapters")
+        adp = self.registrar_adaptador(perfil["fabricante"],
+                                       perfil["mapeo"], responsable)
+        self._auditar("adaptador_desde_perfil",
+                      {"perfil_id": perfil_id,
+                       "fabricante": perfil["fabricante"],
+                       "version_perfil": perfil["version"]}, responsable)
+        return adp
+
+    # ----------------------------------- suscripción MQTT real (31.7)
+    def suscribir_mqtt(self, conector_id: str, topico: str,
+                       dispositivo: str, variable: str, unidad: str,
+                       responsable: str) -> dict:
+        """Suscripción REAL al broker (31.7): cada mensaje publicado se
+        ingiere como medición validada (31.22) — el payload debe ser un
+        número; los mensajes no numéricos o fuera de rango generan evento
+        de validación y NO se aceptan. Sin conexión viva → SinCanal
+        (503 honesto)."""
+        if not topico or not dispositivo or not variable or not unidad:
+            raise ScadaInvalido(
+                "topico, dispositivo, variable y unidad obligatorios")
+        con = self._conector_vigente(conector_id)
+        if con.tipo != "mqtt":
+            raise ScadaInvalido(
+                f"conector {conector_id} es {con.tipo}; la suscripción "
+                "pub/sub solo aplica a conectores mqtt (31.7)")
+        cliente = self._clientes_vivos.get(conector_id)
+        if cliente is None:
+            raise SinCanal(
+                f"conector {conector_id} sin conexión viva; sondee "
+                "primero (POST .../probe)")
+
+        def _al_mensaje(t: str, payload: str) -> None:
+            try:
+                valor = float(payload.strip())
+            except ValueError:
+                try:
+                    self._rechazo(dispositivo, variable,
+                                  f"payload MQTT no numérico: "
+                                  f"{payload[:80]!r}")
+                except ScadaInvalido:
+                    pass  # ya auditado/emitido por la validación 31.22
+                return
+            try:
+                self.registrar_medicion(
+                    dispositivo, variable, valor, unidad,
+                    self._ahora(), origen=f"mqtt:{t}")
+                self._mensajes_ingestados[conector_id] = (
+                    self._mensajes_ingestados.get(conector_id, 0) + 1)
+            except ScadaInvalido:
+                pass  # ya auditado/emitido por la validación 31.22
+
+        cliente.suscribir(topico, _al_mensaje)
+        suscripcion = {
+            "conector_id": conector_id, "topico": topico,
+            "dispositivo": dispositivo, "variable": variable,
+            "unidad": unidad, "responsable": responsable,
+            "suscrita_en": self._ahora(),
+        }
+        self._suscripciones[f"{conector_id}:{topico}"] = suscripcion
+        self._auditar("suscripcion_mqtt",
+                      {"conector_id": conector_id, "topico": topico,
+                       "variable": variable}, responsable)
+        return suscripcion
+
+    def suscripciones(self) -> list[dict]:
+        return [
+            {**s, "mensajes_ingestados":
+                self._mensajes_ingestados.get(s["conector_id"], 0)}
+            for s in self._suscripciones.values()
+        ]
 
     # -------------------------------------- colector de series (31.10)
     def definir_validacion(self, variable: str, minimo: float,
@@ -481,6 +565,9 @@ class ScadaEngine:
                          "configurar la infraestructura real")},
             "bus_eventos": ("inyectado" if self._bus is not None
                             else "no_inyectado"),
+            "suscripciones_mqtt": len(self._suscripciones),
+            "mensajes_mqtt_ingestados": sum(
+                self._mensajes_ingestados.values()),
             "mediciones": sum(len(s) for s in self._series.values()),
             "eventos": len(self._eventos),
             "alarmas_activas": sum(

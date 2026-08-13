@@ -119,6 +119,44 @@ def leer(conector_id: str, variable: str, actor: str = "sistema"):
     return _guard(_eng().leer_variable, conector_id, variable, actor)
 
 
+class SuscripcionIn(BaseModel):
+    topico: str
+    dispositivo: str
+    variable: str
+    unidad: str
+    responsable: str
+
+
+@router.post("/connectors/{conector_id}/subscribe", status_code=201)
+def suscribir(conector_id: str, body: SuscripcionIn):
+    return _guard(_eng().suscribir_mqtt, conector_id, body.topico,
+                  body.dispositivo, body.variable, body.unidad,
+                  body.responsable)
+
+
+@router.get("/subscriptions")
+def suscripciones():
+    return _eng().suscripciones()
+
+
+@router.get("/adapter-profiles")
+def perfiles_plc():
+    from app.domain.plc_profiles import perfiles_disponibles
+    return perfiles_disponibles()
+
+
+class PerfilIn(BaseModel):
+    perfil_id: str
+    responsable: str
+
+
+@router.post("/adapters/from-profile", status_code=201)
+def adaptador_desde_perfil(body: PerfilIn):
+    adp = _guard(_eng().registrar_adaptador_desde_perfil, body.perfil_id,
+                 body.responsable)
+    return {"fabricante": adp.fabricante, "version": adp.version}
+
+
 @router.post("/adapters", status_code=201)
 def registrar_adaptador(body: AdaptadorIn):
     adp = _guard(_eng().registrar_adaptador, body.fabricante, body.mapeo,

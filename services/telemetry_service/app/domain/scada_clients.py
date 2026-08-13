@@ -69,6 +69,24 @@ class _ClienteMqtt:
             "MQTT es pub/sub (31.7): los datos llegan por suscripción "
             "al tópico, no por lectura directa")
 
+    def suscribir(self, topico: str, callback) -> None:
+        """Suscripción REAL al broker (31.7): cada mensaje publicado en
+        el tópico invoca ``callback(topico, payload_texto)``. El hilo de
+        red es el propio de paho (loop_start)."""
+        if self._cliente is None:
+            raise RuntimeError("cliente MQTT no conectado")
+
+        def _al_mensaje(cliente, userdata, mensaje):
+            callback(mensaje.topic,
+                     mensaje.payload.decode("utf-8", errors="replace"))
+
+        self._cliente.on_message = _al_mensaje
+        resultado, _mid = self._cliente.subscribe(topico)
+        if resultado != 0:
+            raise ConnectionError(
+                f"MQTT subscribe a {topico} falló rc={resultado}")
+        self._cliente.loop_start()
+
 
 class _ClienteModbus:
     """Cliente Modbus TCP/RTU real (pymodbus) — 31.8."""
