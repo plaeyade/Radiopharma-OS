@@ -64,6 +64,19 @@ def estado_broker():
     return _eng().estado_broker()
 
 
+class BrokerIn(BaseModel):
+    endpoint: str
+    actor: str
+
+
+@router.post("/broker/connect")
+def conectar_broker(body: BrokerIn):
+    """Conexión REAL al broker MQTT (52.6); el resultado, incluido el
+    fallo, se declara honestamente."""
+    return _guard(lambda: _eng().conectar_broker(body.endpoint,
+                                                 body.actor))
+
+
 @router.post("/topics")
 def crear_topico(body: TopicoIn):
     return _guard(lambda: _eng().crear_topico(body.topico, body.dominio, body.actor))

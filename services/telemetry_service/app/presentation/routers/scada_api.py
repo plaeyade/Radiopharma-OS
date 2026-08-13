@@ -139,6 +139,41 @@ def suscripciones():
     return _eng().suscripciones()
 
 
+class PersistenciaIn(BaseModel):
+    backend: str               # influxdb | redis | minio
+    config: dict
+    responsable: str
+
+
+def _almacen_real(backend: str, config: dict):
+    if backend == "influxdb":
+        from app.infrastructure.scada_persistencia import AlmacenInflux
+        return AlmacenInflux(config["url"], config["token"],
+                             config["org"], config["bucket"])
+    if backend == "redis":
+        from app.infrastructure.scada_persistencia import AlmacenRedis
+        return AlmacenRedis(config["host"], int(config.get("puerto", 6379)))
+    raise HTTPException(
+        status_code=422, detail=(
+            f"backend {backend} sin implementación en esta capa — se "
+            "reporta honestamente no_configurado; influxdb y redis están "
+            "disponibles (31.23)"))
+
+
+@router.post("/persistence", status_code=201)
+def configurar_persistencia(body: PersistenciaIn):
+    """Activa un backend de persistencia real (31.23) con sondeo previo;
+    si no responde → 503 honesto y no queda configurado."""
+    almacen = _almacen_real(body.backend, body.config)
+    return _guard(_eng().configurar_persistencia, body.backend, almacen,
+                  body.responsable)
+
+
+@router.get("/persistence")
+def estado_persistencia():
+    return _eng().estado_capa()["persistencia_31_23"]
+
+
 @router.get("/adapter-profiles")
 def perfiles_plc():
     from app.domain.plc_profiles import perfiles_disponibles

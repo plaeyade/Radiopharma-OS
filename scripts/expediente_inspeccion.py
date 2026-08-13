@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Expediente de inspección RCAE/GMP — compilado REAL desde los servicios
+vivos (fase 5.3).
+
+Reúne, de fuentes reales y citadas: estado de calificación DQ/IQ/OQ/PQ de
+cada componente, historial de ejecuciones PQ, estado de conectores
+externos, persistencia SCADA, broker de eventos y trazas de auditoría.
+Lo que no responde se marca honestamente ``sin_evidencia`` — el
+expediente nunca declara lo que no puede demostrar (49.11).
+
+Uso:
+  python3 scripts/expediente_inspeccion.py [--host localhost] \
+      [--componente plataforma_rpos] [--out out/expediente_inspeccion.json]
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import urllib.request
+from datetime import datetime, timezone
+
+
+def _get(url: str):
+    try:
+        with urllib.request.urlopen(url, timeout=8) as r:
+            return {"ok": True, "datos": json.loads(r.read().decode())}
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--host", default="localhost")
+    ap.add_argument("--componente", default="plataforma_rpos")
+    ap.add_argument("--out", default="out/expediente_inspeccion.json")
+    a = ap.parse_args()
+    h = a.host
+
+    exp = {
+        "expediente_id": f"INSPEC-{datetime.now(timezone.utc):%Y%m%d-%H%M%S}",
+        "compilado_en": datetime.now(timezone.utc).isoformat(),
+        "fuentes": {},
+    }
+    puntos = {
+        "calificacion_componente":
+            f"http://{h}:8005/api/v1/qualification/components/{a.componente}/status",
+        "expediente_rcae":
+            f"http://{h}:8005/api/v1/qualification/components/{a.componente}/dossier",
+        "protocolos_pq":
+            f"http://{h}:8005/api/v1/qualification/pq/protocols",
+        "auditoria_pq":
+            f"http://{h}:8005/api/v1/qualification/pq/audit",
+        "conectores_nucleares":
+            f"http://{h}:8001/api/v1/connectors/status",
+        "scada_rtmsil":
+            f"http://{h}:8006/api/v1/scada/status",
+        "broker_eventos":
+            f"http://{h}:8006/api/v1/events/broker",
+        "osrm_logistica":
+            f"http://{h}:8007/api/v1/osrm/status",
+        "serving_bentoml":
+            f"http://{h}:8008/api/v1/serving/status",
+        "genai":
+            f"http://{h}:8008/api/v1/genai/status",
+    }
+    for nombre, url in puntos.items():
+        r = _get(url)
+        exp["fuentes"][nombre] = (r if r["ok"] else {
+            "sin_evidencia": True, "motivo": r["error"], "url": url})
+
+    sin_evidencia = [k for k, v in exp["fuentes"].items() if not v.get("ok")]
+    exp["resumen"] = {
+        "fuentes_consultadas": len(puntos),
+        "fuentes_sin_evidencia": sin_evidencia,
+        "nota": ("expediente compilado solo desde evidencia real; las "
+                 "fuentes sin evidencia se declaran, nunca se suplen "
+                 "(49.11/49.18 — marcador no_demostrable)"),
+    }
+    import os
+    os.makedirs(os.path.dirname(a.out), exist_ok=True)
+    with open(a.out, "w", encoding="utf-8") as fh:
+        json.dump(exp, fh, ensure_ascii=False, indent=2)
+    print(f"expediente: {a.out}")
+    print(f"fuentes sin evidencia: {sin_evidencia or 'ninguna'}")
+
+
+if __name__ == "__main__":
+    main()

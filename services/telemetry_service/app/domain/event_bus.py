@@ -95,6 +95,66 @@ class EventBusEngine:
         self._entregas: list[Entrega] = []
         self._dead_letters: dict[str, DeadLetter] = {}
         self._auditoria: list[dict[str, Any]] = []
+        self._broker: dict[str, Any] | None = None  # 52.6 fase 5
+
+    # ---------------- broker externo real (52.6, fase 5) ----------------
+    def conectar_broker(self, endpoint: str, actor: str,
+                        fabrica_broker=None) -> dict[str, Any]:
+        """Conexión REAL al broker MQTT (52.6). Si el broker no responde,
+        el estado queda honestamente `fallo_conexion` y nada se declara
+        entregado externamente. La fábrica es inyectable en pruebas; en
+        producción usa paho-mqtt real."""
+        if not endpoint:
+            raise EventoInvalido("endpoint del broker obligatorio")
+        if fabrica_broker is None:
+            from ..infrastructure.broker_mqtt import puente_mqtt_real
+            fabrica_broker = puente_mqtt_real
+        try:
+            puente = fabrica_broker(endpoint)
+            puente.conectar()
+            self._broker = {"endpoint": endpoint, "puente": puente,
+                            "estado": "conectado", "detalle": "",
+                            "conectado_en": _ahora()}
+            self._auditar("broker_conectado", {"endpoint": endpoint}, actor)
+        except Exception as exc:
+            self._broker = {"endpoint": endpoint, "puente": None,
+                            "estado": "fallo_conexion",
+                            "detalle": f"{type(exc).__name__}: {exc}",
+                            "conectado_en": _ahora()}
+            self._auditar("broker_fallo_conexion",
+                          {"endpoint": endpoint,
+                           "detalle": self._broker["detalle"]},
+                          actor)
+        return {k: v for k, v in (self._broker or {}).items()
+                if k != "puente"}
+
+    def _publicar_en_broker(self, ev: Evento) -> None:
+        """Entrega externa REAL: publica el evento en el broker MQTT
+        (tópico rpos/<topico>). El fallo se audita con su causa real y
+        marca el broker como caído — nunca se declara entregado."""
+        if not self._broker or self._broker.get("puente") is None:
+            return
+        import json as _json
+        try:
+            self._broker["puente"].publicar(
+                f"rpos/{ev.topico}",
+                _json.dumps({"evento_id": ev.evento_id, "tipo": ev.tipo,
+                             "payload": ev.payload,
+                             "publicado_en": ev.publicado_en},
+                            ensure_ascii=False))
+            self._auditar("broker_entrega",
+                          {"evento_id": ev.evento_id,
+                           "topico": ev.topico}, ev.productor)
+        except Exception as exc:
+            causa = f"{type(exc).__name__}: {exc}"
+            self._broker["estado"] = "fallo_conexion"
+            self._broker["detalle"] = causa
+            dl = DeadLetter(str(uuid.uuid4()), ev.evento_id,
+                            "broker-mqtt", causa, _ahora(), "pendiente")
+            self._dead_letters[dl.dead_letter_id] = dl
+            self._auditar("broker_entrega_fallida",
+                          {"evento_id": ev.evento_id, "causa": causa},
+                          ev.productor)
 
     # ---------------- auditoría ALCOA+ (52.20) ----------------
     def _auditar(self, accion: str, detalle: dict[str, Any], actor: str) -> None:
@@ -113,10 +173,16 @@ class EventBusEngine:
     def estado_broker(self) -> dict[str, Any]:
         """52.6: la implementación tecnológica permanece desacoplada; el
         broker externo se declara honestamente."""
-        return {"broker_externo": "no_configurado",
-                "bus_en_proceso": "operativo",
-                "nota": "la entrega externa requiere un broker real; nunca se "
-                        "declara entregado un evento sin canal"}
+        if self._broker is None:
+            return {"broker_externo": "no_configurado",
+                    "bus_en_proceso": "operativo",
+                    "nota": "la entrega externa requiere un broker real; "
+                            "nunca se declara entregado un evento sin canal"}
+        return {"broker_externo": self._broker["estado"],
+                "endpoint": self._broker["endpoint"],
+                "detalle": self._broker["detalle"],
+                "conectado_en": self._broker["conectado_en"],
+                "bus_en_proceso": "operativo"}
 
     # ---------------- Topic Manager 52.7 ----------------
     def crear_topico(self, topico: str, dominio: str, actor: str) -> dict[str, Any]:
@@ -212,6 +278,7 @@ class EventBusEngine:
         ev = Evento(str(uuid.uuid4()), tipo, esq["version"], topico, productor,
                     dict(payload), _ahora())
         self._eventos.append(ev)
+        self._publicar_en_broker(ev)  # entrega externa real (52.6)
         entregas: list[dict[str, Any]] = []
         for sus in self._suscripciones.values():
             if sus.topico != topico:

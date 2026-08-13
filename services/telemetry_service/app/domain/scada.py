@@ -124,6 +124,7 @@ class ScadaEngine:
         self._ultimo_estado: dict[str, dict] = {}
         self._suscripciones: dict[str, dict] = {}
         self._mensajes_ingestados: dict[str, int] = {}
+        self._almacenes: dict[str, object] = {}  # 31.23 persistencia real
         self._auditoria: list[dict] = []
 
     # ------------------------------------------------------------ núcleo
@@ -431,12 +432,61 @@ class ScadaEngine:
             calidad=calidad, version=SCADA_VERSION,
             dispositivo_id=dispositivo)
         serie.append(med)
+        self._persistir(med)
         self._auditar("medicion_registrada",
                       {"dispositivo": dispositivo, "variable": variable,
                        "valor": valor, "unidad": unidad,
                        "origen": origen, "calidad": calidad},
                       origen)
         return med
+
+    # ------------------------------------- persistencia real (31.23)
+    def configurar_persistencia(self, backend: str, almacen,
+                                actor: str) -> dict:
+        """Configura un almacén real (InfluxDB/Redis) con sondeo REAL:
+        si el almacén no responde, la configuración NO queda activa y el
+        fallo se registra honestamente. Nunca se declara persistido lo
+        que no se escribió."""
+        if backend not in ("influxdb", "redis", "minio"):
+            raise ScadaInvalido(
+                f"backend inválido {backend}; backends: influxdb, redis, "
+                "minio")
+        try:
+            almacen.sondear()
+        except Exception as exc:
+            self._auditar("persistencia_fallo_sondeo",
+                          {"backend": backend,
+                           "detalle": f"{type(exc).__name__}: {exc}"},
+                          actor, "fallo")
+            raise SinCanal(
+                f"almacén {backend} no responde: "
+                f"{type(exc).__name__}: {exc} — la persistencia NO se "
+                "declara configurada") from exc
+        self._almacenes[backend] = almacen
+        self._auditar("persistencia_configurada",
+                      {"backend": backend,
+                       "tipo": type(almacen).__name__}, actor)
+        return {"backend": backend, "estado": "configurado"}
+
+    def _persistir(self, med: Medicion) -> None:
+        """Escritura real en cada almacén configurado (31.23). Un fallo
+        de escritura se registra honestamente y NO invalida la medición
+        en memoria — pero queda auditado como fallo de persistencia."""
+        if not self._almacenes:
+            return
+        doc = {"medicion_id": med.medicion_id, "dispositivo": med.dispositivo,
+               "variable": med.variable, "valor": med.valor,
+               "unidad": med.unidad, "timestamp": med.timestamp,
+               "origen": med.origen, "calidad": med.calidad}
+        for backend, almacen in self._almacenes.items():
+            try:
+                almacen.escribir(doc)
+            except Exception as exc:
+                self._auditar("fallo_persistencia",
+                              {"backend": backend,
+                               "variable": med.variable,
+                               "detalle": f"{type(exc).__name__}: {exc}"},
+                              med.origen, "fallo")
 
     def _rechazo(self, dispositivo: str, variable: str, motivo: str):
         # 31.22: las anomalías generan eventos de validación
@@ -557,12 +607,13 @@ class ScadaEngine:
             "version_motor": SCADA_VERSION,
             "conectores": self.conectores(),
             "persistencia_31_23": {
-                "influxdb": "no_configurado",
-                "redis": "no_configurado",
-                "minio": "no_configurado",
-                "nota": ("series almacenadas en memoria del proceso; "
-                         "la persistencia externa se activa al "
-                         "configurar la infraestructura real")},
+                **{b: ("configurado" if b in self._almacenes
+                       else "no_configurado")
+                   for b in ("influxdb", "redis", "minio")},
+                "nota": ("escritura real en los backends configurados; "
+                         "los no configurados se declaran honestamente "
+                         "— nunca se declara persistido lo que no se "
+                         "escribió")},
             "bus_eventos": ("inyectado" if self._bus is not None
                             else "no_inyectado"),
             "suscripciones_mqtt": len(self._suscripciones),
