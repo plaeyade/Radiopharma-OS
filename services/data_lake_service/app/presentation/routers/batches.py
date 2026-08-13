@@ -28,14 +28,20 @@ _service: BatchService | None = None
 _ebr: EbrService | None = None
 _alerts = None
 _pdf = EbrPdfRenderer()
+_qp = None  # QpReleaseService (fase 4)
 
 
 def init(service: BatchService, ebr: EbrService | None = None,
          alerts=None) -> None:
-    global _service, _ebr, _alerts
+    global _service, _ebr, _alerts, _qp
     _service = service
     _ebr = ebr
     _alerts = alerts
+    if ebr is not None:
+        from app.application.qp_release_service import QpReleaseService
+        _qp = QpReleaseService(service, ebr, _pdf)
+    else:
+        _qp = None
 
 
 def _out(r) -> BatchOut:
@@ -164,6 +170,41 @@ async def release_batch(batch_id: str, payload: ReleaseIn,
     try:
         record = await _service.release_batch(
             batch_id, payload.decision, identity.username, payload.reason)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _out(record)
+
+
+# ---------------- workflow de liberación QP (fase 4, GMP; 25.12) --------
+
+@router.get("/{batch_id}/release-dossier")
+async def release_dossier(batch_id: str,
+                          _: Identity = Depends(require_calidad)):
+    """Dossier de decisión QP con evidencia REAL: QC, firmas, integridad
+    eBR y gate PDF/A (interno siempre; veraPDF honesto si no hay CLI)."""
+    if _qp is None:
+        raise HTTPException(status_code=503,
+                            detail="Workflow QP no configurado")
+    try:
+        return await _qp.dossier(batch_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.post("/{batch_id}/qp-release", response_model=BatchOut)
+async def qp_release(batch_id: str, payload: ReleaseIn,
+                     identity: Identity = Depends(require_calidad)) -> BatchOut:
+    """Decisión de liberación de la Persona Cualificada: segregación de
+    funciones (la QP no libera su propio lote) e integridad eBR
+    verificable obligatoria. Nunca automática (25.12)."""
+    if _qp is None:
+        raise HTTPException(status_code=503,
+                            detail="Workflow QP no configurado")
+    try:
+        record = await _qp.qp_release(batch_id, payload.decision,
+                                      identity.username, payload.reason)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except ValueError as exc:
