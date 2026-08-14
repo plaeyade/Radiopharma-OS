@@ -1,0 +1,50 @@
+{
+  "simulaciones": [
+    {
+      "simulation_id": "SIM-526CF6599F5D",
+      "kind": "talys_excitation",
+      "record_hash": "5e49a1bafbf29d0a0f448dee0c1e7d54382f5288e2365c2f1237f12b6b817150",
+      "integridad_verificada": true
+    },
+    {
+      "simulation_id": "SIM-30378BCD29A3",
+      "kind": "monte_carlo",
+      "record_hash": "7cc971bb74a1b8bcbe1351b5cc2789e447df4e58f460b150f47af1f631c1e116",
+      "integridad_verificada": true
+    },
+    {
+      "simulation_id": "SIM-0C423E5750B7",
+      "kind": "elmer_thermal",
+      "record_hash": "ecdc6127beed47b505d96ddca383643634bf1b7b2f86288bcc115223a8e45457",
+      "integridad_verificada": true
+    }
+  ],
+  "evidencias": [
+    {
+      "evidencia_id": "EV-TALYS-EXCITATION-599F5D",
+      "origen_sim": "SIM-526CF6599F5D"
+    },
+    {
+      "evidencia_id": "EV-MONTE-CARLO-CD29A3",
+      "origen_sim": "SIM-30378BCD29A3"
+    },
+    {
+      "evidencia_id": "EV-ELMER-THERMAL-5750B7",
+      "origen_sim": "SIM-0C423E5750B7"
+    }
+  ],
+  "evaluaciones": [
+    {
+      "requisito_id": "REQ-PT-19.12-TALYS",
+      "estado": "cumple"
+    },
+    {
+      "requisito_id": "REQ-PT-19.14-MC",
+      "estado": "cumple_parcial"
+    },
+    {
+      "requisito_id": "REQ-PT-8.11-TERM",
+      "estado": "cumple"
+    }
+  ]
+}

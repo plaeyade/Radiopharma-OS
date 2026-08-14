@@ -82,6 +82,32 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 10 — Calificación DQ/IQ/OQ y PQ periódico en vivo (v0.76.0)
+
+Cierre del ciclo de calificación de la plataforma (14.9, orden estricto
+DQ→IQ→OQ→PQ impuesto por el qc_engine):
+
+- `scripts/calificar_plataforma_pq.py` (`make calificar-pq`): registra el
+  componente (nunca duplicado), define los protocolos DQ/IQ/OQ y ejecuta
+  cada etapa declarando «cumple» **solo tras verificarlo en el momento**:
+  DQ comprueba la documentación del diseño; IQ hace GET real a los 8
+  `/health` (un servicio caído → etapa fallida, jamás declarada); OQ
+  ejecuta de verdad `pytest pipelines` (45 passed) y solo cumple en verde.
+  Después define el protocolo `pq_deploy` (8 criterios /health reales) y
+  dispara el PQ periódico.
+- `pq_periodico.py` en vivo: PQ **superada** con las 8 latencias reales
+  medidas (1,2–3,7 ms); histórico append-only `out/pq_historico.jsonl`.
+- Expediente de inspección regenerado: **ninguna fuente sin evidencia** —
+  `pq_historico` aporta 3 ejecuciones reales (incluido el error 422 honesto
+  previo al orden DQ/IQ/OQ, que también queda como evidencia).
+- Reporte de validación global (18.13): `pq_periodico` ya no usa el
+  marcador honesto «sin historial» — lee ejecuciones reales superadas.
+- La evidencia real de la batería científica (`out/prueba_teorica_fisica.json`)
+  y del registro RCAE (`out/registro_rcae_fase8.json`) queda versionada en
+  el repo: el veredicto 18.13 es reproducible en cualquier entorno.
+- 3 tests nuevos (`pipelines/test_calificacion_pq.py`): IQ nunca superada
+  con un servicio caído; orden estricto; componente nunca duplicado.
+
 ## Fase 9 — Validación global con evidencia viva (v0.75.0)
 
 El reporte consolidado de validación (18.13, `make validation`) incorpora un

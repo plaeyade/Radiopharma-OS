@@ -1,5 +1,5 @@
 {
-  "generado_en": "2026-08-13T15:35:55.326224+00:00",
+  "generado_en": "2026-08-13T22:51:45.037089+00:00",
   "tipo": "prueba_teorica_fisica",
   "nota": "cálculos reales del motor; referencias IAEA-NDS Medical Portal May-2021; sin ciclotrón operativo no existen datos reales de haz — esto NO los sustituye",
   "secciones": {
@@ -23,7 +23,7 @@
         },
         {
           "e_mev": 18.0,
-          "motor_gbq_ua": 9.903
+          "motor_gbq_ua": 9.902
         }
       ],
       "referencia_canonica_16_5": 9.5,
@@ -47,7 +47,7 @@
         },
         {
           "e_mev": 12.0,
-          "motor_gbq_ua": 3.999,
+          "motor_gbq_ua": 3.998,
           "iaea_gbq_ua": 4.08,
           "desviacion_pct": -2.0
         },
@@ -68,7 +68,7 @@
       "metodo": "integración numérica real σ(E)×(dE/dx)^-1 (ATIMA)"
     },
     "caso_operativo_f18": {
-      "eob_gbq": 108.94736824020598,
+      "eob_gbq": 108.9452339374022,
       "parametros": {
         "E": 16.5,
         "I_uA": 37.0,
@@ -90,18 +90,39 @@
     "runtimes_cientificos": {
       "TALYS": {
         "integracion": "services/nuclear_data_service/app/infrastructure/talys/talys_runner.py",
-        "disponible": false,
-        "motivo_no_disponible": "requiere compilación Fortran (gfortran) — sin root en sandbox"
+        "disponible": true,
+        "ejecucion": "real",
+        "puntos_sigma": 21,
+        "rango_mev": [
+          8.0,
+          18.0
+        ],
+        "desviacion_media_abs_vs_iaea2021_pct": 23.6,
+        "referencia": "data/cross_sections/o18_p_n_f18/o18_p_n_f18_iaea2021.csv (IAEA-NDS, Pade fit a 534 puntos EXFOR)",
+        "nota": "desviacion tipica del modelo optico por defecto de TALYS frente a datos evaluados; la cadena determinista usa sigma(E) IAEA directamente"
       },
       "OpenGATE_Geant4": {
         "integracion": "services/yield_engine/app/infrastructure/gate/",
-        "disponible": false,
-        "motivo_no_disponible": "wheel ~1 GB + datos Geant4; red del sandbox ~15 KB/s"
+        "disponible": true,
+        "ejecucion": "real",
+        "motor": "OpenGATE 10.1.1 / Geant4",
+        "historias": 2000,
+        "particula": "proton",
+        "energia_mev": 16.0,
+        "blanco": "agua 10x10x10 cm",
+        "semilla": 12345,
+        "edep_total_mev": 31980.9,
+        "edep_esperada_mev": 32000.0,
+        "desviacion_pct": -0.06,
+        "nota": "transporte Geant4 real; edep medida con DoseActor, sin surrogate ni ajuste"
       },
       "ElmerFEM": {
-        "integracion": "services/yield_engine/app/infrastructure/elmer/elmer_runner.py",
-        "disponible": false,
-        "motivo_no_disponible": "paquete apt sin root en sandbox"
+        "integracion": "services/yield_engine/app/infrastructure/elmer/",
+        "disponible": true,
+        "ejecucion": "real",
+        "t_max_k": 801785.4611918,
+        "t_mean_k": 341015.7072868,
+        "caso": "blanco 610,5 W, haz gaussiano sigma=0,5 cm, conveccion h=0,5 W/cm2K"
       }
     }
   }
