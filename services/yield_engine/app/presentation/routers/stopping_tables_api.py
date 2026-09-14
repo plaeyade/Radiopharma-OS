@@ -112,3 +112,67 @@ def calibrar_tabla(material: str, version: int, body: CalibracionIn):
             body.motivo, body.registrado_por)
     except TablaExternaInvalida as exc:
         raise HTTPException(422, str(exc)) from exc
+
+
+# ---------------------------------------------------------------------
+# Promoción a proveedor activo (EDS 19.10)
+# ---------------------------------------------------------------------
+
+class PromocionIn(BaseModel):
+    motivo: str
+    registrado_por: str
+
+
+@router.post("/external-tables/{material}/versions/{version}/promote",
+             status_code=201)
+def promover_tabla(material: str, version: int, body: PromocionIn):
+    """Promueve una tabla CALIBRADA a proveedor activo del material.
+
+    Desde este momento el cómputo de rendimientos del material usa la
+    tabla externa real (dentro de su rango validado) y lo declara en
+    cada respuesta. Append-only: la promoción jamás se borra, solo se
+    revierte con motivo.
+    """
+    assert _tablas is not None
+    try:
+        return _tablas.promover(material, version, body.motivo,
+                                body.registrado_por)
+    except TablaExternaInvalida as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.post("/external-tables/{material}/demote", status_code=201)
+def revertir_promocion(material: str, body: PromocionIn):
+    """Revoca la promoción vigente (vuelve el proveedor base ATIMA).
+
+    Requiere motivo; queda registrada en el mismo historial append-only.
+    """
+    assert _tablas is not None
+    try:
+        return _tablas.revertir(material, body.motivo, body.registrado_por)
+    except TablaExternaInvalida as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@router.get("/promotions")
+def historial_promociones():
+    """Historial append-only de promociones y reversiones (ALCOA+)."""
+    assert _tablas is not None
+    return {"promociones": _tablas.promociones(),
+            "nota": ("historial append-only: las promociones y "
+                     "reversiones nunca se sobrescriben ni se borran")}
+
+
+@router.get("/providers")
+def proveedores_activos():
+    """Proveedor de stopping EFECTIVO por material (el que usa el cómputo).
+
+    Declaración honesta: base ATIMA empaquetado o tabla externa
+    promovida (material, versión, fuente, sha256).
+    """
+    assert _service is not None
+    estado = None
+    if hasattr(_service._stopping, "estado"):
+        estado = _service._stopping.estado()
+    return {"stopping_status": _service.stopping_status(),
+            "detalle": estado}

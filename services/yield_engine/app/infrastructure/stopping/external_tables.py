@@ -39,7 +39,14 @@ class ExternalStoppingTables:
                 indent=2, ensure_ascii=False))
 
     def _leer(self) -> dict:
-        return json.loads(self._manifiesto.read_text())
+        man = json.loads(self._manifiesto.read_text())
+        man.setdefault("promociones", [])
+        man.setdefault("activas", {})
+        return man
+
+    def _escribir(self, man: dict) -> None:
+        self._manifiesto.write_text(
+            json.dumps(man, indent=2, ensure_ascii=False))
 
     def registrar(self, material: str, fuente: str, ejecutado_en: str,
                   descripcion: str, filas: list[list[float]],
@@ -96,8 +103,7 @@ class ExternalStoppingTables:
                 "nunca ejecuta ni simula SRIM"),
         }
         man["tablas"].append(entrada)
-        self._manifiesto.write_text(
-            json.dumps(man, indent=2, ensure_ascii=False))
+        self._escribir(man)
         return entrada
 
     def listar(self) -> list[dict]:
@@ -154,8 +160,133 @@ class ExternalStoppingTables:
                 t.setdefault("calibraciones", []).append(cal)
                 t["estado"] = ("calibrada" if cal["veredicto"] == "calibrada"
                                else "rechazada_declarada")
-                self._manifiesto.write_text(
-                    json.dumps(man, indent=2, ensure_ascii=False))
+                self._escribir(man)
                 return {"tabla": t, "calibracion": cal}
         raise TablaExternaInvalida(
             f"tabla desconocida: {material} v{version}")
+
+    # ------------------------------------------------------------------
+    # Promoción a proveedor activo (EDS 19.10)
+    #
+    # Una tabla externa SOLO se convierte en proveedor activo del
+    # material después de una calibración con veredicto `calibrada`, y
+    # cada promoción/reversión se registra append-only con motivo —
+    # el historial nunca se sobrescribe (ALCOA+). El cómputo declara en
+    # cada respuesta qué proveedor y fuente usó realmente.
+    # ------------------------------------------------------------------
+
+    def promover(self, material: str, version: int, motivo: str,
+                 registrado_por: str) -> dict:
+        """Promueve una tabla CALIBRADA a proveedor activo del material."""
+        if not motivo.strip():
+            raise TablaExternaInvalida("la promoción exige motivo")
+        entrada = self.obtener(material, version)
+        if entrada["estado"] != "calibrada":
+            raise TablaExternaInvalida(
+                f"solo se promueve una tabla calibrada: {material} "
+                f"v{version} está en estado '{entrada['estado']}' — "
+                f"calibrar primero contra el proveedor vigente (19.10); "
+                f"una tabla sin calibrar jamás entra en el cómputo")
+        filas = self.leer_filas(entrada)      # verifica sha256 (ALCOA+)
+        man = self._leer()
+        promocion = {
+            "accion": "promovida",
+            "material": material, "version": version,
+            "fuente": entrada["fuente"], "sha256": entrada["sha256"],
+            "rango_mev": [filas[0][0], filas[-1][0]],
+            "motivo": motivo.strip(),
+            "registrado_por": registrado_por.strip() or "desconocido",
+            "registrada_en": datetime.now(timezone.utc).isoformat(),
+        }
+        man["promociones"].append(promocion)
+        man["activas"][material] = version
+        self._escribir(man)
+        return {"promocion": promocion,
+                "nota_honestidad": (
+                    "proveedor activo cambiado con motivo registrado; el "
+                    "historial de promociones es append-only y el cómputo "
+                    "declara esta fuente en cada resultado (19.10)")}
+
+    def revertir(self, material: str, motivo: str,
+                 registrado_por: str) -> dict:
+        """Revoca la promoción vigente: vuelve el proveedor base (ATIMA)."""
+        if not motivo.strip():
+            raise TablaExternaInvalida("la reversión exige motivo")
+        man = self._leer()
+        version = man["activas"].get(material)
+        if version is None:
+            raise TablaExternaInvalida(
+                f"no hay promoción vigente para '{material}' — nada que "
+                f"revertir (el proveedor base sigue activo)")
+        entrada = self.obtener(material, version)
+        reversion = {
+            "accion": "revertida_a_proveedor_base",
+            "material": material, "version": version,
+            "fuente": entrada["fuente"], "sha256": entrada["sha256"],
+            "motivo": motivo.strip(),
+            "registrado_por": registrado_por.strip() or "desconocido",
+            "registrada_en": datetime.now(timezone.utc).isoformat(),
+        }
+        man["promociones"].append(reversion)
+        del man["activas"][material]
+        self._escribir(man)
+        return {"reversion": reversion}
+
+    def activa(self, material: str) -> dict | None:
+        """Tabla promovida vigente del material, o None si no la hay."""
+        version = self._leer()["activas"].get(material)
+        if version is None:
+            return None
+        return self.obtener(material, version)
+
+    def promociones(self) -> list[dict]:
+        """Historial append-only de promociones y reversiones."""
+        return list(self._leer()["promociones"])
+
+    def interpolar(self, material: str, energia_mev: float) -> float:
+        """Poder de frenado de la tabla PROMOVIDA, interpolación real.
+
+        Fuera del rango registrado de la tabla → error honesto: nunca se
+        extrapola una tabla externa fuera de su rango validado (49.11).
+        """
+        entrada = self.activa(material)
+        if entrada is None:
+            raise TablaExternaInvalida(
+                f"sin tabla promovida para '{material}'")
+        filas = self.leer_filas(entrada)      # verifica sha256 (ALCOA+)
+        if not (filas[0][0] <= energia_mev <= filas[-1][0]):
+            raise TablaExternaInvalida(
+                f"energía {energia_mev} MeV fuera del rango validado de "
+                f"la tabla promovida [{filas[0][0]}, {filas[-1][0]}] MeV "
+                f"— nunca se extrapola una tabla externa (49.11)")
+        for (e0, s0), (e1, s1) in zip(filas, filas[1:]):
+            if e0 <= energia_mev <= e1:
+                f = (energia_mev - e0) / (e1 - e0)
+                return s0 + f * (s1 - s0)
+        return filas[-1][1]
+
+    def alcance_g_cm2(self, material: str, energia_mev: float) -> float:
+        """Alcance CSDA de la tabla promovida: R = ∫ dE/S(E) real.
+
+        Integración trapezoidal sobre los puntos REALES registrados,
+        desde la energía mínima de la tabla hasta ``energia_mev``.
+        """
+        entrada = self.activa(material)
+        if entrada is None:
+            raise TablaExternaInvalida(
+                f"sin tabla promovida para '{material}'")
+        filas = self.leer_filas(entrada)      # verifica sha256 (ALCOA+)
+        if not (filas[0][0] <= energia_mev <= filas[-1][0]):
+            raise TablaExternaInvalida(
+                f"energía {energia_mev} MeV fuera del rango validado de "
+                f"la tabla promovida [{filas[0][0]}, {filas[-1][0]}] MeV "
+                f"— nunca se extrapola una tabla externa (49.11)")
+        puntos = [(e, s) for e, s in filas if e <= energia_mev]
+        e_fin, s_fin = puntos[-1]
+        if e_fin < energia_mev:
+            s_e = self.interpolar(material, energia_mev)
+            puntos.append((energia_mev, s_e))
+        rango = 0.0
+        for (e0, s0), (e1, s1) in zip(puntos, puntos[1:]):
+            rango += 0.5 * (1.0 / s0 + 1.0 / s1) * (e1 - e0)
+        return rango

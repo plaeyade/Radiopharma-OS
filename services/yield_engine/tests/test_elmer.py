@@ -229,6 +229,31 @@ def test_compare_linaje_yield_burnup(tmp_path: Path):
 
 
 
+def test_fem_termico_real_end_to_end_con_runtime():
+    """FEM térmico REAL con ElmerSolver instalado (ELMER_CMD / PATH).
+
+    Sin runtime → skip honesto (el 503 ya está probado arriba). Con
+    runtime: la física debe ser coherente — el máximo supera la
+    temperatura del refrigerante y la media no supera el máximo.
+    """
+    import os
+    import shutil
+    from app.main import service
+    if not (os.environ.get("ELMER_CMD") or shutil.which("ElmerSolver")):
+        pytest.skip("sin runtime Elmer — patrón honesto sin_runtime")
+    r = service.thermal_fem(
+        beam_power_w=CASE.beam_power_w,
+        spot_radius_cm=CASE.spot_radius_cm,
+        target_thickness_cm=CASE.target_thickness_cm,
+        conductivity_w_cm_k=CASE.conductivity_w_cm_k,
+        film_coeff_w_cm2_k=CASE.film_coeff_w_cm2_k,
+        coolant_temp_k=CASE.coolant_temp_k,
+        beam_sigma_cm=CASE.beam_sigma_cm)
+    assert r["t_max_k"] > CASE.coolant_temp_k
+    assert r["t_mean_k"] <= r["t_max_k"]
+    assert "ElmerSolver" in r["solver"] or "elmer" in r["solver"].lower()
+
+
 def test_parse_scalars_formato_real_estacionario():
     """Formato real Elmer 26 estacionario: todas las columnas son variables
     (sin paso inicial), detectado vía scalars.dat.names."""

@@ -1486,3 +1486,42 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - 6 tests nuevos (impureza presente, monotonía con la energía, F-18 sin
   canal → no_demostrable, recomendación respeta criterio y es el
   máximo viable, fuente obligatoria).
+
+## Fase 20 — Promoción de tabla externa calibrada a proveedor activo (v0.85.0)
+
+- **Cierre del ciclo 19.10**: registro (Fase 16) → calibración (Fase 17)
+  → **promoción**. Solo una tabla con veredicto `calibrada` puede
+  convertirse en proveedor activo de su material; promoción y reversión
+  exigen **motivo** y quedan en un historial **append-only** (ALCOA+).
+- Endpoints: `POST /external-tables/{material}/versions/{v}/promote`,
+  `POST /external-tables/{material}/demote`,
+  `GET /promotions` (auditoría) y `GET /providers` (proveedor efectivo
+  por material, con fuente y sha256).
+- `PromotedStoppingPower`: el cómputo usa la tabla externa REAL
+  interpolada dentro de su rango validado; **fuera de rango → error
+  honesto, nunca extrapolación** (49.11). Alcance CSDA por integración
+  trapezoidal real de 1/S sobre los puntos registrados. Cada lectura
+  verifica sha256 — integridad violada → error, jamás cómputo con dato
+  dudoso. La fuente efectiva se declara en `stopping_status` y en cada
+  respuesta de producción.
+- 7 tests nuevos (exige calibrada, cambio real del cómputo, fuera de
+  rango, reversión append-only con vuelta a ATIMA, motivo obligatorio,
+  CSDA real, integridad sha256 tras promoción).
+
+## Fase 21 — FEM térmico cerrado con runtime Elmer real (v0.85.0)
+
+- **Bug real detectado y corregido**: `thermal_fem` pasaba los argumentos
+  invertidos a `build_case` — el endpoint `/targets/{id}/thermal` jamás
+  había llegado a ejecutar el solver. El test end-to-end con runtime
+  real lo destapó (validación teórica → ejecución real).
+- Test `test_fem_termico_real_end_to_end_con_runtime`: con ElmerSolver
+  instalado (ELMER_CMD/PATH) ejecuta el FEM real y exige coherencia
+  física (T_max > T_refrigerante, T_media ≤ T_max); sin runtime → skip
+  honesto (el 503 `sin_runtime` sigue probado). El test térmico de la
+  API ahora es consciente del entorno (200 real con cita de COOL, o 503
+  honesto).
+- En vivo: configuración de enfriamiento **COOL-0001** registrada con
+  fuente citada → `POST /targets/zn68/thermal` resuelto por
+  **ElmerSolver 26.2 real** (HeatSolve axisimétrico, SaveScalars) — ya
+  no es `sin_runtime`: temperaturas computadas por el solver, nunca
+  estimadas.

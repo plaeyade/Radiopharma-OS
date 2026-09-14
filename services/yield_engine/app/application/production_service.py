@@ -511,9 +511,10 @@ class ProductionService:
             conductivity_w_cm_k=conductivity_w_cm_k,
             film_coeff_w_cm2_k=film_coeff_w_cm2_k,
             coolant_temp_k=coolant_temp_k, beam_sigma_cm=beam_sigma_cm)
+        from pathlib import Path as _Path
         with tempfile.TemporaryDirectory(prefix="elmer_cool_") as tmp:
-            case_dir = build_case(case, tmp)
-            scalars = self._elmer.run(case_dir)
+            build_case(_Path(tmp), case)
+            scalars = self._elmer.run(_Path(tmp))
         return {"t_max_k": float(scalars[0]), "t_mean_k": float(scalars[1]),
                 "solver": self._elmer.cmd_label,
                 "film_coeff_w_cm2_k": film_coeff_w_cm2_k}

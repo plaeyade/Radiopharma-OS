@@ -32,8 +32,19 @@ app = FastAPI(
         "radionúclidos PET (MVP: 18O(p,n)18F)."),
 )
 
+from app.infrastructure.stopping.external_tables import ExternalStoppingTables
+from app.infrastructure.stopping.promoted_stopping import PromotedStoppingPower
+
+_tablas_ext = ExternalStoppingTables(DATA_DIR / "stopping" / "external")
+# Promoción de tablas externas calibradas (EDS 19.10): el proveedor
+# activo es el base (ATIMA) salvo en materiales con tabla promovida.
+# Mapeo clave interna → nombre del material externo registrado.
+_MAPA_PROMOCION = {"h2o": "agua", "o2": "oxigeno", "n2": "nitrogeno",
+                   "zn68": "zn68"}
 service = ProductionService(
-    stopping=build_stopping_provider(DATA_DIR / "stopping"),
+    stopping=PromotedStoppingPower(
+        build_stopping_provider(DATA_DIR / "stopping"), _tablas_ext,
+        _MAPA_PROMOCION),
     rxn=build_reaction_provider(DATA_DIR),
 )
 yield_api.init(service)
@@ -75,7 +86,6 @@ app.include_router(irradiation_api.router)
 from app.domain.beamline import BeamlineRegistry
 from app.domain.radiochemistry import ProcesoRadioquimicoRegistry
 from app.domain.synthesis_module import ModuloSintesisRegistry
-from app.infrastructure.stopping.external_tables import ExternalStoppingTables
 from app.presentation.routers import (beamline_api, radiochemistry_api,
                                       stopping_tables_api)
 
@@ -85,8 +95,7 @@ app.include_router(beamline_api.router)
 radiochemistry_api.init(service, ProcesoRadioquimicoRegistry(),
                         ModuloSintesisRegistry())
 app.include_router(radiochemistry_api.router)
-stopping_tables_api.init(ExternalStoppingTables(DATA_DIR / "stopping"
-                                                / "external"), service)
+stopping_tables_api.init(_tablas_ext, service)
 app.include_router(stopping_tables_api.router)
 
 from app.domain.beam_optics import LineaOpticaRegistry

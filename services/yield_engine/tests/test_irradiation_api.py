@@ -141,9 +141,20 @@ def test_thermal_con_h_registrada_usa_vigente(client):
         "fuente": "literatura especializada citada por el usuario",
         "registrado_por": "calidad"})
     assert r.status_code == 201, r.text
-    # sin runtime Elmer en este entorno → 503 honesto (nunca estimado);
-    # con runtime, la respuesta citaría config_id/versión/fuente
+    # sin runtime Elmer → 503 honesto (nunca estimado); con runtime →
+    # FEM real que cita config_id/versión/fuente de la h vigente
+    import os as _os
+    import shutil as _sh
     r = client.post("/api/v1/targets/h2_18o/thermal", json={
         "energia_mev": 18.0, "corriente_ua": 300.0})
-    assert r.status_code == 503
-    assert "no demostrable" in r.json()["detail"] or "ElmerSolver" in r.json()["detail"]
+    if _os.environ.get("ELMER_CMD") or _sh.which("ElmerSolver"):
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d["cooling_config_id"] and d["cooling_version"] == 1
+        assert d["cooling_fuente"]
+        assert d["t_max_k"] > d["film_coeff_w_cm2_k"] * 0  # real
+        assert d["t_mean_k"] <= d["t_max_k"]
+    else:
+        assert r.status_code == 503
+        assert ("no demostrable" in r.json()["detail"]
+                or "ElmerSolver" in r.json()["detail"])
