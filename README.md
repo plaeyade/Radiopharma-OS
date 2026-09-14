@@ -1525,3 +1525,32 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   **ElmerSolver 26.2 real** (HeatSolve axisimétrico, SaveScalars) — ya
   no es `sin_runtime`: temperaturas computadas por el solver, nunca
   estimadas.
+
+## Fase 22 — Producción de ⁶⁴Cu (⁶⁴Ni(p,n)⁶⁴Cu) (v0.86.0)
+
+- **Dataset IAEA-NDS ⁶⁴Ni(p,n)⁶⁴Cu** (46 puntos, 2,6–25 MeV, pico
+  665,5 mb @ 10,5 MeV, con incertidumbres): versionado y **verificado
+  en vivo 46/46** contra la fuente oficial por `pipelines/verificar_datasets.py`
+  (fixture offline + test de regresión).
+- **Biblioteca de decaimiento ⁶⁴Cu**: T½ = 12,7004 h, λ = 1,51602e-05 s⁻¹,
+  ramas β− 38,5 % / β+ 17,6 % / EC 43,1 % — NuDat (BNL), consistente con
+  ICRP-107/MIRD.
+- **Stopping del blanco Ni-64 con proxy DECLARADO**: PSTAR no publica
+  níquel; se usa la tabla real **NIST PSTAR cobre** (Z=29, vecino de
+  Ni Z=28 — descargada en vivo y versionada con fuente/url/integridad)
+  con interpolación log-log y rango CSDA tabulado por el NIST. El
+  proveedor declara la mezcla en `source_label` («ATIMA + PSTAR cobre
+  como proxy declarado para ni64») y el catálogo lo marca en la
+  etiqueta del blanco. Camino honesto a futuro: tabla SRIM/ATIMA real
+  de Ni exportada por el usuario → registro (Fase 16) → calibración
+  (Fase 17) → promoción (Fase 20).
+- **Impurezas**: sin canal competidor con dataset citado para ⁶⁴Ni
+  (⁶¹Co por (p,α), ⁶³Ni por (p,pn)… no publicados en el portal médico
+  IAEA) → cada irradiación de ⁶⁴Cu declara impureza `no_demostrable`
+  (nunca estimada, 49.11).
+- En vivo (KIUBE 18 MeV / 50 µA / 60 min, enriquecimiento 95 %
+  declarado): **EOB ⁶⁴Cu 31,09 ± 2,58 GBq** (cota superior sin ventana
+  registrada — declarado).
+- 5 tests nuevos (λ real, EOB positivo con dataset verificado,
+  monotonía, impureza no_demostrable, proxy declarado) + 1 test del
+  verificador.

@@ -1,0 +1,27 @@
+{
+  "nuclide": "64Cu",
+  "Z": 29,
+  "A": 64,
+  "half_life_s": 45721.44,
+  "half_life_min": 762.024,
+  "half_life_uncertainty_min": null,
+  "decay_constant_s-1": 1.5160222000005802e-05,
+  "decay_modes": [
+    {
+      "mode": "beta_minus",
+      "branching_ratio": 0.385,
+      "note": "β− 38,5 % → 64Zn estable"
+    },
+    {
+      "mode": "beta_plus",
+      "branching_ratio": 0.176,
+      "note": "β+ 17,6 % → 64Ni (emisor PET)"
+    },
+    {
+      "mode": "electron_capture",
+      "branching_ratio": 0.431,
+      "note": "EC 43,1 % → 64Ni; gamma 1346 keV (0,47 %)"
+    }
+  ],
+  "fuente": "NuDat (BNL) — T½ = 12,7004 h; ramas β−/β+/EC consistentes con ICRP-107/MIRD"
+}

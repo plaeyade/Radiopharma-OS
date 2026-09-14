@@ -40,6 +40,8 @@ REACTIONS: dict[str, dict] = {
                       "targets": ["zn68"]},
     "zn68_p_2n_ga67": {"notation": "68Zn(p,2n)67Ga", "product": "67Ga",
                        "targets": ["zn68"]},
+    "ni64_p_n_cu64": {"notation": "64Ni(p,n)64Cu", "product": "64Cu",
+                      "targets": ["ni64"]},
 }
 
 # Canales competidores registrados: producen impurezas radionuclídicas

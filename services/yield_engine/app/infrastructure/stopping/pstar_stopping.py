@@ -18,12 +18,14 @@ import numpy as np
 
 # materiales con tabla PSTAR versionada en data/stopping/pstar/
 MATERIALES_PSTAR = {"water": "proton_water_pstar.csv",
-                    "iron": "proton_iron_pstar.csv"}
+                    "iron": "proton_iron_pstar.csv",
+                    "copper": "proton_cu_pstar.csv"}
 
 # densidades de referencia declaradas (g/cm³) — solo para convertir
 # espesores; se documentan como supuesto explícito del usuario
 DENSIDADES_REF = {"water": 1.0, "iron": 7.874,
-                  "havar_aprox": 8.3}  # proxy declarado: Havar ≈ Fe en S(E)
+                  "havar_aprox": 8.3,  # proxy declarado: Havar ≈ Fe en S(E)
+                  "copper": 8.96}
 
 
 class VentanaInvalida(ValueError):

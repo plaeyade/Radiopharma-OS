@@ -26,7 +26,7 @@ PSTAR_DIR = DATA_DIR / "stopping" / "pstar"
 # ------------------------------------------------------------- tablas PSTAR
 def test_tablas_pstar_tienen_fuente_y_datos_reales():
     tablas = PstarTables(PSTAR_DIR)
-    assert set(tablas.materiales()) == {"water", "iron"}
+    assert set(tablas.materiales()) == {"water", "iron", "copper"}
     # valores NIST conocidos de las propias tablas versionadas
     s = tablas.stopping_power("water", 16.0)
     assert 25.0 < s < 35.0         # MeV·cm²/g — valor NIST a 16 MeV ≈ 31
@@ -123,5 +123,5 @@ def test_status_reporta_pstar_configurado():
     client = _client()
     d = client.get("/api/v1/stopping-power/status").json()
     assert d["pstar_ventanas"]["estado"] == "configurado"
-    assert d["pstar_ventanas"]["materiales"] == ["iron", "water"]
+    assert d["pstar_ventanas"]["materiales"] == ["copper", "iron", "water"]
     assert d["srim"]["estado"] == "no_configurado"

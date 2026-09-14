@@ -74,3 +74,15 @@ def test_dataset_ga67_layout_sin_incertidumbre():
     assert r["estado"] == "verificado"
     assert r["n_puntos_versionados"] == r["n_puntos_fuente"] == 68
     assert r["discrepancias"] == []
+
+
+FIXTURE_CU64 = Path(__file__).parent / "fixtures" / "nip64cu4.html"
+
+
+def test_dataset_cu64_verificado_contra_fuente_oficial():
+    """64Ni(p,n)64Cu: el CSV versionado coincide punto a punto con IAEA."""
+    r = vd.verificar_dataset(DATA, "ni64_p_n_cu64",
+                             fuente_local=FIXTURE_CU64)
+    assert r["estado"] == "verificado"
+    assert r["n_puntos_versionados"] == r["n_puntos_fuente"] == 46
+    assert r["discrepancias"] == []

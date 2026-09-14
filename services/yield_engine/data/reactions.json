@@ -33,5 +33,12 @@
     "q_value_mev": -10.31,
     "dataset_id": "zn68_p_2n_ga67_iaea",
     "file": "cross_sections/zn68_p_2n_ga67/zn68_p_2n_ga67_iaea.csv"
+  },
+  "ni64_p_n_cu64": {
+    "notation": "64Ni(p,n)64Cu",
+    "threshold_mev": 2.47,
+    "q_value_mev": -2.46,
+    "dataset_id": "ni64_p_n_cu64_iaea",
+    "file": "cross_sections/ni64_p_n_cu64/ni64_p_n_cu64_iaea.csv"
   }
 }

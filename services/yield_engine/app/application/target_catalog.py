@@ -50,6 +50,20 @@ TARGET_CATALOG: dict[str, TargetMaterial] = {
         mass_fraction=1.0,
         enrichment=0.982,                # enriquecimiento típico comercial
     ),
+    # Blanco de 64Ni enriquecido (electroplated sobre backplate Au/Cu —
+    # ruta ciclotrón estándar de 64Cu). Stopping: proxy Cu PSTAR
+    # DECLARADO (PSTAR no publica Ni; pendiente tabla SRIM/ATIMA real
+    # exportada por el usuario → calibración/promoción 19.10).
+    "ni64": TargetMaterial(
+        material_id="ni64",
+        label=("Níquel enriquecido 64Ni (stopping: proxy Cu PSTAR "
+               "declarado; enriquecimiento típico comercial declarado)"),
+        stopping_material="ni64",
+        target_nuclide="64Ni",
+        molar_mass_g_mol=64.0,
+        mass_fraction=1.0,
+        enrichment=0.95,                 # enriquecimiento típico comercial declarado
+    ),
     # Blanco gaseoso 18O2 (ruta [18F]F2)
     "o2_18": TargetMaterial(
         material_id="o2_18",
