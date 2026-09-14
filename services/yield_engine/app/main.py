@@ -79,14 +79,21 @@ from app.infrastructure.stopping.external_tables import ExternalStoppingTables
 from app.presentation.routers import (beamline_api, radiochemistry_api,
                                       stopping_tables_api)
 
-beamline_api.init(BeamlineRegistry())
+_beamlines = BeamlineRegistry()
+beamline_api.init(_beamlines)
 app.include_router(beamline_api.router)
 radiochemistry_api.init(service, ProcesoRadioquimicoRegistry(),
                         ModuloSintesisRegistry())
 app.include_router(radiochemistry_api.router)
 stopping_tables_api.init(ExternalStoppingTables(DATA_DIR / "stopping"
-                                                / "external"))
+                                                / "external"), service)
 app.include_router(stopping_tables_api.router)
+
+from app.domain.beam_optics import LineaOpticaRegistry
+from app.presentation.routers import beam_optics_api
+
+beam_optics_api.init(LineaOpticaRegistry(), _beamlines)
+app.include_router(beam_optics_api.router)
 
 
 @app.get("/health", tags=["meta"])

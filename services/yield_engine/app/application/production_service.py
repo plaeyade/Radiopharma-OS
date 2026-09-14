@@ -517,6 +517,13 @@ class ProductionService:
         """
         return float(self._rxn.get_decay_constant(nuclide))
 
+    def stopping_power_active(self, material_key: str,
+                              energy_mev: float) -> float:
+        """Poder de frenado del proveedor ACTIVO (referencia de
+        calibración de tablas externas, 19.10)."""
+        return float(self._stopping.stopping_power(material_key,
+                                                   energy_mev))
+
     def compute(
         self,
         reaction_id: str,

@@ -1405,3 +1405,31 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   sus valores quedan pendientes de ficha técnica proporcionada por el
   usuario (nunca se inventan).
 - 8 tests nuevos (`tests/test_synthesis_module.py`).
+
+## Fase 17 — Óptica de haz (TraceWin) y calibración de tablas externas (v0.82.0)
+
+- **Línea óptica versionada (EDS 5.9)**: `POST/GET
+  /api/v1/beamlines/{id}/optics` — secuencia de elementos (drift,
+  cuadrupolo, dipolo, solenoide, colimador) vinculada a la beamline,
+  cada elemento con **fuente citada** (diseño del proveedor o medición;
+  49.11). Registro versionado que nunca sobrescribe.
+- **Adaptador TraceWin (CEA)** (`POST /api/v1/beamlines/{id}/transport`):
+  genera el deck real (.dat) desde la línea registrada y ejecuta el
+  binario detectado vía `TRACEWIN_CMD`/PATH (mismo patrón que TALYS_CMD
+  / ELMER_CMD). Sin runtime → **503 honesto `sin_runtime`**: la
+  plataforma nunca simula la envolvente del haz. Qué aporta cuando haya
+  runtime: transmisión calculada de extremo a extremo y tamaño de haz
+  real en el blanco (hoy la transmisión es valor citado y el σ del
+  perfil térmico es supuesto declarado).
+- **Calibración de tablas externas de frenado (19.10)**:
+  `POST /api/v1/stopping-power/external-tables/{mat}/versions/{v}/calibrate`
+  — comparación REAL punto a punto contra el proveedor activo (ATIMA
+  versionado), con verificación de integridad sha256 de la tabla antes
+  de comparar (ALCOA+). Veredicto `calibrada` / `rechazada_declarada`
+  según criterio de desviación máxima; calibraciones append-only con
+  motivo. Material sin mapeo declarado → `no_demostrable`.
+- En vivo: OPT-BL-0001-v1 (drift + cuadrupolo + colimador, fuentes
+  didácticas declaradas) → transporte **503 sin_runtime** honesto;
+  calibración de la tabla PSTAR/agua v1 vs ATIMA: **desv. máx 3,33 %**
+  (4,5–6,5 MeV) → veredicto **calibrada**.
+- 7 tests nuevos (`tests/test_beam_optics.py`).

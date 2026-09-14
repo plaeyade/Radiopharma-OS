@@ -36,8 +36,106 @@
       "descripcion": "extracto de referencia para futura calibración cruzada ATIMA vs PSTAR en el blanco",
       "registrado_por": "demo-fase16",
       "registrada_en": "2026-09-14T07:16:34.126230+00:00",
-      "estado": "registrada_no_calibrada",
-      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+      "estado": "calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 5,
+            "desv_media_pct": 3.302,
+            "desv_max_pct": 3.326,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.86,
+                "referencia": 88.805,
+                "desv_pct": 3.316
+              },
+              {
+                "energia_mev": 5.0,
+                "externa": 79.11,
+                "referencia": 81.8317,
+                "desv_pct": 3.326
+              },
+              {
+                "energia_mev": 5.5,
+                "externa": 73.43,
+                "referencia": 75.9491,
+                "desv_pct": 3.317
+              },
+              {
+                "energia_mev": 6.0,
+                "externa": 68.58,
+                "referencia": 70.9133,
+                "desv_pct": 3.29
+              },
+              {
+                "energia_mev": 6.5,
+                "externa": 64.38,
+                "referencia": 66.5494,
+                "desv_pct": 3.26
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:17:56.660283+00:00"
+        },
+        {
+          "criterio_max_pct": 15.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 5,
+            "desv_media_pct": 3.302,
+            "desv_max_pct": 3.326,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.86,
+                "referencia": 88.805,
+                "desv_pct": 3.316
+              },
+              {
+                "energia_mev": 5.0,
+                "externa": 79.11,
+                "referencia": 81.8317,
+                "desv_pct": 3.326
+              },
+              {
+                "energia_mev": 5.5,
+                "externa": 73.43,
+                "referencia": 75.9491,
+                "desv_pct": 3.317
+              },
+              {
+                "energia_mev": 6.0,
+                "externa": 68.58,
+                "referencia": 70.9133,
+                "desv_pct": 3.29
+              },
+              {
+                "energia_mev": 6.5,
+                "externa": 64.38,
+                "referencia": 66.5494,
+                "desv_pct": 3.26
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación cruzada PSTAR (NIST) vs ATIMA empaquetado en el rango 4,5-6,5 MeV de la ventana",
+          "registrado_por": "demo-fase17",
+          "registrada_en": "2026-09-14T15:19:29.138228+00:00"
+        }
+      ]
     },
     {
       "material": "agua_test",
@@ -140,6 +238,584 @@
       "descripcion": "tabla de prueba",
       "registrado_por": "físico",
       "registrada_en": "2026-09-14T07:28:57.982953+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 2,
+      "archivo": "agua_v2.csv",
+      "sha256": "e42dffd7f6e7cfb57c4f19ef2426e0aab6664a668f7059c5d10c46b37c1b34ca",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:17:56.656787+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "titanio",
+      "version": 1,
+      "archivo": "titanio_v1.csv",
+      "sha256": "38ab8b252c817fc2377d6b1802fb29e0c765adab1bf82f5e3076f36c7abc83c4",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:17:56.696151+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 3,
+      "archivo": "agua_v3.csv",
+      "sha256": "d7798beb7c72cb120b03b8546d997173b3cee5f1a7ea5aa37a348d494a86dcf3",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:18:30.937105+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:18:30.940840+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:18:30.944220+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 2,
+      "archivo": "titanio_v2.csv",
+      "sha256": "b97081f31f30d41dd745874ce0922bb8d88b3c2f7e3edbc77cdda7c7e3e3353e",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:18:30.948491+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 4,
+      "archivo": "agua_v4.csv",
+      "sha256": "28513f67dcf403a7cdfa2aa93326732c88672f5a3c577871ceeccaac85d31901",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:18:32.864011+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:18:32.867906+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:18:32.871480+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 3,
+      "archivo": "titanio_v3.csv",
+      "sha256": "6e19727aec6b36917e3c884ca89f4897057b3d9b887b9edeb624930a1a2b12d4",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:18:32.875890+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua_test",
+      "version": 11,
+      "archivo": "agua_test_v11.csv",
+      "sha256": "80bcb4fafd504e99133e50dda1f7adeb7f3b0f679788c8cb94b10def174e8602",
+      "fuente": "SRIM-2013 ejecutado por el usuario, export PROTONS in water",
+      "ejecutado_en": "2026-09-14, SRIM-2013 en PC del laboratorio",
+      "descripcion": "tabla de prueba",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:18:34.582577+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 5,
+      "archivo": "agua_v5.csv",
+      "sha256": "a7a6f3ade50317e4d1ee9c2333ca316b9e29c09132cce60f4204a40e03aa4485",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:22:24.573060+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:22:24.577457+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:22:24.581396+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 4,
+      "archivo": "titanio_v4.csv",
+      "sha256": "ba2d974c56267869c286cf891a56520682d9eaf69e9b3befce95364784c20036",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:22:24.585880+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua_test",
+      "version": 12,
+      "archivo": "agua_test_v12.csv",
+      "sha256": "0e9ea5ce6f2c9639046370a4f49f49d41b653ddc7a859f66965470a40745d128",
+      "fuente": "SRIM-2013 ejecutado por el usuario, export PROTONS in water",
+      "ejecutado_en": "2026-09-14, SRIM-2013 en PC del laboratorio",
+      "descripcion": "tabla de prueba",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:22:26.273494+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 6,
+      "archivo": "agua_v6.csv",
+      "sha256": "824a738fe0926fae54f02b3adc34d29323d86259eae6bc49a7a09d8b7e93519c",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:23:19.168557+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:23:19.173042+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:23:19.177164+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 5,
+      "archivo": "titanio_v5.csv",
+      "sha256": "ab69170ec830773db30a9620c835268d11c6abbe998afbc1cbf16d43b2235b6a",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:23:19.181892+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua_test",
+      "version": 13,
+      "archivo": "agua_test_v13.csv",
+      "sha256": "575107541caa11a40b10664ee071377e2c46fee11be2311df9d522dd167a552e",
+      "fuente": "SRIM-2013 ejecutado por el usuario, export PROTONS in water",
+      "ejecutado_en": "2026-09-14, SRIM-2013 en PC del laboratorio",
+      "descripcion": "tabla de prueba",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:23:21.072556+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 7,
+      "archivo": "agua_v7.csv",
+      "sha256": "330db6fa9b0d19e2dbc61383829e628ed993e4eb7ac193d0803da0790507a74c",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:23:59.428211+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:23:59.432972+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "TableStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-09-14T15:23:59.437314+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 6,
+      "archivo": "titanio_v6.csv",
+      "sha256": "9a55134ef39576ddfdb7e4842a2fda5dbe91ba16e4fe380ee042d83d26658725",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-09-14T15:23:59.442173+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua_test",
+      "version": 14,
+      "archivo": "agua_test_v14.csv",
+      "sha256": "dd1f3e866879b6ab7268771ea3ba4f316d0c626e182beb98e2031bdd20b0cefc",
+      "fuente": "SRIM-2013 ejecutado por el usuario, export PROTONS in water",
+      "ejecutado_en": "2026-09-14, SRIM-2013 en PC del laboratorio",
+      "descripcion": "tabla de prueba",
+      "registrado_por": "físico",
+      "registrada_en": "2026-09-14T15:24:01.407230+00:00",
       "estado": "registrada_no_calibrada",
       "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
     }

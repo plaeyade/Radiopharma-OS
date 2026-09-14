@@ -102,3 +102,60 @@ class ExternalStoppingTables:
 
     def listar(self) -> list[dict]:
         return list(self._leer()["tablas"])
+
+    def obtener(self, material: str, version: int) -> dict:
+        for t in self._leer()["tablas"]:
+            if t["material"] == material and t["version"] == version:
+                return t
+        raise TablaExternaInvalida(
+            f"tabla desconocida: {material} v{version}")
+
+    def leer_filas(self, entrada: dict) -> list[tuple[float, float]]:
+        """Filas reales del CSV registrado (con verificación sha256)."""
+        ruta = self._dir / entrada["archivo"]
+        contenido = ruta.read_text()
+        sha = hashlib.sha256(contenido.encode()).hexdigest()
+        if sha != entrada["sha256"]:
+            raise TablaExternaInvalida(
+                f"integridad violada en {entrada['archivo']} "
+                f"(sha256 no coincide — ALCOA+)")
+        filas = []
+        for linea in contenido.splitlines():
+            if linea.startswith("#") or linea.startswith("energy_MeV"):
+                continue
+            e, s = linea.split(",")
+            filas.append((float(e), float(s)))
+        return filas
+
+    def registrar_calibracion(self, material: str, version: int,
+                              comparacion: dict, criterio_max_pct: float,
+                              motivo: str, registrado_por: str) -> dict:
+        """Registra una calibración (append-only, ALCOA+) y actualiza el
+        estado de la tabla según el veredicto.
+
+        ``comparacion`` la computa el llamador contra el proveedor activo
+        con datos reales — este almacén jamás genera métricas por su
+        cuenta.
+        """
+        if not motivo.strip():
+            raise TablaExternaInvalida("la calibración exige motivo")
+        man = self._leer()
+        for t in man["tablas"]:
+            if t["material"] == material and t["version"] == version:
+                cal = {
+                    "criterio_max_pct": criterio_max_pct,
+                    "comparacion": comparacion,
+                    "veredicto": ("calibrada" if comparacion["desv_max_pct"]
+                                  <= criterio_max_pct else "rechazada"),
+                    "motivo": motivo.strip(),
+                    "registrado_por": registrado_por.strip() or "desconocido",
+                    "registrada_en": datetime.now(timezone.utc).isoformat(),
+                }
+                t.setdefault("calibraciones", []).append(cal)
+                t["estado"] = ("calibrada" if cal["veredicto"] == "calibrada"
+                               else "rechazada_declarada")
+                self._manifiesto.write_text(
+                    json.dumps(man, indent=2, ensure_ascii=False))
+                return {"tabla": t, "calibracion": cal}
+        raise TablaExternaInvalida(
+            f"tabla desconocida: {material} v{version}")
