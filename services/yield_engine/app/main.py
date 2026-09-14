@@ -58,7 +58,8 @@ app.include_router(yield_api.router)
 app.include_router(equipment_api.router)
 hpc_api.init()
 app.include_router(hpc_api.router)
-cyclotron_api.init(service)
+from app.infrastructure.stopping.pstar_stopping import PstarTables
+cyclotron_api.init(service, pstar=PstarTables(DATA_DIR / "stopping" / "pstar"))
 app.include_router(cyclotron_api.router)
 
 

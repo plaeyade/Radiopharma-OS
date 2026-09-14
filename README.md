@@ -82,6 +82,32 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 12 — Degradación en ventana con PSTAR/NIST (v0.78.0)
+
+Cierra la cadena 19.10: haz → ventana → blanco, con datos oficiales —
+nunca inventados:
+
+- **Tablas NIST PSTAR versionadas** en `yield_engine/data/stopping/pstar/`
+  (agua líquida y hierro, 132 puntos 1 keV–10 GeV), descargadas del
+  servicio web oficial del NIST con fuente, URL y fecha en cabecera CSV
+  (trazabilidad ALCOA+ del dato).
+- `PstarTables` (`infrastructure/stopping/pstar_stopping.py`): S(E) total
+  y rango CSDA por interpolación log-log; `degradar(material, espesor,
+  E_in)` invierte R(E_out) = R(E_in) − x. Si el espesor supera el rango,
+  el haz se declara **detenido en la ventana** (error) — jamás se inventa
+  una energía de salida.
+- API: las irradiaciones aceptan `ventana {material, espesor_g_cm2,
+  descripcion}` → reportan energía en el blanco, pérdida, fuente PSTAR y
+  `supuesto_declarado` (un proxy Havar≈Fe es supuesto del usuario, nunca
+  dato del fabricante). Sin tablas configuradas → 503 honesto
+  `no demostrable`. `/stopping-power/status` reporta `pstar_ventanas:
+  configurado`.
+- **Corrida KIUBE nominal en vivo**: 18,0 MeV → **17,616 MeV** en el
+  blanco (−0,384 MeV; Havar 25 µm ≈ Fe, supuesto declarado), EOB =
+  **1557,3 ± 120,0 GBq ¹⁸F** (vs cota superior 1578,3 sin ventana).
+- 7 tests nuevos (`tests/test_pstar_ventana.py`): valores NIST reales,
+  consistencia R(E_in)−R(E_out)=x, haz detenido = error, 503 sin tablas.
+
 ## Fase 11 — Dominio del ciclotrón y corrida tipo KIUBE (v0.77.0)
 
 Implementa el dominio canónico del ciclotrón (Informe §1558 — fabricante,

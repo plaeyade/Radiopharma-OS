@@ -37,6 +37,13 @@ def main() -> None:
     ap.add_argument("--energia", type=float, default=18.0)
     ap.add_argument("--corriente", type=float, default=300.0)
     ap.add_argument("--tiempo-min", type=float, default=120.0)
+    ap.add_argument("--ventana-material", default=None,
+                    help="material PSTAR de la ventana (iron, water); "
+                         "sin él, EOB = cota superior declarada")
+    ap.add_argument("--ventana-espesor", type=float, default=None,
+                    help="espesor areal de la ventana (g/cm²)")
+    ap.add_argument("--ventana-descripcion", default="",
+                    help="descripción del supuesto (p. ej. 'Havar 25 µm ≈ Fe')")
     a = ap.parse_args()
     ye = f"http://{a.host}:8002"
 
@@ -62,10 +69,15 @@ def main() -> None:
               f"(v{kiube['version']})")
 
     # 2) irradiación parametrizada, validada contra límites de la máquina
+    cuerpo: dict = {"energia_mev": a.energia, "corriente_ua": a.corriente,
+                    "tiempo_min": a.tiempo_min}
+    if a.ventana_material and a.ventana_espesor:
+        cuerpo["ventana"] = {"material": a.ventana_material,
+                             "espesor_g_cm2": a.ventana_espesor,
+                             "descripcion": a.ventana_descripcion}
     irr = _req("POST",
                f"{ye}/api/v1/cyclotrons/{kiube['ciclotron_id']}/irradiations",
-               {"energia_mev": a.energia, "corriente_ua": a.corriente,
-                "tiempo_min": a.tiempo_min})
+               cuerpo)
     print(json.dumps(irr, ensure_ascii=False, indent=2))
 
     # 3) estado honesto del poder de frenado (19.10)
