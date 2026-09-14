@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import json
 import os
 
 from fastapi import FastAPI
@@ -41,10 +42,11 @@ _tablas_ext = ExternalStoppingTables(DATA_DIR / "stopping" / "external")
 # Mapeo clave interna → nombre del material externo registrado.
 _MAPA_PROMOCION = {"h2o": "agua", "o2": "oxigeno", "n2": "nitrogeno",
                    "zn68": "zn68"}
+_stopping_provider = PromotedStoppingPower(
+    build_stopping_provider(DATA_DIR / "stopping"), _tablas_ext,
+    _MAPA_PROMOCION)
 service = ProductionService(
-    stopping=PromotedStoppingPower(
-        build_stopping_provider(DATA_DIR / "stopping"), _tablas_ext,
-        _MAPA_PROMOCION),
+    stopping=_stopping_provider,
     rxn=build_reaction_provider(DATA_DIR),
 )
 yield_api.init(service)
@@ -103,6 +105,20 @@ from app.presentation.routers import beam_optics_api
 
 beam_optics_api.init(LineaOpticaRegistry(), _beamlines)
 app.include_router(beam_optics_api.router)
+
+from app.application.neutron_service import NeutronService
+from app.infrastructure.talys_spectra import TalysSpectraRunner
+from app.infrastructure.gate.neutron_tally import NeutronTallyRunner
+from app.infrastructure.gate.gate_runner import build_gate_env
+from app.presentation.routers import neutrons_api
+
+_neutron_service = NeutronService(
+    TalysSpectraRunner(DATA_DIR / "neutron_spectra"),
+    _stopping_provider,
+    NeutronTallyRunner(env_extra=build_gate_env()),
+    json.loads((DATA_DIR / "reactions.json").read_text()))
+neutrons_api.init(_neutron_service)
+app.include_router(neutrons_api.router)
 
 
 @app.get("/health", tags=["meta"])

@@ -1554,3 +1554,44 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
 - 5 tests nuevos (λ real, EOB positivo con dataset verificado,
   monotonía, impureza no_demostrable, proxy declarado) + 1 test del
   verificador.
+
+## Fase 23 — Neutrones rápidos/térmicos de la irradiación (v0.87.0)
+
+Responde con datos reales: *¿cuántos neutrones rápidos y térmicos
+produce una irradiación?* — cadena completa y honesta:
+
+- **Fuente: TALYS-2.23 real** (`app/infrastructure/talys_spectra.py`).
+  Ejecución real por energía (deck mínimo `filespectrum n` +
+  `outspectra y` → `nspec*.tot`, formato YANDF-0.4), parseada con
+  integración trapezoidal y componentes (directo / pre-equilibrio /
+  compound) tal como las escribe TALYS. Cada espectro se cachea como
+  **dato versionado con fuente citada** («TALYS-2 (IAEA-NDS /
+  A.J. Koning) — ejecución real», timestamp y binario). Sin runtime →
+  **503 `sin_runtime`**: nunca se simula un espectro neutrónico.
+- **Producción de blanco grueso** (`NeutronService.produccion`):
+  malla σ_n,total(E) TALYS desde el umbral hasta E₀ integrada con el
+  **poder de frenado ACTIVO** (mismo formalismo que el EOB:
+  Y_n = n_t ∫ σ_n/S dE — nunca un factor inventado) → n/protón y
+  tasa n/s.
+- **Termalización: SOLO MC real** (`app/infrastructure/gate/neutron_tally.py`).
+  El espectro fuente TALYS se transporta con OpenGATE 10.1 / Geant4
+  11.4.2 (`FTFP_BERT_HP` + **G4NDL 4.7.1 real**) en un moderador
+  esférico (modelo de screening declarado); un PhaseSpaceActor registra
+  la energía de cada neutrón que SALE del moderador y las bandas se
+  computan del ROOT real. Sin OpenGATE o sin G4NDL → 503: los térmicos
+  son `no_demostrable`, **jamás estimados analíticamente**.
+- **Bandas declaradas**: térmicos < 0,4 eV; epitérmicos 0,4 eV–100 keV;
+  rápidos ≥ 100 keV. En el espectro fuente (TALYS emite desde 1 keV)
+  los térmicos son 0 **declarado**.
+- Endpoints: `GET /api/v1/neutrons/status`, `POST /api/v1/neutrons/production`,
+  `POST /api/v1/neutrons/transport-tally` (validación estricta,
+  `extra=forbid`).
+- **En vivo** (⁶⁴Ni enriquecido 95 %, 18 MeV, 50 µA):
+  **5,31e-03 n/protón → 1,656e12 n/s** totales; σ_n TALYS 21 mb @3 MeV
+  → 1558 mb @18 MeV (malla real de 16 puntos). Tras moderador de agua
+  de 30 cm (1000 historias reales): **térmicos 1,66e10 n/s (1,0 %),
+  epitérmicos 1,67e11 n/s (10,1 %), rápidos 1,26e12 n/s (76,2 %)**,
+  fuga del moderador 87,3 %.
+- 8 tests nuevos (parser con fixture REAL de TALYS, bandas fuente,
+  503 sin_runtime TALYS y OpenGATE, 422 bajo umbral, e2e real con skip
+  honesto) → suite yield_engine **267 verde**.
