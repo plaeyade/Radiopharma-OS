@@ -42,6 +42,7 @@ class ProcesoRadioquimico:
     producto: str                   # p. ej. "FDG", "NaF-F18"
     nucleido: str                   # p. ej. "F-18" (biblioteca nuclear)
     etapas: tuple[EtapaRadioquimica, ...]
+    modulo_id: str | None           # módulo de síntesis del catálogo (opcional)
     version: int
     motivo_version: str
     registrado_por: str
@@ -57,7 +58,8 @@ class ProcesoRadioquimicoRegistry:
 
     def registrar(self, producto: str, nucleido: str,
                   etapas: list[EtapaRadioquimica], registrado_por: str,
-                  motivo_version: str = "registro inicial") -> ProcesoRadioquimico:
+                  motivo_version: str = "registro inicial",
+                  modulo_id: str | None = None) -> ProcesoRadioquimico:
         if not producto.strip() or not nucleido.strip():
             raise ProcesoInvalido("producto y nucleido obligatorios")
         if not etapas:
@@ -86,7 +88,8 @@ class ProcesoRadioquimicoRegistry:
         self._seq += 1
         p = ProcesoRadioquimico(
             proceso_id=f"RQ-{self._seq:04d}", producto=producto.strip(),
-            nucleido=nucleido.strip(), etapas=tuple(etapas), version=version,
+            nucleido=nucleido.strip(), etapas=tuple(etapas),
+            modulo_id=modulo_id, version=version,
             motivo_version=motivo_version.strip(),
             registrado_por=registrado_por.strip() or "desconocido",
             registrado_en=datetime.now(timezone.utc).isoformat())

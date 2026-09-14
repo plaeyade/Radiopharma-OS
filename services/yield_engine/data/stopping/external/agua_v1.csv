@@ -1,0 +1,11 @@
+# fuente: NIST PSTAR — tabla proton_water_pstar.csv versionada en el repo (descargada de physics.nist.gov, 2026-08); exportada por el usuario como tabla externa de referencia
+# ejecutado_en: exportación 2026-09-14 desde dato versionado del monorepo
+# descripcion: extracto de referencia para futura calibración cruzada ATIMA vs PSTAR en el blanco
+# registrada_por: demo-fase16
+# registrada_en: 2026-09-14T07:16:34.125857+00:00
+energy_MeV,stopping_MeV_cm2_g
+4.5,85.86
+5.0,79.11
+5.5,73.43
+6.0,68.58
+6.5,64.38

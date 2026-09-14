@@ -1,0 +1,9 @@
+# fuente: SRIM-2013 ejecutado por el usuario, export PROTONS in water
+# ejecutado_en: 2026-09-14, SRIM-2013 en PC del laboratorio
+# descripcion: tabla de prueba
+# registrada_por: físico
+# registrada_en: 2026-09-14T07:14:21.542360+00:00
+energy_MeV,stopping_MeV_cm2_g
+1.0,260.0
+10.0,45.0
+18.0,27.0

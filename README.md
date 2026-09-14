@@ -1370,3 +1370,38 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   KIUBE con ventana PSTAR) → **EOS 634,4 GBq** (ε_total 0,5586, factor
   decaimiento 0,7293, λ = 1,0524e-4 s⁻¹ real de la biblioteca).
 - 7 tests nuevos (`tests/test_radiochemistry.py`).
+
+## Fase 16 — Módulos de síntesis por proveedor, EOS multiisótopo y tablas externas de frenado (v0.81.0)
+
+- **Catálogo de módulos de síntesis (Informe 19.14, análogo a §1558)**:
+  `POST/GET /api/v1/radiochemistry/modules` — fabricante, modelo y
+  nucleidos soportados SOLO con fuente citada (ficha técnica real o
+  literatura especializada; 49.11). Versionado que nunca sobrescribe.
+  Los procesos radioquímicos pueden vincularse a un módulo
+  (`modulo_id`): la plataforma valida que el módulo declare soporte
+  para el núclido del proceso (422 si no).
+- **EOS multiisótopo** (`POST /api/v1/radiochemistry/eos/batch`): lote
+  de procesos (FDG, PSMA-11, …) — cada ítem usa la λ REAL de su
+  núclido desde la biblioteca nuclear (F-18, Ga-68, C-11, O-15
+  versionados); errores aislados por ítem; nota honesta de estimación
+  teórica (nunca valores medidos).
+- **Tablas externas de poder de frenado (EDS 19.10)**:
+  `POST/GET /api/v1/stopping-power/external-tables` — único camino
+  honesto para "configurar SRIM": la plataforma NUNCA lo ejecuta
+  (propietario, solo Windows, sin licencia), pero registra tablas
+  REALES exportadas por el usuario (SRIM/ATIMA) como dato versionado
+  con fuente, fecha de ejecución, sha256 y estado
+  `registrada_no_calibrada` (no se usan en cómputo hasta calibración
+  explícita).
+- En vivo (fuentes reales citadas): MOD-0001 IBA Synthera + MOD-0002
+  Trasis AllinOne (J Nucl Med 2022;63 suppl 2:4123 — FDG 60-66 %),
+  MOD-0003 GE FASTlab 2 (ficha oficial GE — 78 % EOS, 553 corridas),
+  MOD-0004 Modular-Lab Ga-68 (Wichmann 2021 — 76 % d.c.). Desde el EOB
+  real de la corrida KIUBE (1557,3 GBq ¹⁸F): EOS FDG **818,4 GBq**
+  (Synthera/AllinOne) y **985,0 GBq** (FASTlab 2); Ga-68 PSMA-11 desde
+  EOB declarado de literatura (3,7 GBq, Alnahwi 2020): EOS **2,0 GBq**
+  con λ real ⁶⁸Ga. Tabla externa PSTAR/agua registrada con sha256.
+  NOTA: para LBT no se hallaron rendimientos públicos verificables —
+  sus valores quedan pendientes de ficha técnica proporcionada por el
+  usuario (nunca se inventan).
+- 8 tests nuevos (`tests/test_synthesis_module.py`).
