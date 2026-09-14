@@ -1460,3 +1460,29 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   `no_demostrable`; la producción real degrada a ~12-14 MeV.
 - 4 tests nuevos (`pipelines/test_verificar_datasets.py`,
   `tests/test_cyclotron.py`).
+
+## Fase 19 — Impureza radionuclídica ⁶⁷Ga y recomendación de energía (v0.84.0)
+
+- **Dataset ⁶⁸Zn(p,2n)⁶⁷Ga** (IAEA-NDS, 68 puntos, 12,3–45 MeV):
+  versionado con fuente y **verificado en vivo contra la fuente oficial
+  (68/68 puntos)** por `pipelines/verificar_datasets.py` (ahora con
+  soporte de ambos layouts de la IAEA: con y sin incertidumbres punto a
+  punto — declarado en el CSV). Núclido ⁶⁷Ga en la biblioteca de
+  decaimiento (T½ = 3,2612 d, EC 100 % — NuDat/ICRP-107).
+- **Impureza al EOB en cada irradiación**: los canales competidores se
+  declaran en `COMPETING_CHANNELS` solo con dataset citado verificado;
+  la irradiación reporta EOB del contaminante y razón de actividades
+  ⁶⁷Ga/⁶⁸Ga con λ reales. Sin canal registrado → `no_demostrable`
+  (nunca se estima). En vivo (KIUBE 18→17,616 MeV, 50 µA, 60 min):
+  EOB ⁶⁸Ga 363,7 GBq + ⁶⁷Ga 2,24 GBq (**0,616 %**).
+- **Recomendación de energía con límite de impureza (18.10)**:
+  `POST /api/v1/cyclotrons/{id}/recommend-energy` — barre las energías
+  reales de la máquina (con degradación de ventana PSTAR si aplica) y
+  devuelve la que maximiza el EOB cumpliendo el criterio de impureza,
+  que exige **fuente citada** (norma/monografía/ficha). Respuesta
+  marcada `recomendacion` — diferenciada de la decisión operativa, que
+  corresponde al responsable cualificado. En vivo (criterio de ejemplo
+  0,5 % declarado): **17,0 MeV → EOB 346,7 GBq, impureza 0,41 %**.
+- 6 tests nuevos (impureza presente, monotonía con la energía, F-18 sin
+  canal → no_demostrable, recomendación respeta criterio y es el
+  máximo viable, fuente obligatoria).

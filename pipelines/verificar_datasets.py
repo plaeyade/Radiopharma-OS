@@ -45,21 +45,32 @@ def leer_csv_versionado(ruta: Path) -> tuple[list[tuple], dict]:
     return filas, cabecera
 
 
-def parsear_tabla_iaea_html(html: str) -> dict[float, tuple[float, float]]:
-    """Tabla oficial IAEA-NDS Medical: grupos de columnas (E, σ ± Δσ)."""
+def parsear_tabla_iaea_html(html: str) -> dict[float, tuple[float, float | None]]:
+    """Tabla oficial IAEA-NDS Medical en sus dos layouts reales:
+
+    - 16 celdas/fila: 4 grupos de (E, σ, '±', Δσ) — con incertidumbre.
+    - 8 celdas/fila: 4 grupos de (E, σ) — sin incertidumbre (la fuente
+      no la publica; el CSV versionado lo declara con dsigma vacío).
+    """
     rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html, re.S | re.I)
-    puntos: dict[float, tuple[float, float]] = {}
+    puntos: dict[float, tuple[float, float | None]] = {}
     for r in rows:
         celdas = [re.sub(r"<[^>]+>", "", c).replace("\xa0", " ").strip()
                   for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>",
                                       r, re.S | re.I)]
-        for i in range(0, len(celdas) - 3, 4):
-            try:
-                e, s, d = (float(celdas[i]), float(celdas[i + 1]),
-                           float(celdas[i + 3]))
-                puntos[e] = (s, d)
-            except (ValueError, IndexError):
-                continue
+        if len(celdas) == 16:
+            for i in range(0, 16, 4):
+                try:
+                    puntos[float(celdas[i])] = (float(celdas[i + 1]),
+                                                float(celdas[i + 3]))
+                except (ValueError, IndexError):
+                    continue
+        elif len(celdas) == 8:
+            for i in (0, 2, 4, 6):
+                try:
+                    puntos[float(celdas[i])] = (float(celdas[i + 1]), None)
+                except (ValueError, IndexError):
+                    continue
     return puntos
 
 
@@ -100,9 +111,14 @@ def verificar_dataset(data_dir: Path, reaction_id: str,
             faltan.append(e)
             continue
         so, do = oficial[e]
-        if abs(s - so) > TOLERANCIA_ABS or abs((d or 0) - do) > TOLERANCIA_ABS:
+        if abs(s - so) > TOLERANCIA_ABS:
             discrepan.append({"energia_mev": e, "versionado": s,
                               "oficial": so})
+            continue
+        # dσ solo se compara si la fuente la publica (layout con '±')
+        if do is not None and abs((d or 0) - do) > TOLERANCIA_ABS:
+            discrepan.append({"energia_mev": e, "campo": "dsigma",
+                              "versionado": d, "oficial": do})
     resultado.update(n_puntos_fuente=len(oficial),
                      discrepancias=discrepan,
                      energias_no_en_fuente=faltan)

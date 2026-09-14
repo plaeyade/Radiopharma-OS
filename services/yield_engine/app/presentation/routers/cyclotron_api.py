@@ -177,6 +177,20 @@ def registrar_irradiacion(ciclotron_id: str, body: IrradiacionIn):
             saturation_yield_mbq_ua=round(r.saturation_yield_mbq_ua, 1),
             saturation_factor=round(r.saturation_factor, 5),
             dataset_id=r.dataset_id, stopping_source=r.stopping_source)
+        # impurezas radionuclídicas de canales competidores (dataset citado)
+        impurezas = _service.compute_impurities(
+            reaction_id=irr.reaccion_id, target_id=irr.blanco_id,
+            beam_energy_mev=energia_blanco, current_ua=irr.corriente_ua,
+            irradiation_time_min=irr.tiempo_min,
+            eob_principal_gbq=r.eob_activity_gbq)
+        if impurezas:
+            resp["impurezas"] = impurezas
+        else:
+            resp["impurezas"] = {
+                "no_demostrable": True,
+                "motivo": ("sin canal competidor registrado con dataset "
+                           "citado para esta reacción — la impureza "
+                           "nunca se estima")            }
     except ValueError as exc:
         resp["eob"] = {"no_demostrable": True, "motivo": str(exc)}
     return resp
@@ -193,6 +207,88 @@ def historial_irradiaciones(ciclotron_id: str):
                  tiempo_min=i.tiempo_min, reaccion_id=i.reaccion_id,
                  registrada_en=i.registrada_en)
             for i in _reg().irradiaciones(ciclotron_id)]
+
+
+class RecomendacionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reaccion_id: str
+    blanco_id: str
+    corriente_ua: float = Field(gt=0)
+    tiempo_min: float = Field(gt=0)
+    criterio_max_impureza_pct: float = Field(gt=0)
+    fuente_criterio: str            # norma/ficha que fija el límite — obligatoria
+    ventana: VentanaIn | None = None
+    paso_mev: float = Field(default=0.5, gt=0, le=2.0)
+
+
+@router.post("/cyclotrons/{ciclotron_id}/recommend-energy")
+def recomendar_energia(ciclotron_id: str, body: RecomendacionIn):
+    """Recomendación de energía con límite de impureza (Informe 18.10).
+
+    Barre energías reales de la máquina registrada, computa EOB del
+    producto y de las impurezas (canales con dataset citado) y devuelve
+    la energía que maximiza el EOB cumpliendo el criterio. Es una
+    RECOMENDACIÓN diferenciada de la decisión operativa — el criterio
+    exige fuente citada (norma, monografía o ficha), nunca inventado.
+    """
+    try:
+        c = _reg().obtener(ciclotron_id)
+    except CiclotronInvalido as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    if not body.fuente_criterio.strip():
+        raise HTTPException(422, "el criterio de impureza exige fuente "
+                            "citada — nunca se inventa (49.11)")
+    e_max = c.energia_max_mev
+    paso = body.paso_mev
+    puntos = []
+    n = int(e_max / paso)
+    for i in range(1, n + 1):
+        e_in = round(i * paso, 3)
+        e_blanco = e_in
+        if body.ventana is not None:
+            if _pstar is None:
+                raise HTTPException(503, "tablas PSTAR no configuradas")
+            try:
+                e_blanco = _pstar.degradar(body.ventana.material,
+                                           body.ventana.espesor_g_cm2, e_in)
+            except VentanaInvalida:
+                continue                    # haz detenido en la ventana
+        try:
+            r = _service.compute(
+                reaction_id=body.reaccion_id, target_id=body.blanco_id,
+                beam_energy_mev=e_blanco, current_ua=body.corriente_ua,
+                irradiation_time_min=body.tiempo_min)
+        except ValueError:
+            continue
+        imp = _service.compute_impurities(
+            reaction_id=body.reaccion_id, target_id=body.blanco_id,
+            beam_energy_mev=e_blanco, current_ua=body.corriente_ua,
+            irradiation_time_min=body.tiempo_min,
+            eob_principal_gbq=r.eob_activity_gbq)
+        razon = max((i_["razon_eob_pct"] or 0.0) for i_ in imp) if imp else 0.0
+        puntos.append({"energia_entrada_mev": e_in,
+                       "energia_en_blanco_mev": round(e_blanco, 3),
+                       "eob_gbq": round(r.eob_activity_gbq, 3),
+                       "impureza_max_pct": round(razon, 4)})
+    viables = [p for p in puntos
+               if p["impureza_max_pct"] <= body.criterio_max_impureza_pct]
+    recomendacion = (max(viables, key=lambda p: p["eob_gbq"])
+                     if viables else None)
+    return {
+        "ciclotron_id": ciclotron_id,
+        "criterio_max_impureza_pct": body.criterio_max_impureza_pct,
+        "fuente_criterio": body.fuente_criterio,
+        "recomendacion": recomendacion,
+        "curva": puntos,
+        "tipo": "recomendacion",
+        "nota_honestidad": (
+            "recomendación del modelo físico determinista sobre datos "
+            "reales versionados — NO es una decisión operativa: la "
+            "decisión de producción corresponde al responsable "
+            "cualificado (18.10)"),
+        **({"motivo_no_viable": "ninguna energía cumple el criterio"}
+           if recomendacion is None else {}),
+    }
 
 
 @router.get("/stopping-power/status")

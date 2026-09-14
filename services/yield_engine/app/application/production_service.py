@@ -38,6 +38,20 @@ REACTIONS: dict[str, dict] = {
                     "targets": ["n15_gas"]},
     "zn68_p_n_ga68": {"notation": "68Zn(p,n)68Ga", "product": "68Ga",
                       "targets": ["zn68"]},
+    "zn68_p_2n_ga67": {"notation": "68Zn(p,2n)67Ga", "product": "67Ga",
+                       "targets": ["zn68"]},
+}
+
+# Canales competidores registrados: producen impurezas radionuclídicas
+# sobre el mismo blanco. Solo se declaran con dataset citado verificado —
+# nunca se estiman.
+COMPETING_CHANNELS: dict[str, list[dict]] = {
+    "zn68_p_n_ga68": [{
+        "reaccion": "zn68_p_2n_ga67", "producto": "67Ga",
+        "impacto": ("impureza radionuclídica de vida larga (EC, "
+                    "T½ = 78,3 h, emisor gamma SPECT) — limita la "
+                    "energía legal de producción de 68Ga"),
+    }],
 }
 
 
@@ -555,6 +569,40 @@ class ProductionService:
             reaction_id=reaction_id,
             product_nuclide=REACTIONS[reaction_id]["product"],
             beam=beam, target=target, irradiation_time_min=irradiation_time_min)
+
+    def compute_impurities(
+        self,
+        reaction_id: str,
+        target_id: str,
+        beam_energy_mev: float,
+        current_ua: float,
+        irradiation_time_min: float,
+        eob_principal_gbq: float,
+    ) -> list[dict]:
+        """Impurezas radionuclídicas al EOB de canales competidores.
+
+        Solo canales con dataset citado registrado (COMPETING_CHANNELS);
+        si no hay ninguno → lista vacía y la impureza queda
+        `no_demostrable` (declarado por el llamador). Razón de
+        actividades al EOB calculada con λ real de cada núclido.
+        """
+        impurezas = []
+        for canal in COMPETING_CHANNELS.get(reaction_id, []):
+            r = self.compute(
+                reaction_id=canal["reaccion"], target_id=target_id,
+                beam_energy_mev=beam_energy_mev, current_ua=current_ua,
+                irradiation_time_min=irradiation_time_min)
+            impurezas.append({
+                "producto": canal["producto"],
+                "reaccion": canal["reaccion"],
+                "eob_gbq": round(r.eob_activity_gbq, 3),
+                "razon_eob_pct": (round(r.eob_activity_gbq
+                                       / eob_principal_gbq * 100, 4)
+                                  if eob_principal_gbq > 0 else None),
+                "dataset_id": r.dataset_id,
+                "impacto": canal["impacto"],
+            })
+        return impurezas
 
     def optimize_production(
         self,

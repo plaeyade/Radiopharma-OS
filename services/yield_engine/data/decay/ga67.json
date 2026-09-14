@@ -1,0 +1,17 @@
+{
+  "nuclide": "67Ga",
+  "Z": 31,
+  "A": 67,
+  "half_life_s": 281767.68,
+  "half_life_min": 4696.128,
+  "half_life_uncertainty_min": null,
+  "decay_constant_s-1": 2.4599953428297573e-06,
+  "decay_modes": [
+    {
+      "mode": "electron_capture",
+      "branching_ratio": 1.0,
+      "note": "EC 100 % → 67Zn estable; gamma 93/185/300 keV (SPECT)"
+    }
+  ],
+  "fuente": "NuDat (BNL) — T½ = 3,2612 d; consistente con ICRP-107/MIRD (λ = 2,4600e-6 s⁻¹)"
+}

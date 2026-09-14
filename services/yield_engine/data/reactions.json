@@ -26,5 +26,12 @@
     "q_value_mev": -3.7,
     "dataset_id": "zn68_p_n_ga68_iaea2021",
     "file": "cross_sections/zn68_p_n_ga68/zn68_p_n_ga68_iaea2021.csv"
+  },
+  "zn68_p_2n_ga67": {
+    "notation": "68Zn(p,2n)67Ga",
+    "threshold_mev": 10.45,
+    "q_value_mev": -10.31,
+    "dataset_id": "zn68_p_2n_ga67_iaea",
+    "file": "cross_sections/zn68_p_2n_ga67/zn68_p_2n_ga67_iaea.csv"
   }
 }

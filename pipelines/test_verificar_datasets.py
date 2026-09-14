@@ -62,3 +62,15 @@ def test_fuente_inaccesible_honesto():
         r = vd.verificar_dataset(data, "zn68_p_n_ga68")
         assert r["estado"] == "no_verificable"
         assert "inaccesible" in r["motivo"]
+
+
+FIXTURE_GA67 = Path(__file__).parent / "fixtures" / "zn8p7ga4.html"
+
+
+def test_dataset_ga67_layout_sin_incertidumbre():
+    """68Zn(p,2n)67Ga: layout de 8 columnas sin dσ — verificado igual."""
+    r = vd.verificar_dataset(DATA, "zn68_p_2n_ga67",
+                             fuente_local=FIXTURE_GA67)
+    assert r["estado"] == "verificado"
+    assert r["n_puntos_versionados"] == r["n_puntos_fuente"] == 68
+    assert r["discrepancias"] == []
