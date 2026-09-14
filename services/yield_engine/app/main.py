@@ -72,6 +72,15 @@ irradiation_api.init(service, _ciclotrones, CoolingRegistry(),
                      PerfilIrradiacionRegistry(), pstar=_pstar)
 app.include_router(irradiation_api.router)
 
+from app.domain.beamline import BeamlineRegistry
+from app.domain.radiochemistry import ProcesoRadioquimicoRegistry
+from app.presentation.routers import beamline_api, radiochemistry_api
+
+beamline_api.init(BeamlineRegistry())
+app.include_router(beamline_api.router)
+radiochemistry_api.init(service, ProcesoRadioquimicoRegistry())
+app.include_router(radiochemistry_api.router)
+
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:

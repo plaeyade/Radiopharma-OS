@@ -1333,3 +1333,40 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
       verificado e2e. Pendiente: ejecutar el FEM real en planta.
 - [ ] Conector OPC-UA contra el PLC real (red del acelerador), Keycloak/OIDC
       externo, validación veraPDF en CI del archivo documental.
+
+## Fase 14 — Beamline y puestos de blanco (v0.80.0)
+
+- **Beamline (EDS 5.9)**: `POST/GET /api/v1/beamlines` — la transmisión
+  del haz por la línea SOLO se registra con **fuente citada** (medición
+  en comisionado o ficha técnica del proveedor): no hay motor de óptica
+  de haces en la plataforma y nunca se simula uno, así que una pérdida
+  inventada está prohibida (49.11). Registro versionado por
+  (ciclotrón, nombre) que nunca sobrescribe; transmisión validada en
+  (0, 1]; listado filtrable por ciclotrón.
+- **Puestos de blanco (EDS 5.9 target_position)**:
+  `/api/v1/beamlines/{id}/target-positions` — cadena canónica
+  ciclotrón → beamline → puesto → blanco; cada puesto con estado
+  operativo (activo | en_mantenimiento | inactivo).
+- En vivo: BL-0001 (línea de blancos líquidos del CYC-0001 KIUBE,
+  T=0,97 con ficha citada) + TP-0001 (TGT-H2O18, puesto 1 — 90°).
+- 6 tests nuevos (`tests/test_beamline.py`).
+
+## Fase 15 — Modelado radioquímico: actividad al EOS (v0.80.0)
+
+- **Proceso radioquímico versionado (Informe 19.14)**:
+  `POST/GET /api/v1/radiochemistry/processes` — cadena post-EOB de cada
+  producto: síntesis, transferencia, purificación, formulación. Cada
+  etapa exige eficiencia en (0, 1], duración y **fuente citada**
+  (literatura, SOP validado o ficha del módulo) — una eficiencia
+  inventada produce una actividad inventada. Proceso versionado por
+  producto que nunca sobrescribe (ALCOA+).
+- **Actividad al EOS** (`POST /api/v1/radiochemistry/eos`):
+  A_EOS = A_EOB · Π(eficiencias) · exp(−λ·t_total), con λ REAL del
+  núclido desde la biblioteca nuclear configurada (nunca tecleada).
+  Nota honesta: estimación teórica 19.14 — nunca un valor medido de
+  producción.
+- En vivo: RQ-0001 FDG (síntesis 0,60 citando Yu 2006 + purificación
+  0,95 + formulación 0,98; 50 min) desde EOB 1557,3 GBq ¹⁸F (corrida
+  KIUBE con ventana PSTAR) → **EOS 634,4 GBq** (ε_total 0,5586, factor
+  decaimiento 0,7293, λ = 1,0524e-4 s⁻¹ real de la biblioteca).
+- 7 tests nuevos (`tests/test_radiochemistry.py`).

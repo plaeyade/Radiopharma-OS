@@ -509,6 +509,14 @@ class ProductionService:
         return {"proveedor": type(self._stopping).__name__,
                 "fuente": self._stopping.source_label()}
 
+    def decay_constant_s(self, nuclide: str) -> float:
+        """λ [s⁻¹] del núclido desde la biblioteca nuclear configurada.
+
+        Fuente real del proveedor de datos (nuclear_data_service / datos
+        locales versionados) — nunca un valor asumido (49.11).
+        """
+        return float(self._rxn.get_decay_constant(nuclide))
+
     def compute(
         self,
         reaction_id: str,

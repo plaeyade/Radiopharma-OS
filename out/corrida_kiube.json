@@ -1,0 +1,64 @@
+{
+  "ciclotron": {
+    "ciclotron_id": "CYC-0001",
+    "fabricante": "IBA",
+    "modelo": "KIUBE",
+    "energia_max_mev": 18.0,
+    "corriente_max_ua": 300.0,
+    "estado_operativo": "proyectado",
+    "fuente": "especificación pública del fabricante aportada por el usuario (18 MeV, 300 µA) — verificar contra datasheet oficial antes de uso operativo",
+    "version": 1,
+    "motivo_version": "registro inicial",
+    "registrado_por": "calidad",
+    "registrado_en": "2026-09-14T06:03:37.036488+00:00"
+  },
+  "irradiacion": {
+    "irradiacion_id": "IRR-00001",
+    "ciclotron_id": "CYC-0001",
+    "ciclotron_version": 1,
+    "energia_mev": 18.0,
+    "corriente_ua": 300.0,
+    "tiempo_min": 120.0,
+    "reaccion_id": "o18_p_n_f18",
+    "blanco_id": "h2_18o",
+    "registrada_en": "2026-09-14T06:03:37.039722+00:00",
+    "potencia_haz_w": 5400.0,
+    "ventana": {
+      "material": "iron",
+      "espesor_g_cm2": 0.02075,
+      "descripcion": "Havar 25 µm (ρ=8.3 g/cm³) aproximado como Fe PSTAR — supuesto declarado del usuario",
+      "energia_entrada_mev": 18.0,
+      "energia_en_blanco_mev": 17.616,
+      "perdida_mev": 0.384,
+      "fuente": "NIST PSTAR (physics.nist.gov/PhysRefData/Star) — tablas versionadas",
+      "supuesto_declarado": true
+    },
+    "nota_honestidad": "degradación en ventana calculada con rangos CSDA NIST PSTAR (fuente versionada) — EOB nominal con la energía efectiva en el blanco; la aproximación de la ventana (material proxy, espesor) es supuesto declarado por el usuario, nunca verificado contra el fabricante",
+    "eob": {
+      "eob_activity_gbq": 1557.273,
+      "eob_uncertainty_gbq": 120.002,
+      "saturation_yield_mbq_ua": 9770.6,
+      "saturation_factor": 0.53128,
+      "dataset_id": "o18_p_n_f18_iaea2021",
+      "stopping_source": "Tablas ATIMA empaquetadas (CSV)"
+    }
+  },
+  "stopping_power": {
+    "proveedor_configurado": {
+      "proveedor": "TableStoppingPower",
+      "fuente": "Tablas ATIMA empaquetadas (CSV)"
+    },
+    "pstar_ventanas": {
+      "estado": "configurado",
+      "materiales": [
+        "iron",
+        "water"
+      ],
+      "fuente": "NIST PSTAR (physics.nist.gov/PhysRefData/Star) — tablas versionadas"
+    },
+    "srim": {
+      "estado": "no_configurado",
+      "motivo": "SRIM es software propietario (solo Windows, sin licencia en esta plataforma): nunca se simula su salida; su rol lo cubre el proveedor ATIMA/CATIMA con fuente versionada, y la integración PSTAR/NIST queda registrada como pendiente (19.10)"
+    }
+  }
+}
