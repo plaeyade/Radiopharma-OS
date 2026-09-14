@@ -12,7 +12,7 @@ es una COTA SUPERIOR declarada, nunca un valor medido.
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.application.production_service import ProductionService
 from app.domain.cyclotron import (CiclotronInvalido, CiclotronRegistry)
@@ -65,6 +65,7 @@ class CiclotronIn(BaseModel):
 
 
 class VentanaIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Ventana del blanco: material con tabla PSTAR versionada.
 
     ``material``: clave de tabla PSTAR (water, iron); usar ``iron`` como
@@ -78,12 +79,14 @@ class VentanaIn(BaseModel):
 
 
 class IrradiacionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     energia_mev: float = Field(gt=0)
     corriente_ua: float = Field(gt=0)
     tiempo_min: float = Field(gt=0)
     reaccion_id: str = "o18_p_n_f18"
     blanco_id: str = "h2_18o"
     ventana: VentanaIn | None = None
+    registrado_por: str = ""      # trazabilidad ALCOA+ del registro
 
 
 def _ciclotron_dict(c) -> dict:
@@ -123,7 +126,8 @@ def registrar_irradiacion(ciclotron_id: str, body: IrradiacionIn):
     try:
         irr = _reg().registrar_irradiacion(
             ciclotron_id, body.energia_mev, body.corriente_ua,
-            body.tiempo_min, body.reaccion_id, body.blanco_id)
+            body.tiempo_min, body.reaccion_id, body.blanco_id,
+            body.registrado_por)
     except CiclotronInvalido as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     resp = dict(irradiacion_id=irr.irradiacion_id,
@@ -131,7 +135,8 @@ def registrar_irradiacion(ciclotron_id: str, body: IrradiacionIn):
                 ciclotron_version=irr.ciclotron_version,
                 energia_mev=irr.energia_mev, corriente_ua=irr.corriente_ua,
                 tiempo_min=irr.tiempo_min, reaccion_id=irr.reaccion_id,
-                blanco_id=irr.blanco_id, registrada_en=irr.registrada_en,
+                blanco_id=irr.blanco_id, registrado_por=irr.registrado_por,
+                registrada_en=irr.registrada_en,
                 potencia_haz_w=round(body.energia_mev * body.corriente_ua, 1))
 
     # degradación en ventana (19.10) con rangos CSDA PSTAR reales

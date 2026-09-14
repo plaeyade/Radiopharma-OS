@@ -1433,3 +1433,30 @@ Clean Architecture por servicio: `domain` (entidades + física pura) ←
   calibración de la tabla PSTAR/agua v1 vs ATIMA: **desv. máx 3,33 %**
   (4,5–6,5 MeV) → veredicto **calibrada**.
 - 7 tests nuevos (`tests/test_beam_optics.py`).
+
+## Fase 18 — Verificación ALCOA+ de datasets y cadena Ga-68 completa (v0.83.0)
+
+- **Verificación de datasets contra fuente oficial**:
+  `pipelines/verificar_datasets.py` — re-descarga la fuente declarada en
+  cada CSV versionado (`# url:`) y compara punto a punto con tolerancia
+  declarada; veredicto honesto `verificado` / `discrepancia` /
+  `no_verificable` (fuente inaccesible — nunca se asume). En vivo: el
+  dataset `zn68_p_n_ga68_iaea2021` coincide con la tabla oficial
+  IAEA-NDS en los **60/60 puntos** → `verificado`
+  (`out/verificacion_zn68_iaea.json`).
+- **Cadena Ga-68 completa en vivo** (cierra el `no_demostrable` de la
+  Fase 16): KIUBE 18 MeV / 50 µA / 60 min con ventana PSTAR
+  (18,0→17,616 MeV) sobre blanco ⁶⁸Zn → **EOB 363,7 ± 24,8 GBq ⁶⁸Ga**
+  (dataset IAEA verificado, saturación 15 850 MBq/µA) → proceso Modular-Lab
+  (Wichmann 2021) → **EOS Ga-68 PSMA-11 199,2 GBq** con λ real ⁶⁸Ga.
+- **Anti error silencioso (trazabilidad ALCOA+)**: los modelos de
+  entrada de irradiación rechazan campos desconocidos (`extra=forbid`)
+  — una clave mal escrita (`reaction_id` vs `reaccion_id`) produce 422
+  en lugar de computar silenciosamente la reacción por defecto (bug
+  detectado y corregido en esta fase); las irradiaciones registran
+  `registrado_por`.
+- **Marcador honesto pendiente**: ⁶⁸Zn(p,2n)⁶⁷Ga (umbral ~10,3 MeV) no
+  modelado (sin dataset citado) → impureza radionuclídica
+  `no_demostrable`; la producción real degrada a ~12-14 MeV.
+- 4 tests nuevos (`pipelines/test_verificar_datasets.py`,
+  `tests/test_cyclotron.py`).

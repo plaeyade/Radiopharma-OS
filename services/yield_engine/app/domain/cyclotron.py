@@ -56,6 +56,7 @@ class Irradiacion:
     tiempo_min: float
     reaccion_id: str
     blanco_id: str
+    registrado_por: str
     registrada_en: str
 
 
@@ -134,7 +135,8 @@ class CiclotronRegistry:
     # ------------------------------------------------------------------
     def registrar_irradiacion(self, ciclotron_id: str, energia_mev: float,
                               corriente_ua: float, tiempo_min: float,
-                              reaccion_id: str, blanco_id: str) -> Irradiacion:
+                              reaccion_id: str, blanco_id: str,
+                              registrado_por: str = "") -> Irradiacion:
         """Lote append-only validado contra los límites REALES declarados."""
         c = self.obtener(ciclotron_id)
         if c.estado_operativo == "fuera_de_servicio":
@@ -156,6 +158,7 @@ class CiclotronRegistry:
             energia_mev=float(energia_mev), corriente_ua=float(corriente_ua),
             tiempo_min=float(tiempo_min), reaccion_id=reaccion_id,
             blanco_id=blanco_id,
+            registrado_por=registrado_por.strip() or "desconocido",
             registrada_en=datetime.now(timezone.utc).isoformat())
         self._irradiaciones.append(irr)
         return irr

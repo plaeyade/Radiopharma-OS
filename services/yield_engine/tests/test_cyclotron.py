@@ -135,3 +135,18 @@ def test_api_stopping_power_honesto(client):
     d = r.json()
     assert d["proveedor_configurado"]["fuente"]     # proveedor real citado
     assert d["srim"]["estado"] == "no_configurado"  # jamás simulado
+
+
+def test_campo_desconocido_rechazado(client):
+    """Anti error silencioso: una clave mal escrita (p. ej. reaction_id en
+    vez de reaccion_id) se rechaza con 422 — nunca se ignora y se computa
+    otra reacción por defecto."""
+    r = client.post("/api/v1/cyclotrons", json={
+        "fabricante": "IBA", "modelo": "KIUBE-anti", "energia_max_mev": 18.0,
+        "corriente_max_ua": 300.0, "estado_operativo": "operativo",
+        "fuente": "ficha de prueba", "registrado_por": "test"})
+    cid = r.json()["ciclotron_id"]
+    mal = client.post(f"/api/v1/cyclotrons/{cid}/irradiations", json={
+        "energia_mev": 18.0, "corriente_ua": 50.0, "tiempo_min": 60.0,
+        "reaction_id": "zn68_p_n_ga68", "target_id": "zn68"})
+    assert mal.status_code == 422
