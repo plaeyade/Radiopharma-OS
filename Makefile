@@ -57,5 +57,8 @@ registro-rcae:   ## Fase 8: registra la batería científica en DL + evidencia R
 calificar-pq:    ## Fase 10: DQ/IQ/OQ verificadas en vivo + PQ periódico (14.9)
 	python3 scripts/calificar_plataforma_pq.py
 
+corrida-kiube:  ## Fase 11: corrida tipo IBA KIUBE 18 MeV/300 µA parametrizable (E/I/t)
+	python3 scripts/corrida_tipo_kiube.py
+
 qualification:   ## calificación DQ/IQ/OQ (Informe 14.9; PQ honestamente no iniciada)
 	python pipelines/qualification.py --out qualification_report.json

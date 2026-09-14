@@ -82,6 +82,34 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 11 — Dominio del ciclotrón y corrida tipo KIUBE (v0.77.0)
+
+Implementa el dominio canónico del ciclotrón (Informe §1558 — fabricante,
+modelo, energía máxima, corriente máxima, estado operativo; EDS 5.9) en el
+yield_engine:
+
+- **Registro versionado** (`/api/v1/cyclotrons`): las especificaciones del
+  proveedor exigen **fuente citada** — nunca se inventan (49.11); un
+  (fabricante, modelo) ya registrado NO se sobrescribe, crea versión con
+  motivo obligatorio (ALCOA+); `fuera_de_servicio` no puede irradiar.
+- **Irradiaciones append-only** (`/cyclotrons/{id}/irradiations`):
+  parámetros de corrida (E, I, t) validados contra los límites REALES de
+  la máquina — una corrida de 19 MeV o 350 µA en un KIUBE de 18 MeV/300 µA
+  se rechaza (422) y jamás queda registrada. Cada lote calcula EOB con el
+  Yield Engine real (σ(E) IAEA-2021 · S(E) ATIMA) y declara la nota de
+  honestidad: **cota superior** — la degradación en ventana (19.10, cadena
+  SRIM/PSTAR) no se aplica aún.
+- **19.10 honesto** (`/api/v1/stopping-power/status`): proveedor real
+  configurado (ATIMA/CATIMA con fuente versionada) y SRIM propietario
+  declarado `no_configurado` — nunca se simula su salida.
+- **Corrida tipo IBA KIUBE en vivo** (`make corrida-kiube`, parametrizable
+  `--energia/--corriente/--tiempo-min`): CYC-0001 (IBA KIUBE 18 MeV/300 µA,
+  fuente aportada por el usuario), IRR-00001 de 120 min → potencia de haz
+  5400 W, EOB = **1578,3 ± 122,8 GBq de ¹⁸F** (rendimiento de saturación
+  9,9 GBq/µA, factor de saturación 0,531, dataset o18_p_n_f18_iaea2021) —
+  cota superior declarada.
+- 9 tests nuevos (`tests/test_cyclotron.py` en yield_engine).
+
 ## Fase 10 — Calificación DQ/IQ/OQ y PQ periódico en vivo (v0.76.0)
 
 Cierre del ciclo de calificación de la plataforma (14.9, orden estricto

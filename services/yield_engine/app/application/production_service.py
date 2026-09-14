@@ -479,6 +479,11 @@ class ProductionService:
             "model": "ElmerFEM Heat→Stress axi 2D acoplado (cap. 18)",
         }
 
+    def stopping_status(self) -> dict:
+        """Proveedor de poder de frenado realmente configurado (19.10)."""
+        return {"proveedor": type(self._stopping).__name__,
+                "fuente": self._stopping.source_label()}
+
     def compute(
         self,
         reaction_id: str,
