@@ -58,9 +58,19 @@ app.include_router(yield_api.router)
 app.include_router(equipment_api.router)
 hpc_api.init()
 app.include_router(hpc_api.router)
+from app.domain.cyclotron import CiclotronRegistry
+from app.domain.irradiation_profile import PerfilIrradiacionRegistry
+from app.domain.target_cooling import CoolingRegistry
 from app.infrastructure.stopping.pstar_stopping import PstarTables
-cyclotron_api.init(service, pstar=PstarTables(DATA_DIR / "stopping" / "pstar"))
+from app.presentation.routers import irradiation_api
+
+_ciclotrones = CiclotronRegistry()
+_pstar = PstarTables(DATA_DIR / "stopping" / "pstar")
+cyclotron_api.init(service, registry=_ciclotrones, pstar=_pstar)
 app.include_router(cyclotron_api.router)
+irradiation_api.init(service, _ciclotrones, CoolingRegistry(),
+                     PerfilIrradiacionRegistry(), pstar=_pstar)
+app.include_router(irradiation_api.router)
 
 
 @app.get("/health", tags=["meta"])

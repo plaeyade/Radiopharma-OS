@@ -479,6 +479,31 @@ class ProductionService:
             "model": "ElmerFEM Heat→Stress axi 2D acoplado (cap. 18)",
         }
 
+    def thermal_fem(self, beam_power_w: float, spot_radius_cm: float,
+                    target_thickness_cm: float, conductivity_w_cm_k: float,
+                    film_coeff_w_cm2_k: float, coolant_temp_k: float,
+                    beam_sigma_cm: float) -> dict:
+        """FEM térmico con h EXPLÍCITA (p. ej. de la configuración de
+        enfriamiento registrada). Sin runtime Elmer → ElmerUnavailable
+        → 503 honesto; nunca se estima la temperatura por otra vía."""
+        if self._elmer is None or not self._elmer.available():
+            raise ElmerUnavailable(
+                "binario ElmerSolver no encontrado (ELMER_CMD ni PATH) — "
+                "FEM no demostrable en este entorno")
+        import tempfile
+        case = ElmerThermalCase(
+            beam_power_w=beam_power_w, spot_radius_cm=spot_radius_cm,
+            target_thickness_cm=target_thickness_cm,
+            conductivity_w_cm_k=conductivity_w_cm_k,
+            film_coeff_w_cm2_k=film_coeff_w_cm2_k,
+            coolant_temp_k=coolant_temp_k, beam_sigma_cm=beam_sigma_cm)
+        with tempfile.TemporaryDirectory(prefix="elmer_cool_") as tmp:
+            case_dir = build_case(case, tmp)
+            scalars = self._elmer.run(case_dir)
+        return {"t_max_k": float(scalars[0]), "t_mean_k": float(scalars[1]),
+                "solver": self._elmer.cmd_label,
+                "film_coeff_w_cm2_k": film_coeff_w_cm2_k}
+
     def stopping_status(self) -> dict:
         """Proveedor de poder de frenado realmente configurado (19.10)."""
         return {"proveedor": type(self._stopping).__name__,

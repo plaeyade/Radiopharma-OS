@@ -82,6 +82,32 @@ nunca se rellenan; documentos sin texto quedan en revisión (45.21); endpoint
 `extractor-status` con estado real de pypdf/Tesseract/poppler; el texto
 extraído alimenta el índice y la recuperación RAG.
 
+## Fase 13 — Enfriamiento con fuente citada y perfiles versionados (v0.79.0)
+
+- **Cooling configuration (EDS 5.10)**: `POST/GET /api/v1/targets/{id}/cooling-configs`
+  — h (coeficiente de película) y geometría de enfriamiento SOLO con
+  **fuente citada** (literatura especializada o ficha técnica del
+  proveedor; 49.11 — un h inventado produce una temperatura inventada).
+  Registro versionado por blanco que nunca sobrescribe; rango físico de h
+  validado; sin configuración → marcador `no_demostrable`.
+- **Perfil de irradiación como entidad versionada (EDS 5.9)**:
+  `/api/v1/irradiation-profiles` — el conjunto completo de parámetros de
+  corrida (E, I, t, blanco, reacción, ventana PSTAR, perfil de haz) ya no
+  son argumentos sueltos: entidad de dominio versionada con motivo por
+  versión, nunca sobrescrita. Las irradiaciones se ejecutan **por perfil
+  + versión** (`/cyclotrons/{id}/irradiations/by-profile`), reproducibles
+  en el tiempo (ALCOA+); un perfil que supera los límites de la máquina
+  se rechaza (422).
+- **FEM térmico con h registrada** (`POST /api/v1/targets/{id}/thermal`):
+  usa la configuración vigente citando config_id/versión/fuente; sin
+  runtime Elmer → 503 honesto `no demostrable` (nunca se estima la
+  temperatura por otra vía).
+- En vivo: COOL-0001 (h=1,2 W/cm²·K, backplate Ag estriado espiral,
+  literatura citada) + PRF-0001 (f18_kiube_2h, ventana Havar≈Fe
+  declarada) → IRR por perfil v1 reproduce **1557,3 ± 120,0 GBq ¹⁸F**
+  (18,0→17,616 MeV PSTAR).
+- 7 tests nuevos (`tests/test_irradiation_api.py`).
+
 ## Fase 12 — Degradación en ventana con PSTAR/NIST (v0.78.0)
 
 Cierra la cadena 19.10: haz → ventana → blanco, con datos oficiales —
