@@ -1622,3 +1622,49 @@ produce una irradiación?* — cadena completa y honesta:
   reales declara `no_demostrable` — nunca dibuja datos de relleno.
 - 2 tests nuevos (build_case con blindajes; validación estricta del
   endpoint).
+
+## Fase 25 — Importador SRIM real + render fotorrealista Blender Cycles (v0.89.0)
+
+- **SRIM (pendiente resuelto)**: la plataforma nunca ejecuta ni simula
+  SRIM (propietario, sin licencia aquí — política canónica intacta). Lo
+  que faltaba era el camino de importación: nuevo módulo
+  `infrastructure/stopping/srim_import.py` que parsea ESTRICTAMENTE las
+  tablas "Stopping/Range" reales exportadas de la instalación SRIM del
+  usuario (formato documentado en el manual oficial SRIM-2013 cap. 8,
+  srim.org). `S_total = S_elec + S_nuc`; solo acepta unidades de frenado
+  MÁSICO (MeV/(mg/cm2), keV/(mg/cm2), keV/(ug/cm2), eV/(ug/cm2),
+  MeV/(g/cm2)) — las basadas en longitud/átomos/LSS se rechazan como
+  `no_convertible` (convertirlas exigiría supuestos que el archivo no
+  trae). Nuevo endpoint `POST /api/v1/stopping-power/external-tables/srim`
+  → registro versionado `registrada_no_calibrada` con fuente citada
+  (49.11), sha256 y ALCOA+; de ahí sigue el pipeline F16→F17→F20
+  (calibración contra proveedor activo → promoción explícita). 9 tests
+  nuevos con fixture REAL del manual (H en agua, valores impresos en el
+  manual, fuente citada).
+- **TraceWin**: adaptador existente re-validado (7/7 tests verde,
+  incluido 503 `sin_runtime` honesto). Ruta de integración: el usuario
+  descarga TraceWin_noX11 (Linux headless) de dacm-logiciels.fr — la
+  descarga exige aceptar la licencia CEA y un hCaptcha, imposible de
+  automatizar — y define `TRACEWIN_CMD`. El resto del catálogo DACM
+  (Toutatis, GenDTL, GenLinWin, RFQ Designer: diseño de linacs; PlotWin,
+  Beta: libres pero redundantes) NO suma a una instalación radiomédica
+  de ciclotrón — no se integra nada (decisión documentada, no por
+  omisión).
+- **Render fotorrealista Blender Cycles** (`scripts/render_blender.py`):
+  renderiza la geometría REAL del caso MC (radios de
+  `blindajes_geometria`, ahora emitidos por el propio tally — moderador
+  + capas con el micro-gap declarado) y los puntos de fuga REALES del
+  PhaseSpaceActor coloreados por banda (térmicos azul, epitérmicos
+  naranja, rápidos rojo). Stills Cycles 1920×1080 con denoising y video
+  turntable H.264 opcional. Si falta geometría o dispersión real, aborta
+  con `no_demostrable` — el render es COMUNICACIÓN visual de resultados
+  MC reales, nunca física. Materiales NIST del caso mapeados a
+  apariencia PBR declarada.
+- **Corrida promedio FDG de ejemplo (fin a fin, todo real)**:
+  ¹⁸O(p,n)¹⁸F @ 18 MeV / 50 µA / 60 min sobre H₂[¹⁸O]:
+  EOB = 156,1 GBq (dataset IAEA 2021 + ATIMA real; consistente con los
+  ~167 GBq que publica IAEA Pub1515 para máquinas 14–19 MeV a 50 µA·h),
+  proceso RQ-0001 registrado con eficiencias CITADAS (trapping QMA >95%
+  y rendimiento global >65% corregido a EOB — IAEA Pub1515 §5.2), EOS
+  = 85,6 GBq (λ real de la biblioteca nuclear, 35 min de proceso),
+  producción neutrónica asociada 1,253e12 n/s (TALYS real).

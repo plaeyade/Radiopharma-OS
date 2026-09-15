@@ -177,6 +177,10 @@ class NeutronService:
             resp["blindajes"] = [
                 {"material_g4": b["material_g4"],
                  "espesor_cm": b["espesor_cm"]} for b in blindajes]
+            # Radios reales de la geometría MC (para el renderizador
+            # fotorrealista Blender Cycles, scripts/render_blender.py)
+            if bandas.get("blindajes_geometria"):
+                resp["blindajes_geometria"] = bandas["blindajes_geometria"]
             resp["impacto_blindaje"] = {
                 "edep_por_capa_mev": bandas.get("edep_por_capa_mev"),
                 "fuga_tras_blindaje_por_neutron_fuente": {

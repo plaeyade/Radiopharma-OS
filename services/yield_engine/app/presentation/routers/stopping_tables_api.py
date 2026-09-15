@@ -18,6 +18,8 @@ from pydantic import BaseModel
 from app.application.production_service import ProductionService
 from app.infrastructure.stopping.external_tables import (
     ExternalStoppingTables, TablaExternaInvalida)
+from app.infrastructure.stopping.srim_import import (
+    SrimFormatoInvalido, parse_srim_table)
 
 router = APIRouter(prefix="/api/v1/stopping-power", tags=["stopping"])
 
@@ -51,6 +53,47 @@ def registrar_tabla(body: TablaExternaIn):
         return _tablas.registrar(**body.model_dump())
     except TablaExternaInvalida as exc:
         raise HTTPException(422, str(exc)) from exc
+
+
+class SrimTablaIn(BaseModel):
+    material: str
+    fuente: str           # p. ej. "SRIM-2013 Pro, SR Module, archivo PROTONS_H2O.txt"
+    ejecutado_en: str
+    registrado_por: str
+    descripcion: str = ""
+    texto_srim: str       # contenido íntegro del archivo exportado de SRIM
+
+
+@router.post("/external-tables/srim", status_code=201)
+def importar_tabla_srim(body: SrimTablaIn):
+    """Importa una tabla REAL exportada de la instalación SRIM del usuario.
+
+    Parseo estricto del formato documentado en el manual SRIM-2013 cap. 8;
+    S_total = S_elec + S_nuc; solo unidades de frenado másico. El registro
+    queda como `registrada_no_calibrada` con fuente citada — nunca entra
+    al cómputo hasta calibración explícita (EDS 19.10).
+    """
+    assert _tablas is not None
+    try:
+        tabla = parse_srim_table(body.texto_srim)
+    except SrimFormatoInvalido as exc:
+        raise HTTPException(422, f"archivo SRIM inválido: {exc}") from exc
+    try:
+        reg = _tablas.registrar(
+            material=body.material,
+            fuente=body.fuente,
+            ejecutado_en=body.ejecutado_en,
+            descripcion=(body.descripcion or
+                         f"SRIM {tabla['ion']}({tabla['masa_ion_u']} u) en "
+                         f"{tabla['blanco'] or 'blanco sin declarar'}; "
+                         f"unidades originales {tabla['unidades_originales']}"),
+            filas=tabla["filas"],
+            registrado_por=body.registrado_por)
+    except TablaExternaInvalida as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {"registro": reg,
+            "parseo": {k: v for k, v in tabla.items() if k != "filas"},
+            "n_filas": len(tabla["filas"])}
 
 
 @router.get("/external-tables")

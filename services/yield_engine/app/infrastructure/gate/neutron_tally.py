@@ -42,7 +42,7 @@ import numpy as np
 case = json.load(open("case.json"))
 import opengate as gate
 from opengate import g4_units
-cm, MeV = g4_units.cm, g4_units.MeV
+cm, mm, MeV = g4_units.cm, g4_units.mm, g4_units.MeV
 
 sim = gate.Simulation()
 sim.verbose_level = gate.logger.NONE
@@ -154,6 +154,17 @@ if capas:
         tree = f[f.keys()[0]]
         eb = tree["KineticEnergy"].array(library="np")
     salida["fuga_tras_blindaje"] = bandas_de(eb)
+    # Geometría real de las capas (radios del case.json + micro-gap
+    # declarado) para el renderizador fotorrealista (scripts/
+    # render_blender.py) — comunicación visual, nunca física.
+    salida["blindajes_geometria"] = [
+        {
+            "material": sh.material,
+            "rmin_mm": round(sh.rmin / mm, 3),
+            "rmax_mm": round(sh.rmax / mm, 3),
+        }
+        for sh in capas
+    ]
     import SimpleITK as sitk
     import glob
     edeps = []
