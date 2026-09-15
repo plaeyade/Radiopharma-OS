@@ -120,8 +120,11 @@ class NeutronService:
               beam_energy_mev: float, current_ua: float,
               radio_moderador_cm: float, n_histories: int,
               seed: int = 12345,
-              material_g4: str = "G4_WATER") -> dict:
-        """Termalización real por MC: bandas tras moderador esférico."""
+              material_g4: str = "G4_WATER",
+              blindajes: list[dict] | None = None) -> dict:
+        """Termalización real por MC: bandas tras moderador esférico y,
+        opcionalmente, capas de blindaje reales con impacto (edep) y
+        dispersión de salida neutrón por neutrón."""
         target = TARGET_CATALOG[target_id]
         element, mass = _parse_nuclide(target.target_nuclide)
         espectro_e0 = self._spectra.espectro(element, mass,
@@ -133,12 +136,13 @@ class NeutronService:
         with _tf.TemporaryDirectory(prefix="gate_ntally_") as tmp:
             script = build_case(_P(tmp), espectro_e0["espectro"],
                                 radio_moderador_cm, n_histories,
-                                material_g4, seed)
+                                material_g4, seed,
+                                blindajes=blindajes)
             bandas = self._tally.run(_P(tmp))
         total_reg = bandas["total_registrados"] or 1
         tasa = prod["tasa_neutrones_s"]
         fraccion_fuga = total_reg / n_histories
-        return {
+        resp = {
             "reaccion": prod["reaccion"], "blanco": target_id,
             "energia_mev": beam_energy_mev, "corriente_ua": current_ua,
             "moderador": {"material_g4": material_g4,
@@ -158,6 +162,7 @@ class NeutronService:
                 "total": tasa,
             },
             "fraccion_fuga_moderador": fraccion_fuga,
+            "dispersion_salida": bandas.get("dispersion"),
             "fuente_espectro": espectro_e0["fuente"],
             "nota_honestidad": (
                 "tally MC real (OpenGATE/Geant4 FTFP_BERT_HP + G4NDL): "
@@ -166,3 +171,29 @@ class NeutronService:
                 "bandas declaradas: térmicos <0.4 eV, epitérmicos "
                 "0.4 eV–100 keV, rápidos ≥100 keV"),
         }
+        if blindajes:
+            fb = bandas.get("fuga_tras_blindaje") or {}
+            n_tot = fb.get("total_registrados", 0)
+            resp["blindajes"] = [
+                {"material_g4": b["material_g4"],
+                 "espesor_cm": b["espesor_cm"]} for b in blindajes]
+            resp["impacto_blindaje"] = {
+                "edep_por_capa_mev": bandas.get("edep_por_capa_mev"),
+                "fuga_tras_blindaje_por_neutron_fuente": {
+                    "termicos": fb.get("termicos_lt_0.4eV", 0) / n_histories,
+                    "epitermicos": fb.get("epitermicos", 0) / n_histories,
+                    "rapidos": fb.get("rapidos_ge_100keV", 0) / n_histories,
+                },
+                "tasa_fuga_tras_blindaje_s": {
+                    "termicos": tasa * fb.get("termicos_lt_0.4eV", 0) / n_histories,
+                    "epitermicos": tasa * fb.get("epitermicos", 0) / n_histories,
+                    "rapidos": tasa * fb.get("rapidos_ge_100keV", 0) / n_histories,
+                    "total": tasa * n_tot / n_histories,
+                },
+                "nota_honestidad": (
+                    "impacto en paredes = energía depositada REAL por capa "
+                    "(DoseActor sobre el material NIST declarado) y fuga "
+                    "residual medida neutrón por neutrón — nunca factores "
+                    "de atenuación inventados"),
+            }
+        return resp

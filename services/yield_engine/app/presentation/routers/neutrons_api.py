@@ -54,6 +54,12 @@ def produccion_neutronica(body: ProduccionIn) -> dict:
         raise HTTPException(422, str(exc)) from exc
 
 
+class BlindajeIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    material_g4: str = Field(min_length=2, max_length=40)
+    espesor_cm: float = Field(gt=0, le=100.0)
+
+
 class TallyIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reaccion_id: str
@@ -64,17 +70,20 @@ class TallyIn(BaseModel):
     n_histories: int = Field(default=2000, ge=100, le=200000)
     seed: int = 12345
     material_g4: str = "G4_WATER"
+    blindajes: list[BlindajeIn] = Field(default_factory=list, max_length=5)
 
 
 @router.post("/transport-tally")
 def tally_termalizacion(body: TallyIn) -> dict:
-    """Neutrones térmicos/epitérmicos/rápidos tras moderador — MC real."""
+    """Neutrones térmicos/epitérmicos/rápidos tras moderador (+blindaje)
+    — MC real."""
     assert _service is not None
     try:
         return _service.tally(body.reaccion_id, body.blanco_id,
                               body.energia_mev, body.corriente_ua,
                               body.radio_moderador_cm, body.n_histories,
-                              body.seed, body.material_g4)
+                              body.seed, body.material_g4,
+                              [b.model_dump() for b in body.blindajes])
     except (TallyGateUnavailable, TalysUnavailable) as exc:
         raise HTTPException(503, str(exc)) from exc
     except (TallyGateError, TalysError) as exc:

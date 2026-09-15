@@ -59,6 +59,19 @@ mod.rmax = case["radio_cm"] * cm
 mod.material = case["material_g4"]
 mod.mother = "world"
 
+# Capas de blindaje concéntricas (materiales NIST reales, nunca
+# efectivos inventados): cada capa es una esfera hueca real.
+radio = case["radio_cm"]
+capas = []
+for i, capa in enumerate(case.get("blindajes", [])):
+    sh = sim.add_volume("Sphere", f"blindaje_{i}")
+    sh.rmin = radio * cm
+    radio = radio + capa["espesor_cm"]
+    sh.rmax = radio * cm
+    sh.material = capa["material_g4"]
+    sh.mother = "world"
+    capas.append(sh)
+
 src = sim.add_source("GenericSource", "fuente_talys")
 src.particle = "neutron"
 src.position.type = "point"
@@ -73,8 +86,23 @@ src.energy.histogram_weight = list(esp[:, 1])
 phsp = sim.add_actor("PhaseSpaceActor", "fuga")
 phsp.attached_to = "moderador"
 phsp.steps_to_store = "exiting"
-phsp.attributes = ["KineticEnergy"]
+phsp.attributes = ["KineticEnergy", "PrePosition"]
 phsp.output_filename = "fuga.root"
+
+# Fuga tras la última capa de blindaje (impacto residual real)
+if capas:
+    phsp2 = sim.add_actor("PhaseSpaceActor", "fuga_blindaje")
+    phsp2.attached_to = capas[-1].name
+    phsp2.steps_to_store = "exiting"
+    phsp2.attributes = ["KineticEnergy"]
+    phsp2.output_filename = "fuga_blindaje.root"
+
+# Energía depositada por capa (impacto en paredes — edep real)
+for i, sh in enumerate(capas):
+    d = sim.add_actor("DoseActor", f"dose_blindaje_{i}")
+    d.attached_to = sh.name
+    d.output_filename = f"dose_blindaje_{i}.mhd"
+    d.size = [1, 1, 1]
 
 # estadística global para conteo real de historias
 stats = sim.add_actor("SimulationStatisticsActor", "stats")
@@ -85,31 +113,65 @@ sim.physics_manager.physics_list_name = case.get("physics_list",
 sim.run(start_new_process=True)
 
 import uproot
+
+def bandas_de(e_mev):
+    e_ev = np.asarray(e_mev, dtype=float) * 1e6
+    return {
+        "termicos_lt_0.4eV": int((e_ev < 0.4).sum()),
+        "epitermicos": int(((e_ev >= 0.4) & (e_ev < 1e5)).sum()),
+        "rapidos_ge_100keV": int((e_ev >= 1e5).sum()),
+        "total_registrados": int(e_ev.size),
+    }
+
+salida = {}
 with uproot.open("fuga.root") as f:
     tree = f[f.keys()[0]]
     e = tree["KineticEnergy"].array(library="np")  # MeV
-e_ev = np.asarray(e, dtype=float) * 1e6
-bandas = {
-    "termicos_lt_0.4eV": int((e_ev < 0.4).sum()),
-    "epitermicos": int(((e_ev >= 0.4) & (e_ev < 1e5)).sum()),
-    "rapidos_ge_100keV": int((e_ev >= 1e5).sum()),
-    "total_registrados": int(e_ev.size),
+    pos = tree["PrePosition"].array(library="np")  # mm, (N,3)
+salida.update(bandas_de(e))
+# Dispersión real: posición y energía de CADA neutrón que sale
+salida["dispersion"] = {
+    "y_mm": [round(float(p[1]), 2) for p in pos],
+    "z_mm": [round(float(p[2]), 2) for p in pos],
+    "e_mev": [round(float(x), 6) for x in e],
+    "radio_moderador_mm": round(case["radio_cm"] * 10.0, 2),
 }
-json.dump(bandas, open("tally.json", "w"), indent=2)
-print(json.dumps(bandas))
+
+if capas:
+    with uproot.open("fuga_blindaje.root") as f:
+        tree = f[f.keys()[0]]
+        eb = tree["KineticEnergy"].array(library="np")
+    salida["fuga_tras_blindaje"] = bandas_de(eb)
+    import SimpleITK as sitk
+    import glob
+    edeps = []
+    for i in range(len(capas)):
+        cand = sorted(glob.glob(f"dose_blindaje_{i}*edep*.mhd"))
+        if not cand:
+            raise RuntimeError(
+                f"DoseActor blindaje_{i} no produjo imagen edep — "
+                "impacto no_demostrable")
+        img = sitk.ReadImage(cand[0])
+        edeps.append(float(sitk.GetArrayFromImage(img).sum()))
+    salida["edep_por_capa_mev"] = edeps
+
+json.dump(salida, open("tally.json", "w"), indent=2)
+print(json.dumps({k: v for k, v in salida.items() if k != "dispersion"}))
 """
 
 
 def build_case(case_dir: Path, espectro: list[list[float]],
                radio_cm: float, n_histories: int, material_g4: str,
-               seed: int, physics_list: str = "FTFP_BERT_HP") -> Path:
+               seed: int, physics_list: str = "FTFP_BERT_HP",
+               blindajes: list[dict] | None = None) -> Path:
     """Escribe case.json + run_tally.py (entrada real del MC)."""
     case_dir = Path(case_dir)
     case_dir.mkdir(parents=True, exist_ok=True)
     (case_dir / "case.json").write_text(json.dumps({
         "espectro": espectro, "radio_cm": radio_cm,
         "n_histories": n_histories, "material_g4": material_g4,
-        "seed": seed, "physics_list": physics_list}))
+        "seed": seed, "physics_list": physics_list,
+        "blindajes": list(blindajes or [])}))
     script = case_dir / "run_tally.py"
     script.write_text(_SCRIPT)
     return script

@@ -100,3 +100,32 @@ def test_produccion_real_end_to_end(tmp_path):
     assert d["tasa_neutrones_s"] > 0
     assert d["bandas_fuente"]["termicos_mb"] == 0.0
     assert "TALYS" in d["fuente"]
+
+
+def test_build_case_con_blindajes(tmp_path):
+    """Las capas de blindaje entran al case.json real (materiales NIST,
+    espesores) — nunca factores de atenuación inventados."""
+    from app.infrastructure.gate.neutron_tally import build_case
+    import json
+    build_case(tmp_path, [[1.0, 100.0], [2.0, 50.0]], 30.0, 100,
+               "G4_WATER", 1,
+               blindajes=[{"material_g4": "G4_CONCRETE", "espesor_cm": 50.0},
+                          {"material_g4": "G4_Pb", "espesor_cm": 5.0}])
+    case = json.loads((tmp_path / "case.json").read_text())
+    assert len(case["blindajes"]) == 2
+    assert case["blindajes"][0]["material_g4"] == "G4_CONCRETE"
+
+
+def test_tally_api_acepta_blindajes_y_rechaza_extras():
+    """Validación estricta (extra=forbid) y límite de espesor."""
+    r = client.post("/api/v1/neutrons/transport-tally", json={
+        "reaccion_id": "ni64_p_n_cu64", "blanco_id": "ni64",
+        "energia_mev": 18.0, "corriente_ua": 50.0,
+        "radio_moderador_cm": 30.0, "n_histories": 100,
+        "blindajes": [{"material_g4": "G4_CONCRETE", "espesor_cm": 500.0}]})
+    assert r.status_code == 422
+    r = client.post("/api/v1/neutrons/transport-tally", json={
+        "reaccion_id": "ni64_p_n_cu64", "blanco_id": "ni64",
+        "energia_mev": 18.0, "corriente_ua": 50.0,
+        "radio_moderador_cm": 30.0, "campo_inventado": 1})
+    assert r.status_code == 422

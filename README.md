@@ -1595,3 +1595,30 @@ produce una irradiación?* — cadena completa y honesta:
 - 8 tests nuevos (parser con fixture REAL de TALYS, bandas fuente,
   503 sin_runtime TALYS y OpenGATE, 422 bajo umbral, e2e real con skip
   honesto) → suite yield_engine **267 verde**.
+
+## Fase 24 — Blindaje y dispersión neutrónica + visualizador (v0.88.0)
+
+- **Genericidad demostrada en vivo**: el servicio de neutrones no es
+  específico de ⁶⁴Cu — deriva núclido y umbral del catálogo/registro y
+  ejecuta TALYS real para cualquier blanco registrado. Prueba en vivo:
+  ¹⁸O (agua enriquecida) @ 18 MeV / 50 µA → 4,01e-03 n/protón,
+  1,253e12 n/s (malla TALYS real 3–18 MeV, 16 ejecuciones cacheadas
+  como datos versionados).
+- **Capas de blindaje reales en el tally MC**: `transport-tally` acepta
+  hasta 5 capas concéntricas con material NIST y espesor declarados
+  (validación estricta, `extra=forbid`). El script GATE crea esferas
+  huecas REALES, un PhaseSpaceActor registra la fuga tras la última
+  capa y un DoseActor por capa mide la energía depositada — **impacto
+  en paredes medido neutrón a neutrón, nunca factores de atenuación
+  inventados**.
+- **Dispersión real de salida**: el PhaseSpaceActor del moderador
+  guarda posición y energía de CADA neutrón que sale
+  (`dispersion_salida` en la respuesta: y, z, E) — base del
+  visualizador.
+- **Visualizador de neutrones** (`/neutrones.html` en la consola de
+  evidencia): espectro fuente TALYS, dispersión y–z coloreada por banda
+  sobre el corte moderador+blindajes, bandas por etapa (fuente →
+  moderador → blindaje) e impacto por capa. Si falta el JSON de datos
+  reales declara `no_demostrable` — nunca dibuja datos de relleno.
+- 2 tests nuevos (build_case con blindajes; validación estricta del
+  endpoint).
