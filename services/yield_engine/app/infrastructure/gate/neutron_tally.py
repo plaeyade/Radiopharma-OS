@@ -60,10 +60,15 @@ mod.material = case["material_g4"]
 mod.mother = "world"
 
 # Capas de blindaje concéntricas (materiales NIST reales, nunca
-# efectivos inventados): cada capa es una esfera hueca real.
+# efectivos inventados): cada capa es una esfera hueca real, con un
+# micro-gap de 0.001 cm entre superficies (las superficies coincidentes
+# hacen que Geant4 no marque el cruce de frontera y el tally quedaría
+# ciego — la separación es físicamente despreciable y se declara).
+GAP_CM = 0.001
 radio = case["radio_cm"]
 capas = []
 for i, capa in enumerate(case.get("blindajes", [])):
+    radio = radio + GAP_CM
     sh = sim.add_volume("Sphere", f"blindaje_{i}")
     sh.rmin = radio * cm
     radio = radio + capa["espesor_cm"]
@@ -97,12 +102,18 @@ if capas:
     phsp2.attributes = ["KineticEnergy"]
     phsp2.output_filename = "fuga_blindaje.root"
 
-# Energía depositada por capa (impacto en paredes — edep real)
+# Energía depositada por capa (impacto en paredes — edep real).
+# El DoseActor usa por defecto vóxeles de 1 mm: hay que darle un
+# `spacing` que cubra la caja envolvente de la capa (1 solo vóxel).
+radio_int = case["radio_cm"]
 for i, sh in enumerate(capas):
+    radio_ext = radio_int + GAP_CM + case["blindajes"][i]["espesor_cm"]
     d = sim.add_actor("DoseActor", f"dose_blindaje_{i}")
     d.attached_to = sh.name
     d.output_filename = f"dose_blindaje_{i}.mhd"
     d.size = [1, 1, 1]
+    d.spacing = [2.0 * radio_ext * 10.0] * 3  # mm — caja envolvente
+    radio_int = radio_ext
 
 # estadística global para conteo real de historias
 stats = sim.add_actor("SimulationStatisticsActor", "stats")
@@ -127,12 +138,13 @@ salida = {}
 with uproot.open("fuga.root") as f:
     tree = f[f.keys()[0]]
     e = tree["KineticEnergy"].array(library="np")  # MeV
-    pos = tree["PrePosition"].array(library="np")  # mm, (N,3)
+    pos_y = tree["PrePosition_Y"].array(library="np")  # mm
+    pos_z = tree["PrePosition_Z"].array(library="np")
 salida.update(bandas_de(e))
 # Dispersión real: posición y energía de CADA neutrón que sale
 salida["dispersion"] = {
-    "y_mm": [round(float(p[1]), 2) for p in pos],
-    "z_mm": [round(float(p[2]), 2) for p in pos],
+    "y_mm": [round(float(p), 2) for p in pos_y],
+    "z_mm": [round(float(p), 2) for p in pos_z],
     "e_mev": [round(float(x), 6) for x in e],
     "radio_moderador_mm": round(case["radio_cm"] * 10.0, 2),
 }
