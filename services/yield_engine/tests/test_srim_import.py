@@ -90,11 +90,13 @@ def client(tmp_path):
     class _SvcStub:  # sin proveedor activo: no se calibra en este test
         pass
 
+    prev = (stopping_tables_api._tablas, stopping_tables_api._service)
     stopping_tables_api.init(ExternalStoppingTables(tmp_path), _SvcStub())
     from fastapi import FastAPI
     app = FastAPI()
     app.include_router(stopping_tables_api.router)
-    return TestClient(app)
+    yield TestClient(app)
+    stopping_tables_api._tablas, stopping_tables_api._service = prev
 
 
 def test_endpoint_importa_y_registra_con_fuente(client):
