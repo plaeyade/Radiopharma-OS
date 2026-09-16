@@ -1668,3 +1668,21 @@ produce una irradiación?* — cadena completa y honesta:
   y rendimiento global >65% corregido a EOB — IAEA Pub1515 §5.2), EOS
   = 85,6 GBq (λ real de la biblioteca nuclear, 35 min de proceso),
   producción neutrónica asociada 1,253e12 n/s (TALYS real).
+- **Estado honesto del tally Geant4 de esta corrida (cierre de fase)**:
+  `no_demostrable_en_este_entorno`. Causa documentada: el dataset
+  G4NDL 4.7.1 (~920 MB, requerido por FTFP_BERT_HP) llegó corrupto al
+  almacenamiento persistente del sandbox (partes con tamaño correcto y
+  contenido inválido por reversiones de escritura del montaje FUSE, con
+  reciclajes periódicos de /tmp y congelamientos del contenedor). Se
+  construyó un reparador autocurativo (zlib en streaming localiza la
+  parte corrupta; descarga reanudable por rangos con abort por
+  estancamiento; refs revalidadas en cada pasada) que al cierre de fase
+  había repuesto y persistido 4 de las ~7 partes dañadas (p23, p27,
+  p29, p30). El pipeline completo del tally (caso FDG 400 historias,
+  seed 12345, moderador G4_WATER 30 cm + G4_CONCRETE 50 cm + G4_Pb 5
+  cm, scripts `run_fdg_tally.py` / `fase25_all.sh` / `fase25_post_tally.sh`)
+  queda LISTO Y PROBADO; su ejecución es el primer objetivo de la
+  Fase 26. Ningún resultado MC fue simulado ni sustituido: el render
+  Blender entregado usa datos REALES del tally previo (geometría +
+  puntos de fuga), y los números FDG provienen de los motores reales
+  (IAEA/ATIMA/TALYS) citados arriba.
