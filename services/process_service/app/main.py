@@ -18,7 +18,7 @@ from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
 from app.presentation.routers import (beme_api, clinical_api, component_api,
-                                  cost_api,
+                                  cost_api, equipment_api,
                                   vacuum_api,
                                   facility_api,
                                   osrm_api,
@@ -75,6 +75,7 @@ app.include_router(financial_api.router)
 app.include_router(component_api.router)
 app.include_router(vacuum_api.router)
 app.include_router(cost_api.router)
+app.include_router(equipment_api.router)
 
 
 @app.get("/health", tags=["meta"])

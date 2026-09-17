@@ -37,6 +37,14 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 CICLOTRONES = {
+    "abt_bg75": {
+        "nombre": "ABT BG-75 (7.5 MeV, autoblindado)",
+        "potencia_standby_kw": 1.0,          # declarado interno, pendiente_fuente
+        "potencia_haz_kw_min": 1.0,
+        "potencia_haz_kw_max": 5.0,          # "<5 kW operación" → cota superior citada
+        "fuente_potencia": ("ABT BG-75 Technical Overview: potencia de operación <5 kW "
+                            "(cota superior citada); standby declarado interno pendiente_fuente"),
+    },
     "iba_cyclone_kiube": {
         "nombre": "IBA Cyclone KIUBE (18 MeV)",
         "potencia_standby_kw": 3.0,          # "<3 kW" → cota superior declarada
