@@ -17,7 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
-from app.presentation.routers import (beme_api, clinical_api, facility_api,
+from app.presentation.routers import (beme_api, clinical_api, component_api,
+                                  facility_api,
                                   osrm_api,
                                   financial_api,
                                   simulation_api,
@@ -42,6 +43,7 @@ synthesis_api.init(SynthesisService())
 operations_api.init()
 clinical_api.init()
 facility_api.init()
+component_api.init(facility_api._twin)  # comparte el Asset Registry real
 beme_api.init()
 simulation_api.init()
 financial_api.init()
