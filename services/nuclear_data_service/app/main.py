@@ -18,7 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.application.queries import NuclearDataQueries
 from app.infrastructure.repositories.csv_cross_section_repository import CsvCrossSectionRepository
 from app.infrastructure.repositories.json_decay_repository import JsonDecayRepository
-from app.presentation.routers import connectors_api, library_api, nuclear_data
+from app.presentation.routers import (activation_api, connectors_api,
+                                  library_api, nuclear_data)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
@@ -50,10 +51,12 @@ app.add_middleware(
 )
 
 library_api.init()
+activation_api.init()
 connectors_api.init()
 app.include_router(connectors_api.router)
 app.include_router(nuclear_data.router)
 app.include_router(library_api.router)
+app.include_router(activation_api.router)
 
 
 @app.get("/health", tags=["meta"])

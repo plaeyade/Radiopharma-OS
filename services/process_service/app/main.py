@@ -18,6 +18,7 @@ from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
 from app.presentation.routers import (beme_api, clinical_api, component_api,
+                                  vacuum_api,
                                   facility_api,
                                   osrm_api,
                                   financial_api,
@@ -44,6 +45,7 @@ operations_api.init()
 clinical_api.init()
 facility_api.init()
 component_api.init(facility_api._twin)  # comparte el Asset Registry real
+vacuum_api.init(facility_api._twin)     # mismo Asset Registry
 beme_api.init()
 simulation_api.init()
 financial_api.init()
