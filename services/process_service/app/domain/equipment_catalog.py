@@ -369,3 +369,128 @@ def recomendacion_fuente_iones(fuente_id: str) -> dict:
                        "de la fuente de iones es decisión operativa con datos de "
                        "haz reales; no bloquear por ausencia de ellos."),
     }
+
+# ---------------------------------------------------------------------------
+# Fase 31: ampliaciones citadas
+# ---------------------------------------------------------------------------
+
+CICLOTRONES_EXT.update({
+    "ge_minitrace_qilin": {
+        "nombre": "GE MINItrace Qilin",
+        "energia_mev": None,   # pendiente_fuente (ficha pública no la declara)
+        "corriente_max_ua": None,
+        "blancos": None,
+        "blanco_tipo": "integrado, totalmente automatizado",
+        "autoblindado": True,
+        "potencia_operacion_kw": None,
+        "fuente": ("GE Healthcare MINItrace Qilin (gehealthcare.com, consulta 2026-09): "
+                   "compacto, autoblindado, vertical, cubre >99 % de procedimientos "
+                   "clínicos PET, capacidad para 3-4 escáneres propios + distribución "
+                   "local. Energía/corriente/potencia: pendiente_fuente"),
+    },
+    "ge_pettrace_890": {
+        "nombre": "GE PETtrace 890",
+        "energia_mev": 16.5,
+        "corriente_max_ua": 160.0,
+        "blancos": 6,
+        "blanco_tipo": "externos, doble blanco simultáneo; blanco sólido disponible",
+        "autoblindado": False,
+        "potencia_operacion_kw": None,
+        "fuente": ("PT800 Cyclotron System Data Sheet rev3: PETtrace 890, 160 µA; "
+                   "instalación U. Oklahoma 2025-09 (g-medtech). Rendimientos EOB "
+                   "citados en RENDIMIENTOS_SINTESIS"),
+    },
+})
+
+# Targets F-18 de alto rendimiento (citados)
+TARGETS_F18_ALTO_RENDIMIENTO = {
+    "iba_nirta_conical_5": {"volumen_llenado_ml": 1.8, "corriente_ua": 45,
+        "rendimiento_sat_mci_ua": 230.0, "salida_2h_ci": 5.5,
+        "presion_bar": 40, "material": "niobio, ventana Havar 35 µm",
+        "fuente": "Devillet 2013 (CYCLOTRONS2013 WEPSH043, IBA)"},
+    "iba_nirta_conical_8": {"volumen_llenado_ml": 2.3, "corriente_ua": 65,
+        "rendimiento_sat_mci_ua": 224.0, "salida_2h_ci": 7.7,
+        "presion_bar": 30, "material": "niobio, ventana Havar 35 µm",
+        "fuente": "Devillet 2013 (CYCLOTRONS2013 WEPSH043, IBA)"},
+    "iba_nirta_conical_12": {"volumen_llenado_ml": 2.7, "corriente_ua": 100,
+        "rendimiento_sat_mci_ua": 228.0, "salida_2h_ci": 12.1,
+        "presion_bar": 30, "material": "niobio, ventana Havar 35 µm",
+        "fuente": "Devillet 2013 (CYCLOTRONS2013 WEPSH043, IBA)"},
+    "iba_nirta_conical_16": {"volumen_llenado_ml": 4.2, "corriente_ua": 130,
+        "rendimiento_sat_mci_ua": 235.0, "salida_2h_ci": 16.2,
+        "presion_bar": 30, "material": "niobio, ventana Havar 35 µm",
+        "nota": "145 µA / 2 h → 18 Ci medido; ruptura >50 bar",
+        "fuente": "Devillet 2013 (CYCLOTRONS2013 WEPSH043, IBA)"},
+    "iba_nirta_cilindrico_3xl": {"volumen_llenado_ml": 4.0, "corriente_ua": None,
+        "rendimiento_sat_mci_ua": None, "salida_2h_ci": 13.0,
+        "presion_bar": None, "material": "niobio",
+        "nota": "referencia cilíndrica: la cónica 16 supera ~25 % a igual volumen",
+        "fuente": "Devillet 2013, tabla comparativa cilíndrico vs cónico"},
+    "lund_niobio_alto_rendimiento": {"volumen_llenado_ml": None, "corriente_ua": 40,
+        "rendimiento_sat_mci_ua": None, "salida_2h_ci": None,
+        "presion_bar": None, "material": "niobio",
+        "nota": "93 GBq F-18 en 1 h @ 40 µA (~300 % vs blanco de plata previo)",
+        "fuente": "Lund Univ. (lup.lub.lu.se), blanco Nb MC-16"},
+    "ge_w_cu_autoblindado": {"volumen_llenado_ml": None, "corriente_ua": 200,
+        "rendimiento_sat_mci_ua": None, "salida_2h_ci": None,
+        "presion_bar": None, "material": "tungsteno/cobre autoblindado",
+        "nota": "rutina 180 µA demostrada; dosis de foils Havar ×8-10 menor",
+        "fuente": "Eriksson 2012 (AIPC 1509:66)"},
+}
+
+# Rendimientos de síntesis / EOB citados por equipo
+RENDIMIENTOS_SINTESIS = {
+    "neptis_fdg_no_corregido": {"valor_pct": 70.0, "cota": ">70 % no corregido",
+        "modulos": ["neptis_rs", "neptis_db", "neptis_lc"],
+        "fuente": "oraneptis.com/products/neptis-rs y /neptis-lc (consulta 2026-09)"},
+    "pettrace_eob_gb": {
+        "18F_840": 240.0, "18F_860": 400.0, "18F_880": 518.0,
+        "11C_CO2": 166.0, "13N_NH3_EOS": 16.6, "15O_O2_EOS": 44.4,
+        "15O_H2O_EOS": 44.0, "18F_F2_D": 11.0, "18F_F2_H": 66.5,
+        "fuente": "GE Healthcare PETtrace 800 series yield specifications (consulta 2026-09)"},
+    "lbt_rendimientos": {"estado": "pendiente_fuente — ficha del fabricante no pública",
+        "fuente": "Preqin 2025 / chinacyclotron.com (solo energías 7/11/20 MeV)"},
+}
+
+# Gases de alta pureza (costo y descripción citados)
+GASES_ALTA_PUREZA = {
+    "n2_6_0": {"descripcion": "Nitrógeno 6.0 (99.9999 %) — gas de blanco gaseoso C-11 (mezcla N2/O2 39:1)",
+        "precio_declarado": "lista Praxair 2018: N2 5.0 UHP $35.63 USD/cil + renta; 6.0 pendiente_fuente",
+        "fuente": "Lista Praxair (uiowa.edu 2018) + MDPI applsci 15:11946 (mezcla 39:1)"},
+    "he_5_0": {"descripcion": "Helio 5.0 — sobrepresión de blancos líquidos, soplado de líneas, cryo",
+        "precio_declarado": "lista Praxair 2018: He research $148.43-258.59 USD/cil + renta",
+        "fuente": "Lista Praxair (uiowa.edu 2018)"},
+    "ar_6_0": {"descripcion": "Argón 6.0 UHP — uso analítico QC (GC), gas de purga",
+        "precio_declarado": "Humphries UHP: Ar $1678.97 USD/cil; gases simples desde $599.33/cil",
+        "fuente": "humphriesinc.com ultra-high-purity (consulta 2026-09)"},
+    "o2_5_0": {"descripcion": "Oxígeno 5.0 — mezcla de blanco C-11 (1/40), oxidante",
+        "precio_declarado": "pendiente_fuente (cotización local)",
+        "fuente": "declarado interno"},
+    "h2_5_0": {"descripcion": "Hidrógeno 5.0 — reducción in-target 13N-NH3 (proceso etanol), GC-FID",
+        "precio_declarado": "pendiente_fuente (cotización local)",
+        "fuente": "declarado interno"},
+}
+
+# Proveedores mundiales de agua enriquecida H2-18O
+PROVEEDORES_H2O18_MUNDIAL = {
+    "nippon_sanso_japon": {"pais": "Japón", "nota": "único fabricante japonés; desde 2004, >30 países; 3ª planta → 600 kg/año (2015), destilación criogénica",
+        "fuente": "C&EN 2013 + nsc.jp.nipponsanso.com (consulta 2026-09)"},
+    "cambridge_isotope_usa": {"pais": "EE. UU.", "nota": "CIL — catálogo H2-18O varios grados",
+        "fuente": "pendiente_fuente_precio (catálogo CIL, consulta 2026-09)"},
+    "isotec_sigma_usa": {"pais": "EE. UU.", "nota": "Sigma-Aldrich ISOTEC ≥98 atom% grado PET",
+        "fuente": "sigmaaldrich.com (consulta 2026-09, Fase 29)"},
+    "nucmedcor_usa": {"pais": "EE. UU.", "nota": "NUCMEDCOR GMP 98 atom%, viales 10/20/50 g",
+        "fuente": "nucmedcor.com (consulta 2026-09, Fase 29)"},
+    "eurisotop_francia": {"pais": "Francia", "nota": "Eurisotop (filial CEA) — isótopos estables",
+        "fuente": "pendiente_fuente_precio (eurisotop.com, consulta 2026-09)"},
+    "silantes_alemania": {"pais": "Alemania", "nota": "desde EUR 170/g (98 %)",
+        "fuente": "silantes.com (consulta 2026-09, Fase 29)"},
+    "abx_alemania": {"pais": "Alemania", "nota": "distribuidor agua 18O grado FDG y GMP",
+        "fuente": "abx.de (consulta 2026-09, Fase 29)"},
+    "chempep_usa": {"pais": "EE. UU.", "nota": "98 %: 1 g $150 / 25 g $1500",
+        "fuente": "chempep.com (consulta 2026-09, Fase 29)"},
+    "isotopeshop": {"pais": "—", "nota": "98 %: 1 g EUR 193 / 5 g EUR 725",
+        "fuente": "isotopeshop.com (consulta 2026-09, Fase 29)"},
+    "ntp_sudafrica": {"pais": "Sudáfrica", "nota": "NTP Radioisotopes — línea de isótopos estables por confirmar para H2-18O",
+        "fuente": "pendiente_fuente (ntpradioisotopes.com)"},
+}
