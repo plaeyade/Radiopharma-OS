@@ -44,8 +44,12 @@ def construir_malla_demo(nx=80, ny=60, ext_x=200.0, ext_y=150.0):
 
 def a_pyvista(xx, yy, fluencia):
     """Convierte la malla a pv.ImageData (requiere pyvista instalado)."""
+    import numpy as _np
     import pyvista as pv
 
+    # Acepta mallas 2-D (meshgrid) o vectores 1-D de ejes (Fase 32)
+    if xx.ndim == 1:
+        xx, yy = _np.meshgrid(xx, yy, indexing="ij")
     nx, ny = xx.shape
     grid = pv.ImageData(dimensions=(nx, ny, 1))
     grid.spacing = (xx[1, 0] - xx[0, 0], yy[0, 1] - yy[0, 0], 1.0)
