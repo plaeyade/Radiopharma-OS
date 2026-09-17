@@ -186,9 +186,9 @@ def main() -> None:
             f"({esp['bins']} bins)")
     lin4 = ("espesor visual exagerado p/ legibilidad — el real esta en el GDML"
             if exagerado else "")
-    _texto("titulo", tit, (0, 0.3 * r, 1.75 * r), 0.26 * r, mat_txt)
-    _texto("lin2", lin2, (0, 0.3 * r, 1.42 * r), 0.19 * r, mat_txt_am)
-    _texto("lin3", lin3, (0, 0.3 * r, 1.16 * r), 0.16 * r, mat_txt)
+    _texto("titulo", tit, (0, 0.3 * r, 1.52 * r), 0.22 * r, mat_txt)
+    _texto("lin2", lin2, (0, 0.3 * r, 1.24 * r), 0.17 * r, mat_txt_am)
+    _texto("lin3", lin3, (0, 0.3 * r, 1.01 * r), 0.145 * r, mat_txt)
     if lin4:
         _texto("lin4", lin4, (0, -0.5 * r, -1.35 * r), 0.14 * r, mat_txt_am)
 
