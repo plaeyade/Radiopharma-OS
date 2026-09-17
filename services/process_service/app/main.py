@@ -18,6 +18,7 @@ from app.application.logistics_service import LogisticsService
 from app.application.process_service import ProcessService
 from app.application.synthesis_service import SynthesisService
 from app.presentation.routers import (beme_api, clinical_api, component_api,
+                                  cost_api,
                                   vacuum_api,
                                   facility_api,
                                   osrm_api,
@@ -46,6 +47,8 @@ clinical_api.init()
 facility_api.init()
 component_api.init(facility_api._twin)  # comparte el Asset Registry real
 vacuum_api.init(facility_api._twin)     # mismo Asset Registry
+from app.domain.cost_engine import CostEngine
+cost_api.init(CostEngine("data/costos/corridas.json"))  # Fase 29
 beme_api.init()
 simulation_api.init()
 financial_api.init()
@@ -69,6 +72,9 @@ app.include_router(facility_api.router)
 app.include_router(beme_api.router)
 app.include_router(simulation_api.router)
 app.include_router(financial_api.router)
+app.include_router(component_api.router)
+app.include_router(vacuum_api.router)
+app.include_router(cost_api.router)
 
 
 @app.get("/health", tags=["meta"])
