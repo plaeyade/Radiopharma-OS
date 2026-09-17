@@ -1668,21 +1668,49 @@ produce una irradiación?* — cadena completa y honesta:
   y rendimiento global >65% corregido a EOB — IAEA Pub1515 §5.2), EOS
   = 85,6 GBq (λ real de la biblioteca nuclear, 35 min de proceso),
   producción neutrónica asociada 1,253e12 n/s (TALYS real).
-- **Estado honesto del tally Geant4 de esta corrida (cierre de fase)**:
-  `no_demostrable_en_este_entorno`. Causa documentada: el dataset
-  G4NDL 4.7.1 (~920 MB, requerido por FTFP_BERT_HP) llegó corrupto al
-  almacenamiento persistente del sandbox (partes con tamaño correcto y
-  contenido inválido por reversiones de escritura del montaje FUSE, con
-  reciclajes periódicos de /tmp y congelamientos del contenedor). Se
-  construyó un reparador autocurativo (zlib en streaming localiza la
-  parte corrupta; descarga reanudable por rangos con abort por
-  estancamiento; refs revalidadas en cada pasada) que al cierre de fase
-  había repuesto y persistido 4 de las ~7 partes dañadas (p23, p27,
-  p29, p30). El pipeline completo del tally (caso FDG 400 historias,
-  seed 12345, moderador G4_WATER 30 cm + G4_CONCRETE 50 cm + G4_Pb 5
-  cm, scripts `run_fdg_tally.py` / `fase25_all.sh` / `fase25_post_tally.sh`)
-  queda LISTO Y PROBADO; su ejecución es el primer objetivo de la
-  Fase 26. Ningún resultado MC fue simulado ni sustituido: el render
-  Blender entregado usa datos REALES del tally previo (geometría +
-  puntos de fuga), y los números FDG provienen de los motores reales
-  (IAEA/ATIMA/TALYS) citados arriba.
+- **Estado del tally Geant4 de esta corrida (Fase 26): DEMOSTRADO**.
+  El dataset G4NDL 4.7.1 (~1,06 GB, requerido por FTFP_BERT_HP) se
+  re-descargó íntegro desde CERN en 48 segmentos con verificación md5
+  por segmento en el momento de la descarga (manifiesto
+  `sci_runtime/segments.md5`), se ensambló en /tmp, superó la
+  validación gzip integral (`gzip -t`) y se extrajo completo:
+  16 092 archivos con todos los directorios (Capture, Elastic,
+  Fission, Inelastic, IsotopeProduction, JENDL_HE, ThermalScattering).
+  La vía /tmp eliminó la corrupción por reversiones de escritura del
+  montaje FUSE que había dañado las partes persistidas en Fase 25.
+  OpenGATE 10.1.1 + Geant4 11.4.2 se reconstruyó offline
+  (`gatepy_rebuild.sh`) con G4NDL 4.7.1 verificado integrado en
+  `geant4_data`. Tally ejecutado (rc=0, 31 s): caso FDG 400 historias,
+  seed 12345, espectro fuente TALYS real ¹⁸O(p,xn) 18 MeV, moderador
+  G4_WATER 30 cm + G4_CONCRETE 50 cm + G4_Pb 5 cm. Resultados
+  (`evidencia_v072/fase25_fdg_tally_raw.json`): de 493 neutrones
+  registrados a la salida del moderador — 58 térmicos, 83 epitérmicos,
+  352 rápidos — la fuga tras el blindaje completo es de **7 neutrones
+  rápidos y 0 térmicos/epitérmicos**; energía depositada por capa
+  614,37 / 14,87 MeV. El render FDG (`render_fdg_f25.png`, Blender
+  Cycles 1920×1080) usa exclusivamente la geometría y los puntos de
+  dispersión REALES de este tally. Historial: en Fase 25 este tally se
+  declaró honestamente `no_demostrable_en_este_entorno` por la
+  corrupción del dataset; la declaración queda superada por la
+  ejecución real documentada aquí. Ningún resultado MC fue simulado
+  ni sustituido en ninguna fase.
+- **Hoja de ruta MC (fases posteriores, ya con G4NDL verificado)**:
+  1. *Irradiación dentro del ciclotrón, gráfica*: modelo GDML del
+     blanco real (cuerpo Ag/Nb, ventana Havar, cavidad H₂[¹⁸O]) con el
+     haz de protones como primario — parametrizado con valores
+     teóricos/publicados y declarado como validación teórica mientras
+     no exista haz real (restricción permanente: nunca bloquear por
+     datos de haz) — y render Cycles de trayectorias/puntos de
+     interacción sobre la propia estructura. Validación contra
+     rendimientos publicados de ¹⁸F (IAEA/TALYS).
+  2. *Activación de los muros del búnker, puntual y gráfica*: mesh
+     tally de fluencia por banda energética sobre las superficies de
+     los muros (geometría de sala real), escalado por la tasa real de
+     producción (1,253e12 n/s corrida FDG); inventario por isótopo con
+     Bateman — A = N·σ̄·φ·(1−e^(−λ·t_irr))·e^(−λ·t_dec) — con σ̄
+     promediada con el espectro MC en el muro (ENDF vía NDS, fuente
+     citada 49.11), calendario de pulsos de irradiación (lotes FDG de
+     1–2 h, ~250 d/a) hasta desmantelamiento, curvas de enfriamiento
+     post-apagado y mapa gráfico de puntos calientes. Culpables
+     típicos: ¹⁵²Eu/¹⁵⁴Eu y ⁶⁰Co (largo plazo, clasificación de
+     residuo), ²⁴Na y ⁵⁶Mn (dosis de entrada en las primeras horas).
