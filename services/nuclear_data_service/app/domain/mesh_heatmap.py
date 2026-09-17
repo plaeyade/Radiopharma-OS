@@ -55,7 +55,7 @@ def a_pyvista(xx, yy, fluencia):
 
 def render_heatmap(salida_png: str, origen: str,
                    titulo: str = "Fluencia neutrónica en muro (corte XY)",
-                   backend: str = "auto") -> dict:
+                   backend: str = "auto", malla=None) -> dict:
     """Render offscreen del campo demo o de una malla MC real.
 
     backend: "auto" (pyvista si importable, si no matplotlib) | "pyvista" |
@@ -73,7 +73,14 @@ def render_heatmap(salida_png: str, origen: str,
             backend = "matplotlib"
 
     etiqueta = _etiqueta(origen)
-    xx, yy, fl = construir_malla_demo()
+    if malla is not None:
+        # Fase 32: malla REAL de un mesh tally MC (origen mesh_tally:...).
+        import numpy as _np
+        fl = _np.asarray(malla, dtype=float)
+        xx = _np.arange(fl.shape[1], dtype=float)
+        yy = _np.arange(fl.shape[0], dtype=float)
+    else:
+        xx, yy, fl = construir_malla_demo()
 
     if backend == "pyvista":
         import pyvista as pv
@@ -116,7 +123,7 @@ def render_heatmap(salida_png: str, origen: str,
 
     return {"png": salida_png, "origen": origen, "etiqueta": etiqueta,
             "backend_usado": backend,
-            "celdas": [int(xx.shape[0]), int(xx.shape[1])],
+            "celdas": [int(fl.shape[0]), int(fl.shape[1])],
             "flujo_max": float(fl.max())}
 
 

@@ -52,6 +52,97 @@ CICLOTRONES = {
         "potencia_haz_kw_max": 65.0,
         "fuente_potencia": "Ficha comercial IBA Cyclone KIUBE (medicalexpo, consulta 2026-09): standby <3 kW, haz 45-65 kW",
     },
+    # Fase 32: TODOS los modelos del catálogo son seleccionables. Los que no
+    # tienen consumo eléctrico con fuente citada llevan rango None → el motor
+    # acepta la potencia declarada por el usuario (con fuente) y la marca
+    # "declarada_usuario_pendiente_fuente" — nunca la inventa.
+    "ge_pettrace_840": {
+        "nombre": "GE PETtrace 840 (16.5 MeV, 60 µA)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente (consumo eléctrico no publicado en fuente consultada)",
+    },
+    "ge_pettrace_860": {
+        "nombre": "GE PETtrace 860 (16.5 MeV, 130 µA)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "ge_pettrace_880": {
+        "nombre": "GE PETtrace 880 (16.5 MeV)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "ge_pettrace_890": {
+        "nombre": "GE PETtrace 890 (16.5 MeV, 160 µA — data sheet PT800 rev3)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente (corriente citada: 160 µA, data sheet PT800 rev3)",
+    },
+    "ge_minitrace_qilin": {
+        "nombre": "GE MINItrace Qilin (autoblindado compacto)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "best_b100": {
+        "nombre": "Best B-100 (7.5 MeV integrado)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "best_b6_15": {
+        "nombre": "Best B6-15 (6-15 MeV variable, ≤1000 µA)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "lbt_7": {
+        "nombre": "LBT Longevous Beamtech 7 MeV (China)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente (Preqin 2025: modelo existe; consumo no publicado)",
+    },
+    "lbt_11": {
+        "nombre": "LBT Longevous Beamtech 11 MeV (China)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+    "lbt_20": {
+        "nombre": "LBT Longevous Beamtech 20 MeV (China)",
+        "potencia_standby_kw": None, "potencia_haz_kw_min": None, "potencia_haz_kw_max": None,
+        "fuente_potencia": "pendiente_fuente",
+    },
+}
+
+# Regiones / divisiones tarifarias de CFE (Fase 32). Base citada: división
+# Sureste (Villahermosa, Tabasco) — ver TARIFAS_CFE. Las demás divisiones se
+# registran como pendiente_fuente: el motor acepta la tarifa declarada por el
+# usuario CON fuente (app.cfe.mx publica tarifas por división cada mes) y la
+# marca; nunca inventa el precio del kWh de otra sede.
+REGIONES_CFE = {
+    "sureste_tab": {"nombre": "Sureste — Villahermosa, Tabasco (base)",
+                    "tarifa_mxn_kwh_gdmto": 1.21,
+                    "fuente": "CFE tarifas vigentes (app.cfe.mx), división Sureste, consulta 2026-09"},
+    "noroeste": {"nombre": "Noroeste (Sonora/Sinaloa)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "norte": {"nombre": "Norte (Chihuahua/Coahuila/Durango)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "noreste": {"nombre": "Noreste (Nuevo León/Tamaulipas)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "occidente": {"nombre": "Occidente (Jalisco/Michoacán)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "centro": {"nombre": "Centro (CDMX/Edo. México/Querétaro)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "oriente": {"nombre": "Oriente (Puebla/Veracruz/Hidalgo)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "sur": {"nombre": "Sur (Guerrero/Oaxaca)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "peninsular": {"nombre": "Peninsular (Yucatán/Q. Roo/Campeche)", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "baja_california": {"nombre": "Baja California", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+    "bcs": {"nombre": "Baja California Sur", "tarifa_mxn_kwh_gdmto": None, "fuente": "pendiente_fuente"},
+}
+
+# Componentes de costo frecuentemente pasados por alto (Fase 32) — catálogo
+# estructural: el motor NO inventa montos; el usuario los declara con fuente
+# (cotización, nómina, contrato) y se suman al total de la corrida.
+COMPONENTES_ADICIONALES = {
+    "personal_operacion": "Sueldos/cargas sociales del operador y RPO prorrateados por corrida",
+    "control_calidad_liberacion": "QC y liberación del lote (GC/HPLC, endotoxinas, esterilidad, pH, radioquímica)",
+    "mantenimiento_preventivo": "Contrato de mantenimiento anual prorrateado por corrida",
+    "gestion_residuos_radiactivos": "Almacenamiento/decaimiento y disposición de residuos radiactivos",
+    "transporte_logistica": "Distribución en ventana de vida media (vehículo, contenedores tipo A)",
+    "licencias_permisos": "COFEPRIS / CNSNS prorrateados",
+    "seguros": "Seguro de responsabilidad civil e instalación prorrateado",
+    "depreciacion_capex": "Depreciación del ciclotrón, celdas calientes y módulos",
+    "gases_alta_pureza": "Gases UHP de proceso (catálogo citado Fase 31)",
+    "agua_ultrapura_hvac": "Agua ultrapura, chiller y HVAC de celdas",
 }
 
 TARIFAS_CFE = {
@@ -136,6 +227,12 @@ class CorridaCosto:
     fuente_consumibles: str
     motivo: str
     responsable: str
+    # Fase 32 (opcionales)
+    region_id: str | None = None                # división CFE de la sede
+    tarifa_declarada_mxn_kwh: float | None = None  # requerida si la región está pendiente_fuente
+    fuente_tarifa_declarada: str | None = None
+    componentes_extra_mxn: dict | None = None   # claves de COMPONENTES_ADICIONALES
+    fuente_componentes_extra: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +270,12 @@ class CostEngine:
     def proveedores_agua(self):
         return PROVEEDORES_H2O18
 
+    def regiones(self):
+        return REGIONES_CFE
+
+    def componentes_adicionales(self):
+        return COMPONENTES_ADICIONALES
+
     # -- cálculo ------------------------------------------------------------
     def registrar_corrida(self, c: CorridaCosto) -> dict:
         if c.corrida_id in self._corridas:
@@ -195,10 +298,18 @@ class CostEngine:
             raise ValueError("actividad y número de dosis deben ser positivos")
 
         cyc = CICLOTRONES[c.ciclotron_id]
-        if not cyc["potencia_haz_kw_min"] <= c.potencia_haz_kw <= cyc["potencia_haz_kw_max"]:
+        if cyc["potencia_haz_kw_min"] is None:
+            if c.potencia_haz_kw <= 0:
+                raise ValueError("potencia_haz_kw debe ser positiva")
+            estado_potencia = ("declarada_usuario_pendiente_fuente: consumo "
+                               "eléctrico del modelo sin fuente citada; la "
+                               "potencia la declara el usuario")
+        elif not cyc["potencia_haz_kw_min"] <= c.potencia_haz_kw <= cyc["potencia_haz_kw_max"]:
             raise ValueError(
                 f"potencia_haz_kw fuera del rango citado "
                 f"[{cyc['potencia_haz_kw_min']}, {cyc['potencia_haz_kw_max']}] kW")
+        else:
+            estado_potencia = "fuente_externa_citada"
 
         tar = TARIFAS_CFE[c.tarifa_id]
         estado_tarifa = "fuente_externa_citada"
@@ -207,12 +318,32 @@ class CostEngine:
                 "ADVERTENCIA: la demanda de haz excede el límite de la tarifa "
                 f"{c.tarifa_id} ({tar['demanda_max_kw']} kW) — verificar tarifa aplicable")
 
+        # Región / división CFE de la sede (Fase 32)
+        estado_region = None
+        tarifa_region_mxn_kwh = None
+        if c.region_id is not None:
+            if c.region_id not in REGIONES_CFE:
+                raise ValueError("region_id no está en el catálogo de divisiones CFE")
+            reg = REGIONES_CFE[c.region_id]
+            tarifa_region_mxn_kwh = reg["tarifa_mxn_kwh_gdmto"]
+            if tarifa_region_mxn_kwh is None:
+                if c.tarifa_declarada_mxn_kwh is None or not c.fuente_tarifa_declarada:
+                    raise ValueError(
+                        f"la división {reg['nombre']} está pendiente_fuente: declare "
+                        "tarifa_declarada_mxn_kwh CON fuente_tarifa_declarada (49.11)")
+                tarifa_region_mxn_kwh = c.tarifa_declarada_mxn_kwh
+                estado_region = "tarifa_regional_declarada_usuario_con_fuente"
+            else:
+                estado_region = "fuente_externa_citada"
+
         # kWh: aritmética directa potencia × tiempo
         kwh_haz = c.potencia_haz_kw * c.t_irradiacion_min / 60.0
-        kwh_standby = cyc["potencia_standby_kw"] * c.t_standby_min / 60.0
+        standby_kw = cyc["potencia_standby_kw"] or 0.0
+        kwh_standby = standby_kw * c.t_standby_min / 60.0
         kwh_total = kwh_haz + kwh_standby
 
-        tarifa_mxn_kwh = sum(tar["rango_mxn_kwh"]) / 2.0
+        tarifa_mxn_kwh = (tarifa_region_mxn_kwh if tarifa_region_mxn_kwh is not None
+                          else sum(tar["rango_mxn_kwh"]) / 2.0)
         costo_electrico_mxn = kwh_total * tarifa_mxn_kwh
 
         # Agua enriquecida: pérdida neta por reciclaje
@@ -223,8 +354,23 @@ class CostEngine:
         nota_moneda = ("precio en moneda del proveedor (USD/EUR declarado); "
                        "tipo de cambio no incluido — declarar si aplica")
 
+        # Componentes adicionales declarados (Fase 32): nunca inventados,
+        # solo claves del catálogo CON fuente.
+        costo_extra = 0.0
+        if c.componentes_extra_mxn:
+            if not c.fuente_componentes_extra:
+                raise ValueError("componentes extra exigen fuente citada (49.11)")
+            for k, v in c.componentes_extra_mxn.items():
+                if k not in COMPONENTES_ADICIONALES:
+                    raise ValueError(f"componente extra desconocido: {k} "
+                                     f"(válidos: {sorted(COMPONENTES_ADICIONALES)})")
+                if v < 0:
+                    raise ValueError(f"componente extra negativo: {k}")
+                costo_extra += float(v)
+
         costo_total = (costo_electrico_mxn + costo_agua_mxn
-                       + c.costo_desgaste_mxn + c.costo_consumibles_mxn)
+                       + c.costo_desgaste_mxn + c.costo_consumibles_mxn
+                       + costo_extra)
 
         rec = {
             **asdict(c),
@@ -241,6 +387,9 @@ class CostEngine:
             "costo_por_gb_mxn": round(costo_total / c.actividad_producida_gb, 2),
             "costo_por_dosis_mxn": round(costo_total / c.n_dosis, 2),
             "estado_tarifa": estado_tarifa,
+            "estado_potencia": estado_potencia,
+            "estado_region": estado_region,
+            "costo_componentes_extra_mxn": round(costo_extra, 2),
             "fuentes": {
                 "potencia": cyc["fuente_potencia"],
                 "tarifa": tar["fuente"],
