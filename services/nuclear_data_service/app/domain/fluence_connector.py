@@ -125,3 +125,45 @@ def actividad_pared(engine, path_mhd: str | Path, corriente_ua: float,
     res["tasa_neutrones"] = q
     res["phi_muros"] = {k: v for k, v in p.items() if k != "estimador"}
     return res
+
+
+def estadistica_lotes(mapas: list) -> dict:
+    """Estadística por lotes de K mapas φ independientes (semillas distintas).
+
+    Estimador declarado: media por lotes y error estándar de la media
+    (SEM = s/√K con s = desviación estándar muestral entre lotes, ddof=1).
+    Honestidad: con K pequeño la incertidumbre es solo indicativa — se
+    declara K y nunca se presenta como barra de error validada.
+    """
+    import numpy as np
+    if len(mapas) < 2:
+        raise ValueError("se requieren >= 2 lotes para estadística")
+    formas = {m["phi_n_cm2_s"].shape for m in mapas}
+    if len(formas) != 1:
+        raise ValueError("lotes con geometrías distintas — no combinables")
+    pila = np.stack([m["phi_n_cm2_s"] for m in mapas])
+    k = len(mapas)
+    media = pila.mean(axis=0)
+    s = pila.std(axis=0, ddof=1)
+    sem = s / np.sqrt(k)
+    activos = media > 0
+    if not activos.any():
+        raise ValueError("mapas sin voxels activos — tally vacío")
+    rel_sem = float((sem[activos] / media[activos]).mean())
+    return {
+        "phi_media_n_cm2_s": media,
+        "phi_sem_n_cm2_s": sem,
+        "k_lotes": k,
+        "muros": {
+            "phi_medio_n_cm2_s": float(media[activos].mean()),
+            "phi_max_n_cm2_s": float(media[activos].max()),
+            "sem_medio_n_cm2_s": float(sem[activos].mean()),
+            "sem_relativo_medio": rel_sem,
+            "voxels_activos": int(activos.sum()),
+        },
+        "estimador": ("declarado: media y SEM por lotes independientes "
+                      f"(K={k}, ddof=1); incertidumbre indicativa, "
+                      "pendiente reducción de varianza y validación PHITS"),
+        "origen_flujo": "mesh_tally_lotes:" + ";".join(
+            m["origen_flujo"] for m in mapas),
+    }
