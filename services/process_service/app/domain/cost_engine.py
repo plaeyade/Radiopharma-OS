@@ -108,6 +108,35 @@ CICLOTRONES = {
     },
 }
 
+# CAPEX de ciclotrones con cotización REAL (Fase 36). Regla 49.11: cada
+# precio lleva fuente documental y alcance EXACTO de la cotización — nunca
+# se reparte ni se extrapola a otros modelos. Moneda original; la conversión
+# a MXN queda pendiente_fuente (tipo de cambio oficial a fecha de pago).
+CAPEX_CICLOTRONES = {
+    "iba_cyclone_kiube": {
+        "precio": 3_435_000, "moneda": "EUR",
+        "alcance": ("paquete IntegraLab ONE completo DDP Villahermosa: Cyclone KIUBE 300 "
+                    "(18 MeV, 300 µA, doble haz, hasta 35 Ci F-18 en 2 h) + 2× blancos Nirta "
+                    "HCFT F18-700 + blanco 13N + Synthera+ + Synthera Extension + Neptis DB + "
+                    "3 hotcells + QC completo (HPLC/GC/TLC/MCA/LAL) + monitoreo radiológico + "
+                    "diseño GMP IntegraLab (bóveda, flujos, aire) + instalación/SAT + garantía "
+                    "1er año + capacitación + arancel importación 2 %. NO es el ciclotrón solo"),
+        "incoterm": ("DDP Villahermosa (Incoterms 2020); validez 60 días; pago 30/30/30/10 % "
+                     "con carta de crédito; indexación S&P GSCI Industrial Metals"),
+        "fuente": ("Cotización IBA 2025/8499 ver. 03.04 — Hospitales Zumaya, S.A. de CV "
+                   "(Integralab Zumaya Tabasco), documento PDF recibido"),
+        "estado": "cotizacion_real_fabricante",
+    },
+    "ge_pettrace_840": {
+        "precio": 3_200_000, "moneda": "USD",
+        "alcance": "PETtrace (130 µA) + 2 módulos FASTlab 2",
+        "incoterm": "pendiente_documento",
+        "fuente": ("declarado por el usuario (3,2 MDD); documento de cotización GE "
+                   "pendiente de entregar"),
+        "estado": "declarado_usuario_pendiente_documento",
+    },
+}
+
 # Regiones / divisiones tarifarias de CFE (Fase 32). Base citada: división
 # Sureste (Villahermosa, Tabasco) — ver TARIFAS_CFE. Las demás divisiones se
 # registran como pendiente_fuente: el motor acepta la tarifa declarada por el
@@ -275,6 +304,22 @@ class CostEngine:
 
     def componentes_adicionales(self):
         return COMPONENTES_ADICIONALES
+
+    def capex_ciclotrones(self):
+        return CAPEX_CICLOTRONES
+
+    def capex_ciclotron(self, ciclotron_id: str) -> dict:
+        """CAPEX cotizado del modelo; si no hay cotización, lo dice honesto."""
+        if ciclotron_id not in CICLOTRONES:
+            raise ValueError("ciclotron_id no está en el catálogo")
+        c = CAPEX_CICLOTRONES.get(ciclotron_id)
+        if c is None:
+            return {"ciclotron_id": ciclotron_id, "precio": None, "moneda": None,
+                    "estado": "pendiente_cotizacion",
+                    "nota": "sin cotización con fuente — nunca se estima el CAPEX"}
+        return {"ciclotron_id": ciclotron_id, **c,
+                "conversion_mxn": ("pendiente_fuente (tipo de cambio oficial a fecha "
+                                   "de pago — no se aplica tipo inventado)")}
 
     # -- cálculo ------------------------------------------------------------
     def registrar_corrida(self, c: CorridaCosto) -> dict:
