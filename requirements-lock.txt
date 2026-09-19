@@ -1,0 +1,27 @@
+# requirements-lock.txt — entorno congelado de la suite v1.0.0 (2026-09-19)
+# Pins EXACTOS verificados con pip freeze en el entorno donde la suite paso
+# (1133 passed + 2 skipped). Stack cientifico MC (opengate 10.1.1, pyvista 0.49.0,
+# vtk 9.7.0, SimpleITK, itk, awkward, uproot) documentado en Fases 34-35;
+# se reinstala via scripts/bootstrap35.sh (el sandbox recicla /tmp).
+# Reproducibilidad GxP: instalar con  pip install -r requirements-lock.txt
+aiosqlite==0.22.1
+asyncua==2.0.1
+click==8.2.1
+colored==2.3.2
+fastapi==0.116.1
+httpx==0.28.1
+jsonpickle==4.1.2
+matplotlib==3.10.3
+numpy==2.2.5
+pandas==2.3.2
+pillow==12.3.0
+psutil==7.0.0
+pydantic==2.11.4
+pydicom==3.0.2
+PyJWT==2.14.0
+pytest==9.1.1
+requests==2.32.3
+scipy==1.16.2
+SQLAlchemy==2.0.54
+tqdm==4.70.1
+uvicorn==0.34.2
