@@ -1,0 +1,17 @@
+# Normalizacion de lineas y clasificacion de binarios — cierre v1.0.0
+* text=auto eol=lf
+*.py    text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.js    text eol=lf
+*.png   binary
+*.jpg   binary
+*.raw   binary
+*.mhd   binary
+*.zip   binary
+*.blend binary
+*.gdml  text eol=lf
