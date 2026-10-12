@@ -50,3 +50,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   sin ciclotrón a corto plazo — solo validación teórica, nunca bloquear por haz);
   calibración 19.16 diferida; tarifas CFE; tipo de cambio MXN.
 - Validación HP vs BERT diferida a Fase 37 (decisión del usuario).
+
+## v1.2.0 — Fase 41 (fuera de canónicos, prioridad 1): OpenMC tercer código — entorno + smoke
+- OpenMC 0.16.0 (conda-forge; DAGMC sí, MPI no) instalado y verificado; procedimiento reproducible en evidencia fase41/bootstrap41.sh.
+- Datos ENDF/B-VIII.0-NNDC HDF5: 33 isótopos (hormigón NIST + aire) descargados, validados con h5py + IncidentNeutron (3 corruptos detectados y redescargados: Ca40, H1, Si30), cross_sections.xml generado.
+- Smoke test real: fuente puntual 2 MeV en esfera de hormigón r=100 cm, 20 000 historias/10 lotes, malla 20³ — 4 844 voxels con flujo, fuga 0,01230 ± 0,00022; statepoint + resultados JSON + render en evidencia_v072/fase41/.
+- Declarado: sin S(α,β) térmico (paridad con gas libre Geant4); persistencia del env en tarball: mejor esfuerzo (recreable vía bootstrap en ~10 min).
