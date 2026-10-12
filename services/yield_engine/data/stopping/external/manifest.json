@@ -2748,6 +2748,106 @@
       "registrada_en": "2026-09-18T22:46:46.107823+00:00",
       "estado": "registrada_no_calibrada",
       "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
+    },
+    {
+      "material": "agua",
+      "version": 26,
+      "archivo": "agua_v26.csv",
+      "sha256": "3134f30e4775e6d158f4ce24b0872761c7a7049ad898656bcf60e305b6b98de4",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "físico",
+      "registrada_en": "2026-10-12T02:44:50.814153+00:00",
+      "estado": "rechazada_declarada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM",
+      "calibraciones": [
+        {
+          "criterio_max_pct": 25.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "PromotedStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV) + NIST PSTAR cobre como proxy declarado para ni64 (PSTAR no publica Ni)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "calibrada",
+          "motivo": "verificación inicial vs ATIMA versionado",
+          "registrado_por": "físico",
+          "registrada_en": "2026-10-12T02:44:50.836787+00:00"
+        },
+        {
+          "criterio_max_pct": 1.0,
+          "comparacion": {
+            "referencia": {
+              "proveedor": "PromotedStoppingPower",
+              "fuente": "Tablas ATIMA empaquetadas (CSV) + NIST PSTAR cobre como proxy declarado para ni64 (PSTAR no publica Ni)"
+            },
+            "n_puntos": 3,
+            "desv_media_pct": 4.669,
+            "desv_max_pct": 5.479,
+            "puntos": [
+              {
+                "energia_mev": 4.5,
+                "externa": 85.0,
+                "referencia": 88.805,
+                "desv_pct": 4.285
+              },
+              {
+                "energia_mev": 10.0,
+                "externa": 45.0,
+                "referencia": 46.9941,
+                "desv_pct": 4.243
+              },
+              {
+                "energia_mev": 16.0,
+                "externa": 30.0,
+                "referencia": 31.7389,
+                "desv_pct": 5.479
+              }
+            ]
+          },
+          "veredicto": "rechazada",
+          "motivo": "criterio estricto",
+          "registrado_por": "físico",
+          "registrada_en": "2026-10-12T02:44:50.858936+00:00"
+        }
+      ]
+    },
+    {
+      "material": "titanio",
+      "version": 25,
+      "archivo": "titanio_v25.csv",
+      "sha256": "ee12b0d79b43bfc9b2b07236edbc385e155784cad3064e0188478c7f1ed6c7ad",
+      "fuente": "tabla de prueba con fuente citada",
+      "ejecutado_en": "test",
+      "descripcion": "",
+      "registrado_por": "op",
+      "registrada_en": "2026-10-12T02:44:50.870536+00:00",
+      "estado": "registrada_no_calibrada",
+      "nota_honestidad": "tabla REAL exportada por el usuario y registrada con fuente e integridad; NO se usa en el cómputo de rendimientos hasta calibración explícita — la plataforma nunca ejecuta ni simula SRIM"
     }
   ],
   "nota": "tablas externas (SRIM/ATIMA exportadas por el usuario) — registradas con fuente, nunca ejecutadas ni simuladas por la plataforma",
