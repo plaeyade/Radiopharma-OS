@@ -79,3 +79,10 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Visor 3D (app/visor3d.html, three.js r152 local): 5 mapas reales 110×110×60 (flujo BERT/HP + actividad Eu-152/Co-60/Na-24), 3 planos de corte con sliders, umbral, geometría alambre, modo cine web (irradiación 1→2500 pulsos y enfriamiento 0→5 años vía factor Bateman escalar por isótopo) y panel de actividad por componente en vivo.
 - Evidencia fase46/exportar_visor3d.py: export uint8 log10 + meta.json.
 - CORRECCIÓN (ALCOA+, detectada en F46): los totales por isótopo de F45 sumaban sobre toda la malla incluyendo aire; isotopo_predominante() ahora enmascara al concreto. Totales corregidos al apagar: Na-24 3,29e9 Bq, Eu-152 5,43e7 Bq, Co-60 2,41e6 Bq. Conclusiones de predominancia sin cambio; videos y póster F45 regenerados. Tests 11/11 (máscara de concreto añadida).
+
+## v1.6.0 — Fase 43: comparación triple de tallies (BERT / HP / OpenMC)
+- Nuevo módulo `yield_engine/app/domain/comparacion_triple.py`: comparación N patas sobre unión de voxels, Δ por historia vs referencia, diferencia simétrica mediana, desglose por componente del búnker (máscaras F45).
+- 7 tests nuevos (`test_comparacion_triple_fase43.py`), estilo canónico de servicio.
+- Evidencia real: BERT 360k vs HP 160k. Unión 18 318 voxels; comunes 9 284; ratio HP/BERT por historia ≈ 1,95 en las 6 componentes (+95 %…+113 %) — hallazgo abierto declarado para F44.
+- Corrección documental: el bloque «comparación» de F37 usaba totales sin normalizar por historias; F43 lo sustituye por comparación por historia.
+- Pata OpenMC/ENDF-B-VIII.0: pendiente_entorno (sandbox recicla el entorno; librería de 33 isótopos persistida).
