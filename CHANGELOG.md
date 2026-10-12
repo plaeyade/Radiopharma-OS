@@ -116,3 +116,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - `bunker_openmc.py`: variante `geometria="bind_real"` con la geometría medida del plano (F38); caso OIEA intacto (ALCOA+).
 - Muro oeste 2,11 m medido; sala estimada con cara oeste corregida por test de coherencia; altura z provisional declarada pendiente_verificacion.
 - 6 tests nuevos (11/11 con regresión F42). Corrida: pendiente_entorno.
+
+## v1.13.0 — Fase 39: cotizaciones de blindaje (2,5 vs 3,5 g/cm³)
+- Nuevo módulo `yield_engine/app/domain/cotizaciones_blindaje.py`: ambas cotizaciones reales registradas con documento citado; verificación aritmética ✓ (JPG suma exacta; PDF subtotal+IVA exacto).
+- Derivados declarados: ratio ×2,02 (sesgo IVA declarado), ~2,36 M USD (TC 17,71), espesor ~0,71× a igualdad de densidad área.
+- 5 tests. Material de decisión, no recomendación operativa (18.10).
