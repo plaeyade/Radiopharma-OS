@@ -145,17 +145,28 @@ def actividad_por_componente(phi_voxel: np.ndarray, isotopo: str, k: int,
     return {nombre: float(a[m].sum()) for nombre, m in mascaras.items()}
 
 
+def mascara_concreto(dims=(110, 110, 60)) -> np.ndarray:
+    """Unión de las máscaras de componentes = todo el concreto del bloque."""
+    m = mascara_componentes(dims)
+    u = np.zeros(dims, dtype=bool)
+    for x in m.values():
+        u |= x
+    return u
+
+
 def isotopo_predominante(phi_voxel: np.ndarray, k: int, t_pulso_s: float,
                          t_entre_pulsos_s: float,
                          t_tras_apagado_s: float = 0.0) -> dict:
-    """Isótopo que domina la actividad total del concreto en el pulso k
-    (y tras un enfriamiento opcional)."""
+    """Isótopo que domina la actividad total del CONCRETO en el pulso k
+    (suma enmascarada al concreto — el aire no se activa como hormigón)."""
+    mc = mascara_concreto(phi_voxel.shape)
     tot = {}
     for iso in ISOTOPOS_CINE:
         p = ISOTOPOS_CINE[iso]
-        a = actividad_pulso(phi_voxel, iso, k, t_pulso_s, t_entre_pulsos_s)
+        a = actividad_pulso(phi_voxel, iso, k, t_pulso_s, t_entre_pulsos_s)[mc]
+        s = float(a.sum())
         if t_tras_apagado_s > 0:
-            a = a * math.exp(-math.log(2.0) / p["t12_s"] * t_tras_apagado_s)
-        tot[iso] = float(a.sum())
+            s *= math.exp(-math.log(2.0) / p["t12_s"] * t_tras_apagado_s)
+        tot[iso] = s
     dominante = max(tot, key=tot.get) if any(v > 0 for v in tot.values()) else None
     return {"actividad_total_bq": tot, "predominante": dominante}

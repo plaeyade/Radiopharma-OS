@@ -74,3 +74,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Dureza: imports de los tests F42/F45 migrados al estilo canónico por-servicio (app.*), sin acoplar servicios; __init__.py del paquete openmc añadido.
 - scripts/suite_canonica.sh: runner reproducible de la suite completa (evidencia para F40 OQ).
 - Dependencias restauradas tras reciclaje del sandbox: lockfile + SimpleITK 2.5.6 (wheel verificado por tamaño exacto).
+
+## v1.5.0 — Fase 46: visor 3D web del búnker + corrección honesta F45
+- Visor 3D (app/visor3d.html, three.js r152 local): 5 mapas reales 110×110×60 (flujo BERT/HP + actividad Eu-152/Co-60/Na-24), 3 planos de corte con sliders, umbral, geometría alambre, modo cine web (irradiación 1→2500 pulsos y enfriamiento 0→5 años vía factor Bateman escalar por isótopo) y panel de actividad por componente en vivo.
+- Evidencia fase46/exportar_visor3d.py: export uint8 log10 + meta.json.
+- CORRECCIÓN (ALCOA+, detectada en F46): los totales por isótopo de F45 sumaban sobre toda la malla incluyendo aire; isotopo_predominante() ahora enmascara al concreto. Totales corregidos al apagar: Na-24 3,29e9 Bq, Eu-152 5,43e7 Bq, Co-60 2,41e6 Bq. Conclusiones de predominancia sin cambio; videos y póster F45 regenerados. Tests 11/11 (máscara de concreto añadida).

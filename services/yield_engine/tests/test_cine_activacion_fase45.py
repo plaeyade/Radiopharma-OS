@@ -8,7 +8,7 @@ import numpy as np
 
 from app.domain.cine_activacion import (
     COMPONENTES, ISOTOPOS_CINE, actividad_por_componente, actividad_pulso,
-    isotopo_predominante, mascara_componentes, nucleos_padre_cm3,
+    isotopo_predominante, mascara_componentes, mascara_concreto, nucleos_padre_cm3,
 )
 
 
@@ -62,7 +62,7 @@ def test_monotonia_y_saturacion():
 
 
 def test_predominancia_corta_vs_larga():
-    phi = np.ones((4, 4, 4)) * 1e5
+    phi = np.ones((110, 110, 60)) * 1e5  # malla real: la máscara de concreto la exige
     # recién apagado tras 2500 pulsos: Na-24 (vida corta, se acumula al
     # equilibrio semanal) domina sobre trazas de Eu/Co a 1 ppm declaradas
     r0 = isotopo_predominante(phi, 2500, 28800.0, 57600.0)
