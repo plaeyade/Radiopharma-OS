@@ -56,3 +56,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Datos ENDF/B-VIII.0-NNDC HDF5: 33 isótopos (hormigón NIST + aire) descargados, validados con h5py + IncidentNeutron (3 corruptos detectados y redescargados: Ca40, H1, Si30), cross_sections.xml generado.
 - Smoke test real: fuente puntual 2 MeV en esfera de hormigón r=100 cm, 20 000 historias/10 lotes, malla 20³ — 4 844 voxels con flujo, fuga 0,01230 ± 0,00022; statepoint + resultados JSON + render en evidencia_v072/fase41/.
 - Declarado: sin S(α,β) térmico (paridad con gas libre Geant4); persistencia del env en tarball: mejor esfuerzo (recreable vía bootstrap en ~10 min).
+
+## v1.3.0-rc1 — Fase 42 (parcial): port del búnker OIEA a OpenMC CSG
+- Nuevo módulo services/yield_engine/app/infrastructure/openmc/bunker_openmc.py: geometría CSG 1:1 del caso F32/F35 (world 22×22×12 m, bloque 12×10×6 m, bóveda 6×6×4 m, laberinto de 2 tramos), materiales NIST G4_CONCRETE/G4_AIR con fuente citada (Geant4 NIST manager), espectro TALYS real (nspec_o18.tot), malla 110×110×60 idéntica, tally flux track-length.
+- Prueba de equivalencia geométrica: censo Monte Carlo de materiales (400k puntos) contra volúmenes analíticos + 5 tests (services/yield_engine/tests/test_bunker_openmc_fase42.py, 5/5 verde).
+- Hallazgo honesto: la geometría F32 declara "muros 2,0 m" pero el grosor real es x=3,0 m (lado laberinto), y=2,0 m, losas z=1,0 m — documentado en el test.
+- PENDIENTE (declarado): lote piloto OpenMC del búnker — el entorno OpenMC se pierde por reciclaje del almacenamiento efímero del sandbox (se reintenta en segundo plano: build directo en /mnt con always_copy). Los 33 h5 ENDF/B-VIII.0 y cross_sections.xml SÍ están persistidos.
