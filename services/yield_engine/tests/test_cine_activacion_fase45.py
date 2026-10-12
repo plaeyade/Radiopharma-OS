@@ -6,13 +6,22 @@ import math
 
 import numpy as np
 
-from services.yield_engine.app.domain.cine_activacion import (
+from app.domain.cine_activacion import (
     COMPONENTES, ISOTOPOS_CINE, actividad_por_componente, actividad_pulso,
     isotopo_predominante, mascara_componentes, nucleos_padre_cm3,
 )
-from services.nuclear_data_service.app.domain.activation import (
-    ActivationEngine, CULPABLES,
-)
+
+
+def _bateman_referencia(n_padre, sigma_b, phi, t12_s, t_pulso, k, t_entre):
+    """Recurrencia exacta pulso a pulso (réplica de ActivationEngine
+    .actividad_tras_pulsos de nuclear_data_service — inline para no acoplar
+    servicios en la suite)."""
+    lam = math.log(2.0) / t12_s
+    g = n_padre * sigma_b * 1e-24 * phi * (-math.expm1(-lam * t_pulso))
+    a = 0.0
+    for _ in range(k):
+        a = a * math.exp(-lam * (t_entre + t_pulso)) + g
+    return a
 
 
 def test_mascaras_cubren_concreto_sin_solapar():
@@ -37,10 +46,10 @@ def test_forma_cerrada_coincide_con_motor_bateman():
     k, tp, te = 2500, 28800.0, 57600.0
     a_vec = actividad_pulso(phi, "Co-60", k, tp, te, v_voxel_cm3=8000.0)
     n_cm3, _ = nucleos_padre_cm3("Co-60")
-    a_ref = ActivationEngine.actividad_tras_pulsos(
-        n_padre=n_cm3 * 8000.0, sigma_b=CULPABLES["Co-60"]["sigma_b"],
-        phi=1.0e5, t12_s=CULPABLES["Co-60"]["t12_s"],
-        t_pulso_s=tp, n_pulsos=k, t_entre_pulsos_s=te)
+    a_ref = _bateman_referencia(
+        n_padre=n_cm3 * 8000.0, sigma_b=ISOTOPOS_CINE["Co-60"]["sigma_b"],
+        phi=1.0e5, t12_s=ISOTOPOS_CINE["Co-60"]["t12_s"], t_pulso=tp,
+        k=k, t_entre=te)
     assert math.isclose(float(a_vec[0, 0, 0]), a_ref, rel_tol=1e-9)
 
 

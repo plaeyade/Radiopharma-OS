@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from services.yield_engine.app.infrastructure.openmc.bunker_openmc import (
+from app.infrastructure.openmc.bunker_openmc import (
     BunkerOpenMCCase, GEOM_CM, vol_aire_cm3, vol_concreto_cm3, build_openmc_model,
 )
 

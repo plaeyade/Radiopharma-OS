@@ -68,3 +68,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - 6 tests nuevos (services/yield_engine/tests/test_cine_activacion_fase45.py) — todos verdes.
 - Evidencia fase45/: 3 videos reales (irradiación 1→2500 pulsos; enfriamiento 1 h→5 años; corte móvil en X) sobre tally HP real F37 (160k historias) + resumen JSON + póster.
 - Resultado declarado: al apagar domina ²⁴Na (1,31e10 Bq, Na mayoritario NIST); a 30 días y 5 años domina ¹⁵²Eu (2,16e8 Bq); ⁶⁰Co 9,61e6 Bq. Trazas Co/Eu 1 ppm declaradas pendientes de fuente (49.11); suavizado σ=1 voxel solo visual, declarado.
+
+## v1.4.1 — Regresión total + dureza de suite
+- Suite canónica completa en VERDE: 1200 passed + 2 skipped (1150 servicios + 50 pipelines), estilo Makefile (por servicio, PYTHONPATH local). Incluye los 11 tests nuevos de F42/F45.
+- Dureza: imports de los tests F42/F45 migrados al estilo canónico por-servicio (app.*), sin acoplar servicios; __init__.py del paquete openmc añadido.
+- scripts/suite_canonica.sh: runner reproducible de la suite completa (evidencia para F40 OQ).
+- Dependencias restauradas tras reciclaje del sandbox: lockfile + SimpleITK 2.5.6 (wheel verificado por tamaño exacto).
