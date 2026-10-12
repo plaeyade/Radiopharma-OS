@@ -105,3 +105,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 ## v1.10.0 — Fase 49: dashboard de evidencia
 - `dashboard.html` + `dashboard_data/` (copia ALCOA+ de los JSON de F43/F44/F45/F47/F48): línea de versiones, tallies del búnker, Δ por componente, activación al apagar, métricas del surrogate y comparador de ciclotrones.
 - Frontend estático sin backend — no persiste nada (declarado).
+
+## v1.11.0 — Fase 38: plano real del búnker (DWG BIND) vs caso simulado
+- Plano DWG real (19,8 MB, AutoCAD 2018) convertido a DXF (ODA 27.9, Xvfb headless) y persistido en evidencia.
+- Nuevo módulo `yield_engine/app/domain/plano_bunker.py`: geometría real medida sobre plano (±0,1 m, estados honestos) + checklist de cumplimiento vs caso F32. 5 tests.
+- Hallazgos: envolvente 9,71×15,49 m; muro oeste 2,11 m ✓; laberinto sur con 2 cambios de dirección (supera F32); sala ~5,9×4,7 m pendiente de verificación; ALARA: RESIDUOS RADIACTIVOS/WGHS/SUMINISTRO comparten muro este.
+- F35-F45 re-etiquetadas honestamente: válidas como caso OIEA declarado, no as-built. Re-simulación as-built: pendiente_entorno.
