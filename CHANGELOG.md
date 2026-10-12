@@ -62,3 +62,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Prueba de equivalencia geométrica: censo Monte Carlo de materiales (400k puntos) contra volúmenes analíticos + 5 tests (services/yield_engine/tests/test_bunker_openmc_fase42.py, 5/5 verde).
 - Hallazgo honesto: la geometría F32 declara "muros 2,0 m" pero el grosor real es x=3,0 m (lado laberinto), y=2,0 m, losas z=1,0 m — documentado en el test.
 - PENDIENTE (declarado): lote piloto OpenMC del búnker — el entorno OpenMC se pierde por reciclaje del almacenamiento efímero del sandbox (se reintenta en segundo plano: build directo en /mnt con always_copy). Los 33 h5 ENDF/B-VIII.0 y cross_sections.xml SÍ están persistidos.
+
+## v1.4.0 — Fase 45 (fuera de canónicos): cine de activación por componente (didáctico)
+- Nuevo módulo services/yield_engine/app/domain/cine_activacion.py: máscaras por componente del búnker (6 componentes, sin solape, volumen MC = analítico <1 %), actividad Bateman vectorizada por voxel (forma cerrada; verificada contra ActivationEngine.actividad_tras_pulsos con rel_tol 1e-9), predominancia por isótopo con enfriamiento.
+- 6 tests nuevos (services/yield_engine/tests/test_cine_activacion_fase45.py) — todos verdes.
+- Evidencia fase45/: 3 videos reales (irradiación 1→2500 pulsos; enfriamiento 1 h→5 años; corte móvil en X) sobre tally HP real F37 (160k historias) + resumen JSON + póster.
+- Resultado declarado: al apagar domina ²⁴Na (1,31e10 Bq, Na mayoritario NIST); a 30 días y 5 años domina ¹⁵²Eu (2,16e8 Bq); ⁶⁰Co 9,61e6 Bq. Trazas Co/Eu 1 ppm declaradas pendientes de fuente (49.11); suavizado σ=1 voxel solo visual, declarado.
