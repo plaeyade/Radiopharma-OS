@@ -91,3 +91,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Evidencia `fase44/informe_validacion_cruzada_f44.json`: verificación lote a lote (σ_rel ≤ 0,4 %), metadatos comprobados (mismo runner/actor/G4NDL íntegro), resolución: ratio ≈2,0 es física (dispersión térmica S(α,β) de FTFP_BERT_HP), no metadatos.
 - Implicación: pata HP como referencia para activación de concreto (capturas térmicas).
 - Pata OpenMC y Co-60 con φ OpenMC: pendiente_entorno declarado. Evidencia parcial 2/3 patas para F40/OQ.
+
+## v1.8.0 — Fase 47: comparador KIUBE vs PETtrace
+- Nuevo módulo `yield_engine/app/domain/comparador_ciclotrones.py`: fichas declarativas con fuente citada por campo (49.11), pendiente_fuente honesto, métricas derivadas declaradas (GBq/µA·2h).
+- Fuentes: IBA PR 2018 (KIUBE 300: 18 MeV, 300 µA, 1110 GBq F-18/2h), GE DOC0776419 rev6 (PETtrace 840–890: 16,5/8,4 MeV, 60–160 µA), Eberl 2012 (rutina 160 µA dual, ~900 GBq).
+- 4 tests nuevos. Material didáctico, no recomendación operativa (18.10).
