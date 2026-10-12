@@ -86,3 +86,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Evidencia real: BERT 360k vs HP 160k. Unión 18 318 voxels; comunes 9 284; ratio HP/BERT por historia ≈ 1,95 en las 6 componentes (+95 %…+113 %) — hallazgo abierto declarado para F44.
 - Corrección documental: el bloque «comparación» de F37 usaba totales sin normalizar por historias; F43 lo sustituye por comparación por historia.
 - Pata OpenMC/ENDF-B-VIII.0: pendiente_entorno (sandbox recicla el entorno; librería de 33 isótopos persistida).
+
+## v1.7.0 — Fase 44: informe de validación cruzada (hallazgo F43 resuelto)
+- Evidencia `fase44/informe_validacion_cruzada_f44.json`: verificación lote a lote (σ_rel ≤ 0,4 %), metadatos comprobados (mismo runner/actor/G4NDL íntegro), resolución: ratio ≈2,0 es física (dispersión térmica S(α,β) de FTFP_BERT_HP), no metadatos.
+- Implicación: pata HP como referencia para activación de concreto (capturas térmicas).
+- Pata OpenMC y Co-60 con φ OpenMC: pendiente_entorno declarado. Evidencia parcial 2/3 patas para F40/OQ.
