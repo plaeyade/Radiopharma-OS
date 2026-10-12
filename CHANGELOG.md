@@ -132,3 +132,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Comparación triple 100 % real (BERT 360k / HP 160k / OpenMC 30k): unión 97 832 voxels; OpenMC Δ=−0,989 con caveat de unidades declarado; cobertura espacial OpenMC≈HP≫BERT (termalización).
 - Verificación de alzados: hallazgo negativo honesto — el DWG no contiene cortes; z=4,0 m sigue provisional pendiente_verificacion (registrado en F38).
 - Ítems diferidos: Dockerfile reproducible (pendiente de build real — sin daemon) y PWA (manifest + service worker) en la página de evidencia.
+
+## v1.16.0 — Fase 40: OQ con evidencia real (oq_parcial_honesto)
+- pipelines/oq_fase40.py + 5 tests en verde; regresión qualification 4/4 (DQ+IQ+OQ base = calificado_dq_iq_oq).
+- F38 parcial (sin alzados en el DWG — hallazgo negativo), F39 ejecutado, F42 parcial (3/6 semillas, segfaults declarados; triple real cerrada).
+- PQ nunca declarada (14.9). Nada fabricado: cada ítem declara su limitación.
