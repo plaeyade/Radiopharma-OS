@@ -126,3 +126,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Bug CSG corregido: planos de vacío compartidos con las celdas (lost particles eliminados).
 - Corrida real: 10k×10, leakage 0,00743±0,00021, 62 393 voxels con flujo; mapas .npy persistidos.
 - Declarado: segfault recurrente del binario conda con 40k o ciertas semillas → estadística completa pendiente_entorno.
+
+## v1.15.0 — Fase 42: barrido estadístico OpenMC real (3×10k) + comparación triple real cerrada + ítems diferidos
+- Barrido de 6 semillas: 3 OK (20261013/20261537/20261668), 3 segfault conda (rc=139/255) declaradas; combinado 30k historias: 89 382 voxels activos, mapas .npy y σ entre semillas persistidos.
+- Comparación triple 100 % real (BERT 360k / HP 160k / OpenMC 30k): unión 97 832 voxels; OpenMC Δ=−0,989 con caveat de unidades declarado; cobertura espacial OpenMC≈HP≫BERT (termalización).
+- Verificación de alzados: hallazgo negativo honesto — el DWG no contiene cortes; z=4,0 m sigue provisional pendiente_verificacion (registrado en F38).
+- Ítems diferidos: Dockerfile reproducible (pendiente de build real — sin daemon) y PWA (manifest + service worker) en la página de evidencia.
