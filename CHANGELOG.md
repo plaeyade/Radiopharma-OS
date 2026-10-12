@@ -121,3 +121,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Nuevo módulo `yield_engine/app/domain/cotizaciones_blindaje.py`: ambas cotizaciones reales registradas con documento citado; verificación aritmética ✓ (JPG suma exacta; PDF subtotal+IVA exacto).
 - Derivados declarados: ratio ×2,02 (sesgo IVA declarado), ~2,36 M USD (TC 17,71), espesor ~0,71× a igualdad de densidad área.
 - 5 tests. Material de decisión, no recomendación operativa (18.10).
+
+## v1.14.0 — Fase 42: piloto OpenMC real completado
+- Bug CSG corregido: planos de vacío compartidos con las celdas (lost particles eliminados).
+- Corrida real: 10k×10, leakage 0,00743±0,00021, 62 393 voxels con flujo; mapas .npy persistidos.
+- Declarado: segfault recurrente del binario conda con 40k o ciertas semillas → estadística completa pendiente_entorno.

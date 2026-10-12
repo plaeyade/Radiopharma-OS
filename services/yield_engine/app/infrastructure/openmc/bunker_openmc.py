@@ -141,7 +141,19 @@ def build_openmc_model(case: BunkerOpenMCCase):
 
     # --- geometría CSG (OIEA F32 o real BIND F38/F42b) ---
     g = case.geom()
-    r_world = _box_region(g["world"])
+    # Frontera de vacío: los 6 planos del world se crean UNA VEZ con
+    # boundary_type="vacuum" y se reusan en la región del world — si son
+    # superficies distintas a las de las celdas, las partículas que cruzan
+    # la frontera quedan "lost" (bug detectado en la corrida F42).
+    x0, x1, y0, y1, z0, z1 = g["world"]
+    world_planes = [openmc.XPlane(x0, boundary_type="vacuum"),
+                    openmc.XPlane(x1, boundary_type="vacuum"),
+                    openmc.YPlane(y0, boundary_type="vacuum"),
+                    openmc.YPlane(y1, boundary_type="vacuum"),
+                    openmc.ZPlane(z0, boundary_type="vacuum"),
+                    openmc.ZPlane(z1, boundary_type="vacuum")]
+    r_world = (+world_planes[0] & -world_planes[1] & +world_planes[2]
+               & -world_planes[3] & +world_planes[4] & -world_planes[5])
     r_conc = _box_region(g["concreto"])
     r_bov = _box_region(g["boveda"])
     r_lab1 = _box_region(g["laberinto_1"])
