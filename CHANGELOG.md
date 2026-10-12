@@ -101,3 +101,7 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Nuevo módulo `yield_engine/app/domain/surrogate_tally.py`: regresión log (φ̂_HP desde φ_BERT + media local 3³), entrenada solo con tallies reales F35/F37.
 - Validación holdout espacial (z<30 train / z≥30 test): R²(log)=0,937, mediana simétrica 9,0 %. Limitaciones declaradas (métrica optimista por correlación espacial; gap térmico irreducible F44).
 - 5 tests nuevos. Surrogate didáctico — no sustituye MC.
+
+## v1.10.0 — Fase 49: dashboard de evidencia
+- `dashboard.html` + `dashboard_data/` (copia ALCOA+ de los JSON de F43/F44/F45/F47/F48): línea de versiones, tallies del búnker, Δ por componente, activación al apagar, métricas del surrogate y comparador de ciclotrones.
+- Frontend estático sin backend — no persiste nada (declarado).
