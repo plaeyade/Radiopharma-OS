@@ -96,3 +96,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Nuevo módulo `yield_engine/app/domain/comparador_ciclotrones.py`: fichas declarativas con fuente citada por campo (49.11), pendiente_fuente honesto, métricas derivadas declaradas (GBq/µA·2h).
 - Fuentes: IBA PR 2018 (KIUBE 300: 18 MeV, 300 µA, 1110 GBq F-18/2h), GE DOC0776419 rev6 (PETtrace 840–890: 16,5/8,4 MeV, 60–160 µA), Eberl 2012 (rutina 160 µA dual, ~900 GBq).
 - 4 tests nuevos. Material didáctico, no recomendación operativa (18.10).
+
+## v1.9.0 — Fase 48: surrogate sobre tallies reales
+- Nuevo módulo `yield_engine/app/domain/surrogate_tally.py`: regresión log (φ̂_HP desde φ_BERT + media local 3³), entrenada solo con tallies reales F35/F37.
+- Validación holdout espacial (z<30 train / z≥30 test): R²(log)=0,937, mediana simétrica 9,0 %. Limitaciones declaradas (métrica optimista por correlación espacial; gap térmico irreducible F44).
+- 5 tests nuevos. Surrogate didáctico — no sustituye MC.
