@@ -83,6 +83,12 @@ class BunkerOpenMCCase:
     mesh_bins: tuple = MESH_BINS
     cross_sections: str = ""      # OPENMC_CROSS_SECTIONS (ENDF/B-VIII.0)
     geometria: str = "oiea"       # "oiea" (F32) | "bind_real" (F38/F42b)
+    sab: str = ""                 # F52: tabla S(α,β), p.ej. "c_H_in_H2O"
+    sab_fuente: str = ("JEFF 3.2 vía openmc-data-storage (mezcla con "
+                       "ENDF/B-VIII.0 declarada; la sublibrería ENDF "
+                       "B-VIII.0 tsl se descargó y su conversión HDF5 "
+                       "quedó pendiente_entorno — requiere NJOY con el "
+                       "fichero de neutrones H-1)")
     nota_termico: str = ("sin S(α,β) — paridad declarada con gas libre "
                          "de los casos Geant4 (F32/F35/F37)")
 
@@ -131,6 +137,12 @@ def build_openmc_model(case: BunkerOpenMCCase):
     for el, w in CONCRETE_WO:
         concreto.add_element(el, w, "wo")
     concreto.set_density("g/cm3", 2.3)
+    if case.sab:
+        # F52: dispersión térmica S(α,β) del H ligado (agua ligera como
+        # proxy del H del concreto). Fuente y mezcla de librerías
+        # declaradas en case.sab_fuente.
+        concreto.add_s_alpha_beta(case.sab)
+        concreto.name = "G4_CONCRETE_NIST_SAB"
 
     aire = openmc.Material(name="G4_AIR_NIST")
     for el, w in AIR_WO:

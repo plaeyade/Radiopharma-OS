@@ -146,3 +146,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Censo MC de materiales valida bind_real (0,6 % vs analítico).
 - Transmisión real del muro este (1,70 m): T=0,0282±0,0022 → TVL empírico ≈1,10 m (caveats declarados).
 - Módulo blindaje_asbuilt.py (5 tests): escenario T=1e-4 → 4,12 m @2,5 / 2,95 m @3,5 g/cm³ (empírico) vs 0,76/0,55 m (Biggs 2010, contraste citado); objetivo real pendiente de ICRP 74 (pendiente_fuente); 18.10.
+
+## v1.19.0 — F53 dosis as-built citada + F52 S(α,β) infraestructura + persistencia entorno MC
+- F53: módulo dosis_asbuilt.py — h*(10)=385 pSv·cm² (²⁵²Cf bare, ISO 8529-1 vía PNNL-19273 t.47), P=20 µSv/sem (NCRP 151), Q_NS=5.9412e11 n/s (F32). Escenario muro este: 8.21e5 µSv/sem sin blindaje extra → 4.61 TVL adicionales. Inconsistencia de normalización del tally de malla (~3.6 órdenes vs ancla geométrica 1/4πr²) declarada no_demostrable_normalizacion_tally; los cocientes (transmisión/TVL) no se ven afectados. 5 tests.
+- F52: soporte S(α,β) en bunker_openmc (add_s_alpha_beta, fuente declarada 49.11); tsl-HinH2O de ENDF/B-VIII.0 descargada de NNDC con MD5 oficial verificado (ecd503d3f8214f703e95e17cc947062c). Conversión a HDF5 requiere NJOY con n-001_H_001.endf (descarga 310 MB incompleta); openmc 0.16 from_endf no exporta HDF5 usable. Estado pendiente_entorno_parcial_honesto con pasos exactos en estado_sab_f52.json. 3 tests; 14/14 verde con regresión F42/F42b.
+- Persistencia: entorno OpenMC troceado (3×100 MB) en sci_runtime/openmc_env_store con md5 verificado + restore_openmc.sh idempotente.
+- Tabla h*(E) AMB74/ICRP 74 no descargable públicamente → pendiente_fuente registrado.
