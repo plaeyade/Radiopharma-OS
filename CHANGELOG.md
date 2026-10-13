@@ -155,3 +155,7 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 
 ## v1.20.0 — F54 informe regulatorio integrado
 - pipelines/informe_regulatorio_f54.py: expediente as-built que integra SOLO evidencia real registrada de 8 fases (F38/F39/F40/F42/F42b/F51/F52/F53), append-only ALCOA+, fuentes heredadas (49.11), PQ no_declarada_nunca (14.9), recomendación ≠ decisión (18.10). Síntesis citada: T=0,0282, TVL empírico 1,10 m, 4,61 TVL adicionales requeridos. 9 hallazgos abiertos declarados sin cierre artificial. 4 tests.
+
+## v1.21.0 — F55 deep dive motores + F56 weight windows
+- F55 (pipelines/motores_deepdive_f55.py): evaluación probada en sandbox de OpenMC/DAGMC/Geant4/GAMOS/GATE/MATLAB/CADQuery/gmsh/GitHub con veredictos honestos (probado_real, no_instalable_pip, pendiente_entorno, no_aplica, entregado_bundle). Decisión 18.10: weight windows OpenMC como única mejora implementable inmediata. 3 tests.
+- F56 (evidencia fase56): generación de weight windows MAGIC REAL sobre el búnker BIND (malla grosera 22×22×12, ww_seed20261013.h5 preservado); explosión de tracks con malla fina acotada y declarada; API 0.16 documentada por prueba. Aplicación de WW: segfault determinista del binario conda (mismo patrón F42) → generacion_ok_aplicacion_no_demostrable_entorno con camino de desbloqueo registrado. Métrica de éxito: σ_rel(T muro este) < 0,078.
