@@ -141,3 +141,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 ## v1.17.0 — Fase 42b: corrida real OpenMC sobre geometría BIND (30k)
 - 3 semillas × 10k (las 3 semillas sanas conocidas; patrón segfault ya declarado) → 509 768 voxels con flujo, σ rel. entre semillas 0,81.
 - Re-simulación as-built deja de ser pendiente_entorno; z=4,0 m sigue provisional (sin alzados en el DWG).
+
+## v1.18.0 — Fase 51: blindaje as-built (método TVL, geometría BIND)
+- Censo MC de materiales valida bind_real (0,6 % vs analítico).
+- Transmisión real del muro este (1,70 m): T=0,0282±0,0022 → TVL empírico ≈1,10 m (caveats declarados).
+- Módulo blindaje_asbuilt.py (5 tests): escenario T=1e-4 → 4,12 m @2,5 / 2,95 m @3,5 g/cm³ (empírico) vs 0,76/0,55 m (Biggs 2010, contraste citado); objetivo real pendiente de ICRP 74 (pendiente_fuente); 18.10.
