@@ -152,3 +152,6 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - F52: soporte S(α,β) en bunker_openmc (add_s_alpha_beta, fuente declarada 49.11); tsl-HinH2O de ENDF/B-VIII.0 descargada de NNDC con MD5 oficial verificado (ecd503d3f8214f703e95e17cc947062c). Conversión a HDF5 requiere NJOY con n-001_H_001.endf (descarga 310 MB incompleta); openmc 0.16 from_endf no exporta HDF5 usable. Estado pendiente_entorno_parcial_honesto con pasos exactos en estado_sab_f52.json. 3 tests; 14/14 verde con regresión F42/F42b.
 - Persistencia: entorno OpenMC troceado (3×100 MB) en sci_runtime/openmc_env_store con md5 verificado + restore_openmc.sh idempotente.
 - Tabla h*(E) AMB74/ICRP 74 no descargable públicamente → pendiente_fuente registrado.
+
+## v1.20.0 — F54 informe regulatorio integrado
+- pipelines/informe_regulatorio_f54.py: expediente as-built que integra SOLO evidencia real registrada de 8 fases (F38/F39/F40/F42/F42b/F51/F52/F53), append-only ALCOA+, fuentes heredadas (49.11), PQ no_declarada_nunca (14.9), recomendación ≠ decisión (18.10). Síntesis citada: T=0,0282, TVL empírico 1,10 m, 4,61 TVL adicionales requeridos. 9 hallazgos abiertos declarados sin cierre artificial. 4 tests.
