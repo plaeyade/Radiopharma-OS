@@ -162,3 +162,8 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 
 ## v1.22.0 — F57 toolchain CAD→DAGMC operativo
 - DAGMC 3.2.4 + MOAB 5.6.0 instalados vía conda-forge (micromamba persistido); mbconvert/check_watertight/overlap_check/uwuw_preproc verificados. Cadena real: casco búnker BIND (STL con dims F38) → h5m con roundtrip verificado. make_watertight sobre STL crudo: fallo declarado (vértices duplicados; ruta correcta = STEP vía CADQuery/gmsh, en descarga). OpenMC↔DAGMC requiere build desde fuente → pendiente_entorno. CUBIT propietario → no_aplica.
+
+## v1.23.0 — F52 CORRIDA S(α,β) REAL + CADQuery/gmsh operativos
+- F52 COMPLETADO: H-1 extraído por rangos HTTP del zip NNDC (límite 100 MiB del montaje sorteado sin descargar 310 MB); conversión NJOY2016 real → c_H_in_H2O.h5 (293,6 K única temperatura — la de 511 MB multi-temperatura no cabe en el montaje; declarado); corrida OpenMC con S(α,β) 3×10k sobre BIND real: T muro este = 0,04145 ± 0,00224 vs 0,0282 sin S(α,β) → la termalización aumenta la penetración 47 %. Derivados honestos: TVL 1,10→1,23 m; dosis F53 8,2e5→1,21e6 µSv/sem; TVL adicionales 4,61→4,78. El blindaje sin S(α,β) era optimista.
+- CADQuery 2.8.0 y gmsh 4.15.2 instalados y verificados (wheels con sha256/md5 verificados tras detectar corrupción por reanudación CDN); STEP as-built del búnker generado (fase57). Sellado make_watertight: causa exacta registrada (file set not found — requiere estructura de conjuntos DAGMC).
+- Persistencia: env DAGMC+NJOY troceado con md5 en sci_runtime/dagmc_env_store; c_H_in_H2O.h5 en openmc_data/endfb80/h5.
