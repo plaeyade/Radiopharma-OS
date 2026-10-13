@@ -137,3 +137,7 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - pipelines/oq_fase40.py + 5 tests en verde; regresión qualification 4/4 (DQ+IQ+OQ base = calificado_dq_iq_oq).
 - F38 parcial (sin alzados en el DWG — hallazgo negativo), F39 ejecutado, F42 parcial (3/6 semillas, segfaults declarados; triple real cerrada).
 - PQ nunca declarada (14.9). Nada fabricado: cada ítem declara su limitación.
+
+## v1.17.0 — Fase 42b: corrida real OpenMC sobre geometría BIND (30k)
+- 3 semillas × 10k (las 3 semillas sanas conocidas; patrón segfault ya declarado) → 509 768 voxels con flujo, σ rel. entre semillas 0,81.
+- Re-simulación as-built deja de ser pendiente_entorno; z=4,0 m sigue provisional (sin alzados en el DWG).
