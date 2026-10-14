@@ -190,3 +190,14 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   enlazados). Bloqueos resueltos: Eigen (conda-forge) y CXXABI_1.3.15
   (libstdc++ de conda + rpath). Persistido en sci_runtime/openmc_dagmc_bin/.
 - Pendiente honesto: corrida DAGMC con h5m sellado + UWUW (pendiente_entorno).
+## v2.0.0-rc1 — Sellado DAGMC validado + eficiencias citadas multi + guía planta (2026-10-14)
+- F61: sellado CAD→DAGMC COMPLETO y validado físicamente: STL→gmsh(volumen
+  cerrado)→mbconvert→topología DAGMC vía herramienta C++/MOAB propia;
+  check_watertight 0/12 y 0/1; DagMC ray_fire reproduce el espesor del muro
+  oeste (1,61 m medidos = 1,61 m esperados); contención de puntos correcta.
+- F60-multi: eficiencias con fuente citada para 11C (Wenz 2022), 68Ga
+  (Siikanen/Pharmaceutics 2023, Alves 2016) y 64Cu (Frontiers 2022). 11 tests.
+- docs/despliegue_planta.md: guía de despliegue en planta hasta la Puerta de
+  Producción Clínica (18.19).
+- Release candidate teórico: PQ sigue no_declarada_nunca (14.9); release
+  clínico bloqueado por entorno físico, no por software.

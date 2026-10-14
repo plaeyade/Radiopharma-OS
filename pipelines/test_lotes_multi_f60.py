@@ -54,3 +54,16 @@ def test_f60_iaea_cota_inferior(tmp_path):
     iaea = s["escenarios_citados"]["iaea_pub1515"]["eos_gbq"]
     holler = s["escenarios_citados"]["holler_2022"]["eos_gbq"]
     assert iaea < holler  # 0.65 < 0.814
+
+
+def test_f60_multi_citados(tmp_path):
+    from pipelines.eficiencias_citadas_multi_f60 import correr_f60_multi, CASOS
+    s = correr_f60_multi(tmp_path)
+    assert set(s["isotopos"]) == {"C11", "GA68", "CU64"}
+    for iso, d in s["isotopos"].items():
+        assert d["eob_gbq"] > 0
+        assert d["liberacion"].startswith("no_liberada")
+        for e in d["escenarios_citados"].values():
+            assert e["estado_eficiencia"].startswith("fuente_citada")
+            assert e["url"].startswith("http")
+            assert 0 < e["eos_gbq"] <= d["eob_gbq"] * 1.0
