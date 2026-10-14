@@ -184,3 +184,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 
 ## v1.24.0 — F58 lote FDG extremo a extremo (EOB→EOS→despacho)
 - pipelines/lote_fdg_f58.py: flujo canónico EDS 21.7 completo (EOB→Transfer→Reaction→Purification→Formulation→SterileFiltration→EOS→QC). EOB desde dataset IAEA 2021 real (16,5 MeV, 40 µA, 60 min, H2-18O 97%): 110,0 GBq → EOS 34,8 GBq → despacho 19,7 GBq (λ DDEP real). Eficiencias supuesto_declarado_pendiente_fuente (49.11); QC pendiente_entorno; liberación no_liberada (18.10/14.9). Registro append-only. 4 tests.
+## v1.25.1 — OpenMC+DAGMC compilado desde fuente (2026-10-14)
+- OpenMC v0.16.0 compilado con -DOPENMC_USE_DAGMC=ON contra DAGMC 3.2.4 /
+  MOAB 5.6.0 (conda-forge). Binario real verificado (libdagmc/libMOAB
+  enlazados). Bloqueos resueltos: Eigen (conda-forge) y CXXABI_1.3.15
+  (libstdc++ de conda + rpath). Persistido en sci_runtime/openmc_dagmc_bin/.
+- Pendiente honesto: corrida DAGMC con h5m sellado + UWUW (pendiente_entorno).
