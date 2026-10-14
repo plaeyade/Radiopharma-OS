@@ -1,5 +1,19 @@
 # CHANGELOG — Radiopharma OS
 
+## v1.25.0 — F58-multi + F59 Batch Manager + F60 eficiencias citadas (2026-10-14)
+- F58-multi: lotes teóricos e2e ¹¹C/⁶⁸Ga/⁶⁴Cu (pipelines/lotes_multi_f58.py,
+  4 tests), datasets IAEA versionados, λ de biblioteca nuclear, registro
+  append-only ALCOA+.
+- F59: Batch Manager API (EDS 21.6) — router /lotes en yield_engine
+  (POST /lotes/teorico, GET /lotes, GET /lotes/escenarios), trazabilidad
+  operador/blanco/módulo, 4 tests.
+- F60: eficiencias FDG con fuente citada (pipelines/eficiencias_citadas_f60.py,
+  6 tests): IAEA Pub1515 (>65 % corr. EOB), Holler 2022 (81,4±4,6 %),
+  Kim 2004 (59,1±5,1 %). Cierre parcial de 49.11; el resto sigue supuesto
+  declarado pendiente de fuente.
+- Dashboard: secciones 54–56 + línea temporal de lotes (lotes_timeline.png).
+- Honestidad canónica intacta: QC pendiente_entorno, liberación no_liberada.
+
 Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 `/mnt/agents/work/evidencia_v072/` + página de evidencia (`/mnt/agents/output/app/index.html`).
 

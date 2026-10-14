@@ -100,6 +100,10 @@ app.include_router(radiochemistry_api.router)
 stopping_tables_api.init(_tablas_ext, service)
 app.include_router(stopping_tables_api.router)
 
+from app.presentation.routers import lotes_api
+
+app.include_router(lotes_api.build_router(service))
+
 from app.domain.beam_optics import LineaOpticaRegistry
 from app.presentation.routers import beam_optics_api
 
