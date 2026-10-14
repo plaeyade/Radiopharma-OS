@@ -201,3 +201,11 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   Producción Clínica (18.19).
 - Release candidate teórico: PQ sigue no_declarada_nunca (14.9); release
   clínico bloqueado por entorno físico, no por software.
+## v2.0.0-rc2 — Corrida MC OpenMC+DAGMC completa (F62) (2026-10-14)
+- Cadena CAD→DAGMC→MC de extremo a extremo ejecutada de verdad: casco BIND
+  sellado (2 volúmenes + cavidad como complemento implícito + graveyard +
+  boundary:vacuum, 0/18 superficies sin sellar), escalado a cm, OpenMC 0.16.0
+  +DAGMC, 200k neutrones × 20 lotes (74 min), fuente con espectro BIND real,
+  ENDF/B-VIII.0 + S(α,β). Fuga 3,44 %, flujo muro 595,9±0,1 cm/part.
+- tools/sellar_dagmc.cpp: sellador DAGMC genérico (MOAB C++) versionado.
+- Nota honesta: comparación cuantitativa con CSG F52 queda como trabajo futuro.
