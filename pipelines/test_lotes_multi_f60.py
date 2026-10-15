@@ -67,3 +67,13 @@ def test_f60_multi_citados(tmp_path):
             assert e["estado_eficiencia"].startswith("fuente_citada")
             assert e["url"].startswith("http")
             assert 0 < e["eos_gbq"] <= d["eob_gbq"] * 1.0
+
+
+def test_f63_json_coherente(tmp_path):
+    import json as j, math
+    p = "/mnt/agents/work/evidencia_v072/fase63/comparacion_csg_dagmc_f63.json"
+    r = j.loads(open(p).read())
+    csg = r["csg"]["flujo_muro"]; dag = r["dagmc_f62"]["flujo_muro"]
+    assert r["diferencia_relativa"] == abs(csg - dag) / dag
+    assert r["diferencia_relativa"] < 0.01  # acuerdo sub-porcentual
+    assert r["csg"]["particles"] == r["dagmc_f62"]["particles"]

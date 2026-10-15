@@ -209,3 +209,9 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   ENDF/B-VIII.0 + S(α,β). Fuga 3,44 %, flujo muro 595,9±0,1 cm/part.
 - tools/sellar_dagmc.cpp: sellador DAGMC genérico (MOAB C++) versionado.
 - Nota honesta: comparación cuantitativa con CSG F52 queda como trabajo futuro.
+## v2.0.0-rc3 — Validación cuantitativa CSG vs DAGMC (F63) (2026-10-14)
+- pipelines/comparacion_csg_dagmc_f63.py: mismo modelo físico (fuente BIND,
+  hormigón Portland, tally flujo muro, 200k×20) en CSG (API Python) vs DAGMC
+  (binario compilado). CSG 596,87±0,13 vs DAGMC 595,88±0,13 → diferencia
+  0,17 %. La cadena CAD→DAGMC→MC queda validada como equivalente a CSG.
+- Cierra el último pendiente honesto declarado en F62.
