@@ -215,3 +215,14 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   (binario compilado). CSG 596,87±0,13 vs DAGMC 595,88±0,13 → diferencia
   0,17 %. La cadena CAD→DAGMC→MC queda validada como equivalente a CSG.
 - Cierra el último pendiente honesto declarado en F62.
+## v2.0.0 — Cierre del modelo (release teórico) (2026-10-16)
+- F64: simulacro de jornada (2 FDG citado + 11C + 68Ga) etiquetado
+  simulacro_teorico_jornada_NO_produccion_real; registro append-only.
+- Purga de módulos `app` en pipelines (aislamiento de sys.modules): suite de
+  pipelines 75/75.
+- SUITE COMPLETA: 1274 tests en verde (auth 60, data_lake 150, nuclear 90,
+  process 280, qc_engine 95, surrogate 79, telemetry 85, yield_engine 360,
+  pipelines 75) — OQ funcional de software.
+- docs/protocolos_iq_oq.md: protocolos IQ (6) y OQ (8) ejecutables en planta.
+- Producción Clínica (18.19) sigue bloqueada por entorno físico: PQ
+  no_declarada_nunca (14.9). Esto NO se simula — es el diseño canónico.

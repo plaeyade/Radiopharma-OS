@@ -42,6 +42,8 @@ T_DESPACHO_MIN = 90.0  # EOS → despacho (supuesto logístico declarado)
 
 def correr_lote(evidencia: Path = EVIDENCIA_DEF) -> dict:
     sys.path.insert(0, "/mnt/agents/work/rpos25/services/yield_engine")
+    for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
+        del sys.modules[_m]
     from app.domain.entities import Beam, TargetMaterial
     from app.domain.yield_calculator import YieldCalculator
     from app.infrastructure.repositories.local_reaction_data import (

@@ -55,6 +55,8 @@ T_SINTESIS_MIN = 35.0  # rango citado IAEA 25-45 min; valor declarado
 
 def correr_f60(evidencia: Path = EVIDENCIA_DEF) -> dict:
     sys.path.insert(0, str(YE))
+    for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
+        del sys.modules[_m]
     from app.domain.entities import Beam, TargetMaterial
     from app.domain.yield_calculator import YieldCalculator
     from app.infrastructure.repositories.local_reaction_data import (

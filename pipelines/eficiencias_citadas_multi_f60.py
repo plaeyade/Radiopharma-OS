@@ -82,6 +82,8 @@ CASOS = {
 
 def correr_f60_multi(evidencia: Path = EVIDENCIA_DEF) -> dict:
     sys.path.insert(0, str(YE))
+    for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
+        del sys.modules[_m]
     from app.main import DATA_DIR
     from app.application.production_service import ProductionService
     from app.infrastructure.repositories.local_reaction_data import (

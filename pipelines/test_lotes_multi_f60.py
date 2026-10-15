@@ -77,3 +77,16 @@ def test_f63_json_coherente(tmp_path):
     assert r["diferencia_relativa"] == abs(csg - dag) / dag
     assert r["diferencia_relativa"] < 0.01  # acuerdo sub-porcentual
     assert r["csg"]["particles"] == r["dagmc_f62"]["particles"]
+
+
+def test_f64_simulacro_etiquetado(tmp_path):
+    from pipelines.simulacro_jornada_f64 import correr_simulacro
+    s = correr_simulacro(tmp_path)
+    assert "NO_produccion_real" in s["estado"]
+    assert len(s["lotes"]) == 4
+    for l in s["lotes"]:
+        assert l["liberacion"].startswith("no_liberada")
+        assert "pendiente_entorno" in l["qc"]
+        assert l["despacho_gbq"] > 0
+    lineas = (tmp_path / "fase64" / "registro_simulacro.jsonl").read_text().strip().splitlines()
+    assert len(lineas) == 1
