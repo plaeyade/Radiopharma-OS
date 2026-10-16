@@ -236,3 +236,15 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - P(r) parametrizada = supuesto_declarado_pendiente_fuente → Molflow+ (Escalón B).
 - 8 tests nuevos (pipelines 83). docs/fuentes_oficiales_kiube.md (v2.0.1).
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v2.2.0 — 2026-10-16 — Fase 66: Escalón B, mapa de presión 3D TPMC
+- domain/vacuum_tpmc.py: motor TPMC propio de flujo molecular (algoritmo
+  Molflow+ de TPMC-IPAC14/19). gitlab.cern.ch inaccesible (403): validación
+  cruzada con Molflow+ oficial pendiente y declarada.
+- Validaciones: conservación total, captura=s, linealidad en Q, P>Q/S.
+- pipelines/mapa_vacio_f66.py: cámara KIUBE (KIUBE-V04): P 4,5e-7 (centro)
+  → 1,4e-7 mbar (pared), mínimo en bocas; pérdida H⁻ con mapa 3D = 0,00123 %
+  (uniforme de igual media 0,00124 %). 600k moléculas.
+- gas_stripping.PerfilPresion.desde_mapa: acoplamiento mapa→stripping.
+- Flujos y s de bomba: EST declarados pendiente_fuente. 8 tests (pipelines 91).
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).

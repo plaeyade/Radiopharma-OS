@@ -99,20 +99,39 @@ def radio_orbita_mm(energia_mev: float, b_media_t: float) -> float:
 
 @dataclass
 class PerfilPresion:
-    """P(r) parametrizado DECLARADO (pendiente mapa Molflow+, Escalón B).
+    """P(r) parametrizado DECLARADO o desde mapa TPMC (vacuum_tpmc, F66).
 
     modelos:
       - "uniforme": P(r) = p_base
       - "radial":   P(r) = p_base + (p_centro - p_base)·(1 - r/r_pared)
         (la fuente de H₂ de las fuentes de iones está en el centro;
         las 4 bombas ODP evacúan en la periferia → máximo en el centro)
+      - "mapa":     interpolación lineal sobre (mapa_r_mm, mapa_p_mbar)
+        proveniente del motor TPMC (F66) — mapa 3D real, no parametrizado
     """
     p_base_mbar: float
     modelo: str = "uniforme"
     p_centro_mbar: float | None = None
     r_pared_mm: float = 548.0
+    mapa_r_mm: tuple | None = None
+    mapa_p_mbar: tuple | None = None
+
+    @classmethod
+    def desde_mapa(cls, r_mm, p_mbar):
+        return cls(p_base_mbar=p_mbar[-1], modelo="mapa",
+                   mapa_r_mm=tuple(r_mm), mapa_p_mbar=tuple(p_mbar))
 
     def presion_mbar(self, r_mm: float) -> float:
+        if self.modelo == "mapa" and self.mapa_r_mm:
+            import bisect
+            rs, ps = self.mapa_r_mm, self.mapa_p_mbar
+            if r_mm <= rs[0]:
+                return ps[0]
+            if r_mm >= rs[-1]:
+                return ps[-1]
+            i = bisect.bisect_right(rs, r_mm) - 1
+            t = (r_mm - rs[i]) / (rs[i + 1] - rs[i])
+            return ps[i] * (1 - t) + ps[i + 1] * t
         if self.modelo == "uniforme" or self.p_centro_mbar is None:
             return self.p_base_mbar
         f = max(0.0, 1.0 - r_mm / self.r_pared_mm)
