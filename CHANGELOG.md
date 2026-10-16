@@ -226,3 +226,13 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - docs/protocolos_iq_oq.md: protocolos IQ (6) y OQ (8) ejecutables en planta.
 - Producción Clínica (18.19) sigue bloqueada por entorno físico: PQ
   no_declarada_nunca (14.9). Esto NO se simula — es el diseño canónico.
+
+## v2.1.0 — 2026-10-16 — Fase 65: pérdida de haz H⁻ por stripping en gas (Escalón A)
+- domain/gas_stripping.py: σ(E)=C/β² citada (Plum/CERN YR, Gillespie 1977),
+  composición residual 70% H₂O / 30% aire (Nakhai-Pour 2022), órbita kiube
+  (ΔE=98,5 keV/v, ⟨B⟩=1,36 T), trazado H⁰→pared (histograma 36 bins).
+- pipelines/perdida_gas_f65.py: KIUBE 180 (2×100 µA): pérdida 0,0006–0,0063 %
+  en 1e-7–1e-6 mbar; máxima en la 1ª vuelta; E_media H⁰ ≈ 6,4 MeV.
+- P(r) parametrizada = supuesto_declarado_pendiente_fuente → Molflow+ (Escalón B).
+- 8 tests nuevos (pipelines 83). docs/fuentes_oficiales_kiube.md (v2.0.1).
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
