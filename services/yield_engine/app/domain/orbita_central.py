@@ -50,6 +50,12 @@ FUENTES_ORBITA = {
     "CALC": "Derivado por cálculo de datos publicados (isocronía, perfiles)",
     "EST": "Estimado — reemplazar cuando haya documento",
     "MAG-1GAP": "Magnetostática propia B∝1/gap: chequeo valle 0,39 T vs 0,45 T medido (13 %, declarado)",
+    "KEY22": "Nuttens et al., Cyclotrons2022 WEAO03 Fig.3 — ⟨B⟩(r) y flutter "
+             "F(r) del KIUBE MEDIDOS/calculados por IBA (digitalizado, "
+             "±15 G, ±0,005 en F; F ambiguo en 0,285–0,345 m, interpolado)",
+    "KEY22-GEOM": "KEY22 Fig.3 fijó por FE 3D (kiube v0.7): valle a 110 mm del "
+                  "plano medio (perfil de flutter coincide) y tapón rebajado "
+                  "17 mm (joroba central 1,04 vs 1,03 medida)",
 }
 
 
@@ -85,22 +91,45 @@ class CampoKIUBE:
     shim_b0: float = 1.0                 # CALC: shim isócrono (calibrar_shim)
     shim_r_mm: tuple = ()                # CALC: shim radial (tabla)
     shim_f: tuple = ()
+    # F69: perfil MEDIDO KEY22 (⟨B⟩(r) y flutter F(r)). Si se cargan, b_media
+    # interpola la medida (×shim) en vez de γ·B0, y b_colina/b_valle salen del
+    # flutter medido: F = ⟨B²⟩/⟨B⟩²−1 = a(1−a)(Bh−Bv)²/B̄² con a = w/90.
+    key22_r_mm: tuple = ()               # KEY22 (medido, digitalizado)
+    key22_bavg_t: tuple = ()             # KEY22
+    key22_f: tuple = ()                  # KEY22 (huecos interpolados, declarado)
+    gap_valle_mm: float = 132.0          # 110 con KEY22-GEOM (F69)
 
     def gamma_orbita(self, r_mm: float) -> float:
         a = 0.299792458 * self.b0_t * self.shim_b0 * (r_mm / 1e3) / 0.939294
         return 1.0 / math.sqrt(max(1 - a * a, 1e-12))
 
     def b_media(self, r_mm: float) -> float:
-        b = self.gamma_orbita(r_mm) * self.b0_t * self.shim_b0
+        if self.key22_bavg_t:
+            b = float(np.interp(r_mm, self.key22_r_mm, self.key22_bavg_t))
+            b *= self.shim_b0
+        else:
+            b = self.gamma_orbita(r_mm) * self.b0_t * self.shim_b0
         if self.shim_r_mm:
             b *= float(np.interp(r_mm, self.shim_r_mm, self.shim_f))
         return b
 
     def b_colina(self, r_mm: float) -> float:
         w = self.colina_ancho_ef_deg
+        if self.key22_f:
+            a = w / 90.0
+            bm = self.b_media(r_mm)
+            f = float(np.interp(r_mm, self.key22_r_mm, self.key22_f))
+            d = bm * math.sqrt(max(f, 0.0) / (a * (1 - a)))
+            return bm + (1 - a) * d
         return self.b_media(r_mm) * 90.0 / (w + self.rho_vh * (90.0 - w))
 
     def b_valle(self, r_mm: float) -> float:
+        if self.key22_f:
+            a = self.colina_ancho_ef_deg / 90.0
+            bm = self.b_media(r_mm)
+            f = float(np.interp(r_mm, self.key22_r_mm, self.key22_f))
+            d = bm * math.sqrt(max(f, 0.0) / (a * (1 - a)))
+            return bm - a * d
         return self.rho_vh * self.b_colina(r_mm)
 
     def resolver_ancho_colina(self) -> float:
@@ -311,6 +340,30 @@ def simular_aceleracion(campo: CampoKIUBE | None = None,
         motivo_fin=motivo_fin,
         trayectoria_xy_mm=[(round(a, 2), round(b, 2)) for a, b in tray],
     )
+
+
+def cargar_perfil_key22(campo: CampoKIUBE, path_csv) -> CampoKIUBE:
+    """Carga ⟨B⟩(r) y F(r) MEDIDOS del KIUBE (KEY22, digitalizado) en el campo.
+
+    El CSV (data/kiube/kiube_Bavg_flutter_KEY22.csv) trae huecos: ⟨B⟩ falta en
+    el centro (r<23 mm) y en el borde; F falta en 0,285–0,345 m (curvas que se
+    cruzan, lectura ambigua — declarado en la cabecera del CSV). Se interpolan
+    linealmente sobre los huecos y se declara; en el centro ⟨B⟩ se extiende con
+    el primer valor medido (joroba central ~1,033, KEY22 B_centro_rel).
+    Además fija gap_valle_mm = 110 mm (KEY22-GEOM: el FE 3D contra el mapa
+    medido fijó el valle a 110 mm del plano medio; antes 132 mm estimado).
+    """
+    d = np.genfromtxt(path_csv, delimiter=",", skip_header=4)
+    r_m, b_g, f = d[:, 0], d[:, 1], d[:, 2]
+    mb = ~np.isnan(b_g)
+    mf = ~np.isnan(f)
+    b_full = np.interp(r_m, r_m[mb], b_g[mb])          # huecos interpolados
+    f_full = np.interp(r_m, r_m[mf], f[mf])
+    campo.key22_r_mm = tuple(float(x * 1e3) for x in r_m)
+    campo.key22_bavg_t = tuple(float(x * 1e-4) for x in b_full)  # G → T
+    campo.key22_f = tuple(float(x) for x in f_full)
+    campo.gap_valle_mm = 110.0
+    return campo
 
 
 def medir_f_rev_orbita(campo: CampoKIUBE, T_mev: float) -> float:
