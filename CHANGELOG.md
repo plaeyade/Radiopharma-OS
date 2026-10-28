@@ -248,3 +248,17 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - gas_stripping.PerfilPresion.desde_mapa: acoplamiento mapa→stripping.
 - Flujos y s de bomba: EST declarados pendiente_fuente. 8 tests (pipelines 91).
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.7.0 — 2026-10-28 — Fase 81: ingesta multiformato kiube v0.35 + verificación cruzada V04/F75/SRG/KIUBE-OM
+- pipelines/ingesta_kiube_v035_f81.py: paquete del gemelo kiube v0.35 (565 artefactos: STEP, h5m DAGMC, GDML, STL,
+  3MF/GLB, Molflow XML, mapas npz, curvas JSON, parámetros, telemetría simulada), md5 verificado artefacto a artefacto.
+- Verificación cruzada (22 filas): coinciden radio de cámara 548 mm, 4 bocas r=127 mm @ 375 mm (T04F2/TUD03 → re-etiquetado
+  append-only a `fuente_modelo_oficial_IBA (vía usuario)`), bobinas 2,12 t, masa 17,9 t vs 18 t SRG, 4 ODP, 8 puertos.
+  Discrepancias cuantificadas (sin sobrescribir V04): gap efectivo 132 → 102,6 mm (−22 %), S_eff 7559 → 3565 l/s (−53 %),
+  carga H₂ ×34, pérdida por gas F65 0,00123 % frente a 15 % (TUD03 medido), acero 14,6 → 15,0 t (+3 %), potencia RF del
+  modelo 21,4 kW frente al amplificador de 16 kW (KIUBE-OM), ubicación de bombas (cualitativa).
+- Impacto en cadena (marcas append-only, evidencias originales intactas): F66/F74/F67/F65 y F70 prioridad alta;
+  F71–F78, F75 y F68/F69 prioridad media.
+- Calibration Layer: BatchMeasurement.origen ("real" | "simulado_declarado"); la puerta 17.21 rechaza lo simulado
+  (memoria 3) y lo deja auditado. API: campo `origen` (por defecto "real"). 3 tests nuevos; 5 tests de la fase.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).

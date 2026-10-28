@@ -12,7 +12,10 @@ predefinida: "No todas las producciones se incorporan automáticamente"
   - incertidumbre relativa declarada ≤ 25 % (calidad de la medida);
   - coherencia física del cociente: 0.1 ≤ k ≤ 10 (un factor fuera de ese
     rango indica error de registro o de unidades, no física real);
-  - batch_id y operador no vacíos (trazabilidad 17.22/17.25).
+  - batch_id y operador no vacíos (trazabilidad 17.22/17.25);
+  - origen == "real" (F81, memoria 3): un dato simulado declarado del gemelo
+    (origen="simulado_declarado") nunca entra al ajuste como medida de lote,
+    aunque sea numéricamente válido; queda en auditoría como rechazado.
 """
 from __future__ import annotations
 
@@ -22,6 +25,8 @@ K_MIN: float = 0.1
 K_MAX: float = 10.0
 U_REL_MAX: float = 0.25
 ALGORITMO: str = "k_batch=medido/predicho; WLS en fit posterior (fit_factor)"
+ORIGEN_REAL: str = "real"
+ORIGENES: tuple = ("real", "simulado_declarado")
 
 
 @dataclass(frozen=True)
@@ -33,6 +38,7 @@ class BatchMeasurement:
     eob_medido_gbq: float            # actividad EOB medida en el lote
     incertidumbre_gbq: float = 0.0   # u experimental del medido (0 = no declarada)
     operador: str = ""               # quién registra la medida (17.22)
+    origen: str = ORIGEN_REAL        # "real" | "simulado_declarado" (F81, memoria 3)
 
 
 def batch_k_factor(eob_medido_gbq: float, eob_predicho_gbq: float) -> float:
@@ -57,6 +63,11 @@ def quality_gate(m: BatchMeasurement) -> dict:
         reasons.append("eob_medido_gbq debe ser > 0")
     if m.incertidumbre_gbq < 0.0:
         reasons.append("incertidumbre_gbq no puede ser negativa")
+    if m.origen not in ORIGENES:
+        reasons.append(f"origen desconocido {m.origen!r}: debe ser uno de {ORIGENES}")
+    elif m.origen != ORIGEN_REAL:
+        reasons.append("dato simulado declarado (gemelo): no es medida de haz real y no "
+                       "entra al ajuste del Calibration Layer (memoria 3)")
     k: float | None = None
     if m.eob_predicho_gbq > 0.0 and m.eob_medido_gbq > 0.0:
         k = batch_k_factor(m.eob_medido_gbq, m.eob_predicho_gbq)

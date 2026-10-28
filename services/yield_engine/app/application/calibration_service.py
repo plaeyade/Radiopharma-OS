@@ -172,7 +172,7 @@ class CalibrationService:
             "eob_predicho_gbq": medida.eob_predicho_gbq,
             "eob_medido_gbq": medida.eob_medido_gbq,
             "incertidumbre_gbq": medida.incertidumbre_gbq,
-            "operador": medida.operador, "k": gate["k"]}
+            "operador": medida.operador, "origen": medida.origen, "k": gate["k"]}
         self._audit.append({
             "fecha": datetime.now(timezone.utc).isoformat(),
             "usuario": medida.operador, "accion": "registro_medida_lote",
