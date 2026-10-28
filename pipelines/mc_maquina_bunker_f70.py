@@ -92,7 +92,7 @@ def ejecutar():
         },
         "corridas": {
             "verificacion_1cm_3000x2": verif,
-            "full_20x10kx2_malla5cm": full_res,
+            f"full_{full_res.get("corridas_ok","?")}x2000x2_malla10cm": full_res,
             "estado_full": estado_full,
             "nota_estabilidad": "openmc 0.16.0 segfault >~12000 historias/corrida en esta celosia; 10k x 2 estable (verificado experimentalmente)",
             "reanudacion": "sh /mnt/agents/work/f70_mc/f70_master.sh + f70_full.py (reanudable, progreso en estado/f70_progreso.npz)",
