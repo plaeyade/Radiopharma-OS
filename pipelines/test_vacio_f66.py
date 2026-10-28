@@ -64,7 +64,8 @@ def test_perdida_con_mapa_coherente():
     r = simular_perdida_gas(corriente_ua=200, energia_final_mev=18.0,
                             delta_e_kev_vuelta=98.5, b_media_t=1.360,
                             perfil=pf)
-    assert 1e-6 < r.fraccion_perdida < 1e-3
+    # F82: corregida la conversión mbar → Pa (×1000); antes 1e-6 – 1e-3
+    assert 1e-3 < r.fraccion_perdida < 1e-1
 
 
 def test_f66_json_coherente():

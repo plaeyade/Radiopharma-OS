@@ -262,3 +262,19 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - Calibration Layer: BatchMeasurement.origen ("real" | "simulado_declarado"); la puerta 17.21 rechaza lo simulado
   (memoria 3) y lo deja auditado. API: campo `origen` (por defecto "real"). 3 tests nuevos; 5 tests de la fase.
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.8.0 — 2026-10-28 — Fase 82: re-corrida F66/F74/F65 con cámara y bombeo kiube v0.35 + corrección de unidades
+- pipelines/vacio_v035_f82.py: gap efectivo 102,6 mm; 4 ODP en los agujeros de valle (2 difusoras abajo, 2 en
+  carcasas RF, EST); brida (H₂O 1300 / H₂ 2000 l/s, EST) en serie con el agujero A+C (Clausing 0,42); cargas H₂O 5,2e-4
+  (10 h) y H₂ 2 sccm. Dos gases, 600k moléculas cada uno. Entradas verificadas por md5 contra el manifiesto F81.
+- F66 (TPMC): H₂O 2,9e-7 mbar (medida IBA con RF: 2,7e-7, +8 %); H₂ 1,6e-5 (centro) → 1,0e-5 mbar (pared).
+- F74 (analítico): S_eff H₂O 3672 l/s (V04: 7559), H₂ 6588 l/s; TPMC/Q/S = 2,0–2,2 por la conductancia del gap fino.
+- F65 (stripping): pérdida por gas 8,6 % (2 sccm) y 13,5 % (3,5 sccm, AMIT) frente al 19 % de pérdida total medido por
+  IBA (TUD03; kiube atribuye 15 % al gas).
+- CORRECCIÓN: gas_stripping.MBAR_A_PA = 0,1 → 100 (1 mbar = 100 Pa). Todas las pérdidas por gas de F65/F66 eran 1000×
+  bajas (F66: 0,00123 % → 1,23 % con V04). Evidencias históricas intactas; registro append-only en
+  fase82/correcciones_historicas.jsonl (precedente F73). vacuum_tpmc: dos factores de unidades que se compensaban se
+  escriben explícitos (presiones idénticas). Rangos de 2 pruebas vivas de F65/F66 corregidos.
+- vacuum_tpmc.CamaraVacio.bombas: bombas configurables (posición, tapa, radio, captura); por defecto, la disposición V04
+  (regresión bit a bit). F67 (Molflow+) sigue afectada y pendiente. 6 pruebas nuevas.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).

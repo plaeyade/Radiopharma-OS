@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 # --- constantes físicas ---
 K_B = 1.380649e-23          # J/K
 M_H_MEV = 938.272           # masa protón (H⁻ ≈ p), MeV/c²
-MBAR_A_PA = 0.1             # 1 mbar = 0,1 Pa
+MBAR_A_PA = 100.0           # 1 mbar = 100 Pa (F82: corregido; hasta v3.7.0 valía 0,1 → densidad y pérdidas 1000× bajas)
 
 # --- secciones eficaces citadas: sigma = C / beta² (cm² por átomo) ---
 _C_ATOMO = {  # coeficiente C en 1e-19 cm²
