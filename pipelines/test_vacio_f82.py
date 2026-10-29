@@ -35,14 +35,15 @@ def test_bombeo_analitico_coherente_con_kiube():
 def test_tpmc_vs_analitico_y_medida():
     for g in ("H2O", "H2"):
         a = E["F74_analitico"][g]
-        assert 1.0 < a["tpmc_media_sobre_analitica"] < 3.0             # el gap fino añade resistencia de conductancia
+        # F84: con el área de las dos tapas corregida el TPMC queda en ~1,0–1,1 × Q/S (antes ~2,0–2,2 por el error)
+        assert 0.9 < a["tpmc_media_sobre_analitica"] < 3.0
         assert abs(E["F66_tpmc"][g]["captura_media_tpmc"] / a["s_captura"] - 1) < 0.05
-    assert 0.7 < E["comparacion_V04"]["P_H2O_tpmc_sobre_medida_TUD03T"] < 1.5
+    assert 0.4 < E["comparacion_V04"]["P_H2O_tpmc_sobre_medida_TUD03T"] < 1.5      # F84: 0,54 con el motor corregido
 
 
 def test_stripping_frente_a_medida_iba():
     s = E["F65_stripping"]
-    assert 0.03 < s["KIUBE180_180uA"]["fraccion_perdida"] < 0.25      # IBA: 19 % de pérdida total (TUD03)
+    assert 0.02 < s["KIUBE180_180uA"]["fraccion_perdida"] < 0.25      # IBA: 19 % de pérdida total (TUD03); F84: 4,4 %
     assert s["sensibilidad_H2_3p5sccm_AMIT_pct"] > s["KIUBE180_180uA"]["pct"]
     c = E["comparacion_V04"]
     assert c["factor_por_unidades"] == 1000.0 and c["factor_por_geometria_bombeo_y_carga_v035"] > 1

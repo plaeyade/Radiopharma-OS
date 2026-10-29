@@ -292,3 +292,25 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
   (0,025 × F72; I0 Ag109→110m EST). 12 corridas × 2000 historias, error estándar entre corridas.
 - Artefacto de varianza declarado (meseta a 1,4–2,0 m de profundidad); F71/F76/F77 siguen afectadas. 4 pruebas.
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.10.0 — 2026-10-28 — Fase 84: Molflow+ oficial con la cámara v0.35 + corrección de los motores de vacío
+- molflowCLI 2.11.1 (paquete Debian del usuario). Validación analítica previa (cilindro con una boca, P = Q/S):
+  encontró y corrige tres errores; las evidencias anteriores no se reescriben (correcciones_historicas.jsonl):
+  - vacuum_tpmc: área de una sola tapa para los impactos de las dos → presiones de F66/F82 ×2 (2,003 → 1,001 × Q/S);
+  - tools/kiube_camara_molflow.py: corona abierta entre tapa y pared (fuga) → Molflow 0,064 → 0,998 × Q/S;
+  - tools/kiube_camara_molflow.py: fuente de H₂ de 2 caras con caudal dividido entre 2 (Molflow lo toma como total);
+  - vacuum_tpmc (modo V04): bocas en ambas tapas (8) frente a las 4 de la tapa superior de F67/F74.
+- Cámara v0.35 (F82 recalculada con el motor corregido): Molflow/TPMC = 1,00 en H₂O y H₂ (0,99–1,03 por radio),
+  absorbido 99,8–99,9 %; pérdida por gas 4,4 % (2 sccm) / 7,0 % (3,5 sccm), Molflow 4,43 % frente a TPMC 4,42 %.
+  P(H₂O) 1,45e-7 mbar (medida IBA con RF 2,7e-7). Control V04: Molflow/TPMC 1,006 (F66 y F67 conciliadas).
+- F67 usaba E = 17,4 MeV, ΔE = 80 keV y B = 1,77 T para la pérdida (distinto de F65/F66): declarado.
+- Rangos de 3 pruebas de F82 ampliados para aceptar la física corregida. 3 pruebas nuevas.
+
+## v3.11.0 — 2026-10-28 — Fase 85: cierre de la cadena de blindaje F70–F78 (kiube v0.35)
+- F83 ampliada a 17 corridas (34 000 historias; 5 con malla de fluencia en 3 grupos). Esquema v2 de importancia
+  (techo y losa) probado y descartado por coste; artefacto de varianza de F83 declarado.
+- F70 sustituida (fuera de bloque 2,7e-4); F71 tabla F83/F85/SRG (TVL medio 26,2 cm; SRG ≈ 30); F72 actualizada
+  (Co60 10,2 ± 0,1 GBq, Eu152 4,8, Cu64 583, Ag110m 0,57); F76 métrica H*(10) ICRP-74, E(AP) ICRP-116 pendiente_fuente;
+  F77 mallas_gemelo_f77.npz (885 720 vóxeles, H*(10) y fluencia en 3 grupos, media/σ); F78 exterior DIRECTO:
+  0,005–0,012 µSv/h (cara), 0,024 µSv/h frente a T1; dosis anual ≤ 0,02 mSv con 150 k µAh/año (límite 1 mSv).
+- 4 pruebas. Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).

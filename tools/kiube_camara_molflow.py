@@ -70,7 +70,21 @@ def _normal_ok(p0, p1, p2, hacia):
     return np.dot(n, hacia) > 0
 
 
-def generar_xml(path_out: str) -> dict:
+def generar_xml(path_out: str, cfg: dict | None = None) -> dict:
+    """cfg (F84, opcional): {"R_cm", "gap_cm", "bombas": [(x_cm, y_cm, lado ±1, r_cm, s)], "q_pared" (mbar·l/s/cm²),
+    "q_fuente" (mbar·l/s), "masa" (g/mol), "temp" (K)}. Sin cfg: cámara KIUBE-V04 (4 bocas en la tapa superior)."""
+    global TEMP
+    cfg = cfg or {}
+    R_CM_, GAP_CM_ = cfg.get("R_cm", R_CM), cfg.get("gap_cm", GAP_CM)
+    q_pared, q_fuente, masa = cfg.get("q_pared", Q_PARED), cfg.get("q_fuente", Q_H2_TOTAL), cfg.get("masa", MASA)
+    TEMP = cfg.get("temp", TEMP)
+    bombas = cfg.get("bombas") or [(R_POS_CM * math.cos(math.pi / 4 + math.pi / 2 * k),
+                                    R_POS_CM * math.sin(math.pi / 4 + math.pi / 2 * k), +1, R_PORT_CM, S_BOMBA)
+                                   for k in range(N_BOMBAS)]
+    return _generar(path_out, R_CM_, GAP_CM_, bombas, q_pared, q_fuente, masa)
+
+
+def _generar(path_out, R_CM, GAP_CM, bombas, Q_PARED, Q_H2_TOTAL, MASA):
     verts: list[tuple] = []
     facetas: list[tuple] = []  # (indices, kwargs)
 
@@ -97,25 +111,26 @@ def generar_xml(path_out: str) -> dict:
                 tri = (tri[0], tri[2], tri[1])
             facetas.append((list(tri), {}))
 
-    # ---------- tapas: Delaunay con huecos de bombeo (solo superior) ----------
-    port_centers = [(R_POS_CM * math.cos(math.pi / 4 + math.pi / 2 * k),
-                     R_POS_CM * math.sin(math.pi / 4 + math.pi / 2 * k))
-                    for k in range(N_BOMBAS)]
-
-    def malla_tapa(z, con_huecos):
+    # ---------- tapas: Delaunay con huecos de bombeo en la tapa de cada bomba ----------
+    def malla_tapa(z, huecos):
         # puntos: rejilla polar + bordes de huecos densos
         pts = []
-        anillos = np.arange(0, R_CM + 0.1, 3.0)
+        # F84: borde de la tapa = exactamente los NS vértices del anillo lateral (geometría estanca). Hasta v3.9.0 la
+        # rejilla polar terminaba en el último múltiplo de 3 cm (54 cm con R = 54,8): quedaba una corona abierta entre la
+        # tapa y la pared lateral por la que el gas escapaba de la cámara (presiones de Molflow bajas en F67).
+        for k in range(NS):
+            a = 2 * math.pi * k / NS
+            pts.append((R_CM * math.cos(a), R_CM * math.sin(a)))
+        anillos = np.arange(0, R_CM - 1.5, 3.0)
         for r in anillos:
             n = max(1, int(2 * math.pi * max(r, 1) / 3.0))
             for k in range(n):
                 a = 2 * math.pi * k / n + r
                 pts.append((r * math.cos(a), r * math.sin(a)))
-        for cx, cy in (port_centers if con_huecos else []):
+        for cx, cy, rp in huecos:
             for k in range(48):
                 a = 2 * math.pi * k / 48
-                pts.append((cx + R_PORT_CM * math.cos(a),
-                            cy + R_PORT_CM * math.sin(a)))
+                pts.append((cx + rp * math.cos(a), cy + rp * math.sin(a)))
         pts = np.array(pts)
         pts = pts[np.hypot(pts[:, 0], pts[:, 1]) <= R_CM + 1e-9]
         tri = Delaunay(pts)
@@ -125,8 +140,7 @@ def generar_xml(path_out: str) -> dict:
             c = p.mean(axis=0)
             if np.hypot(c[0], c[1]) > R_CM:
                 continue
-            if con_huecos and any(np.hypot(c[0] - cx, c[1] - cy) < R_PORT_CM
-                                  for cx, cy in port_centers):
+            if any(np.hypot(c[0] - cx, c[1] - cy) < rp for cx, cy, rp in huecos):
                 continue
             # descartar triángulos que crucen un hueco (arista larga)
             lados = [np.linalg.norm(p[i] - p[(i + 1) % 3]) for i in range(3)]
@@ -137,30 +151,30 @@ def generar_xml(path_out: str) -> dict:
         for p in pts:
             add_v((p[0], p[1], z))
         hacia = np.array([0.0, 0.0, -1.0 if z > 0 else 1.0])
-        for s in caras:
-            tri_i = [base + i for i in s]
+        for s_ in caras:
+            tri_i = [base + i for i in s_]
             p = [np.array(verts[i]) for i in tri_i]
             if not _normal_ok(p[0], p[1], p[2], hacia):
                 tri_i = [tri_i[0], tri_i[2], tri_i[1]]
             facetas.append((tri_i, {}))
 
-    malla_tapa(-zh, con_huecos=False)   # tapa inferior sin bombas (EST)
-    malla_tapa(+zh, con_huecos=True)    # tapa superior con 4 bocas
+    for lado in (-1, +1):
+        malla_tapa(lado * zh, [(b[0], b[1], b[3]) for b in bombas if b[2] == lado])
 
-    # ---------- bocas de bombeo: discos con sticking s (tapa superior) ----------
-    for cx, cy in port_centers:
-        centro = add_v((cx, cy, zh))
+    # ---------- bocas de bombeo: discos con sticking s en su tapa ----------
+    for cx, cy, lado, rp, sb in bombas:
+        zz = lado * zh
+        centro = add_v((cx, cy, zz))
         anillo = []
         for k in range(48):
             a = 2 * math.pi * k / 48
-            anillo.append(add_v((cx + R_PORT_CM * math.cos(a),
-                                 cy + R_PORT_CM * math.sin(a), zh)))
+            anillo.append(add_v((cx + rp * math.cos(a), cy + rp * math.sin(a), zz)))
         for k in range(48):
             tri = [centro, anillo[k], anillo[(k + 1) % 48]]
             p = [np.array(verts[i]) for i in tri]
-            if not _normal_ok(p[0], p[1], p[2], np.array([0.0, 0.0, -1.0])):
+            if not _normal_ok(p[0], p[1], p[2], np.array([0.0, 0.0, -float(lado)])):
                 tri = [tri[0], tri[2], tri[1]]
-            facetas.append((tri, {"sticking": S_BOMBA}))
+            facetas.append((tri, {"sticking": sb}))
 
     # ---------- fuente H₂ central: disco r=2 cm en z=0, 2 caras ----------
     centro = add_v((0.0, 0.0, 0.0))
@@ -169,7 +183,9 @@ def generar_xml(path_out: str) -> dict:
         a = 2 * math.pi * k / 24
         anillo.append(add_v((2.0 * math.cos(a), 2.0 * math.sin(a), 0.0)))
     a_fuente_cm2 = math.pi * 2.0 ** 2
-    q_fuente_pa = Q_H2_TOTAL * 0.1 / 2  # mitad por cara (2 caras)
+    # F84: en Molflow la desgasificación de una faceta de 2 caras es el TOTAL de la faceta (emite por ambas caras).
+    # Hasta v3.9.0 se dividía entre 2 («mitad por cara») y la fuente inyectaba la mitad del H₂ (absorbido = 50 %).
+    q_fuente_pa = Q_H2_TOTAL * 0.1
     for k in range(24):
         tri = [centro, anillo[k], anillo[(k + 1) % 24]]
         p = [np.array(verts[i]) for i in tri]
@@ -217,7 +233,7 @@ def generar_xml(path_out: str) -> dict:
     ET.ElementTree(root).write(path_out, xml_declaration=True,
                                encoding="utf-8")
     return {"vertices": len(verts), "facetas": len(final),
-            "bombas": N_BOMBAS, "path": path_out}
+            "bombas": len(bombas), "path": path_out}
 
 
 if __name__ == "__main__":

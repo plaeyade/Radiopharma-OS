@@ -62,8 +62,8 @@ class CamaraVacio:
     q_h2_fuentes_total_mbar_l_s: float = 1e-3
     masa_gas_g_mol: float = 18.015
     temperatura_k: float = 303.0
-    # F82: bombas configurables (por defecto vacío → disposición V04: n_bombas a 45°+k·90° en ambas tapas con
-    # s_captura). Cada bomba: {"x_mm", "y_mm", "lado" (+1 tapa superior, -1 inferior, 0 ambas), "r_mm", "s"}.
+    # F82: bombas configurables (por defecto vacío → disposición V04: n_bombas a 45°+k·90° en la tapa superior con
+    # s_captura; F84). Cada bomba: {"x_mm", "y_mm", "lado" (+1 tapa superior, -1 inferior, 0 ambas), "r_mm", "s"}.
     bombas: tuple = ()
 
     @property
@@ -129,7 +129,9 @@ def simular_mapa_presion(cam: CamaraVacio, n_moleculas: int = 400_000,
             [cam.r_pos_bomba_mm * math.cos(math.pi / 4 + math.pi / 2 * k),
              cam.r_pos_bomba_mm * math.sin(math.pi / 4 + math.pi / 2 * k)]
             for k in range(cam.n_bombas)])
-        b_lado = np.zeros(cam.n_bombas)
+        # F84: 4 bocas en la tapa SUPERIOR, como declaran F67 (Molflow) y F74 (N_BOMBAS = 4 aperturas). Hasta v3.9.0
+        # valían en ambas tapas (8 bocas efectivas frente a las 4 de s_efectiva_l_s).
+        b_lado = np.ones(cam.n_bombas)
         b_r = np.full(cam.n_bombas, cam.r_bomba_mm)
         b_s = np.full(cam.n_bombas, cam.s_captura)
 
@@ -137,9 +139,12 @@ def simular_mapa_presion(cam: CamaraVacio, n_moleculas: int = 400_000,
     frac_fuente = cam.q_h2_fuentes_total_mbar_l_s / cam.q_total_mbar_l_s
 
     hits_tapa = np.zeros(n_bins_r, dtype=np.int64)
-    area_bin_m2 = np.array([
+    # F84: los impactos de AMBAS tapas se acumulan en hits_tapa → el área del anillo es la de las dos tapas. Hasta v3.9.0
+    # se usaba el área de una sola tapa y todas las presiones de F66/F82 salían ×2 (caso analítico: 1,74e-6 frente a
+    # Q/S = 8,68e-7 mbar; con la corrección 8,69e-7).
+    area_bin_m2 = 2.0 * np.array([
         math.pi * ((R * (i + 1) / n_bins_r) ** 2 - (R * i / n_bins_r) ** 2)
-        for i in range(n_bins_r)]) * 1e-6  # mm²→m²
+        for i in range(n_bins_r)]) * 1e-6  # mm²→m², dos tapas
     absorbidos = 0
     hits_bomba = 0
 
