@@ -278,3 +278,17 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - vacuum_tpmc.CamaraVacio.bombas: bombas configurables (posición, tapa, radio, captura); por defecto, la disposición V04
   (regresión bit a bit). F67 (Molflow+) sigue afectada y pendiente. 6 pruebas nuevas.
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.9.0 — 2026-10-28 — Fase 83: re-corrida de F70 con la geometría kiube v0.35 (Geant4)
+- pipelines/blindaje_v035_f83.py: máquina kiube v0.35 (blancos F18 en la cara del yugo, puertas HDPE 18 cm) en el
+  bloque BIND de F70 (muros 2,11 m, losa 0,55 m, techo 1,45 m); 18O(p,n) BON21, 2 × 90 µA. Geant4 11.4 QGSP_BIC_HP
+  (sin ENDF/B-VIII.0 HDF5 para OpenMC en el entorno): cálculo independiente; la evidencia de F70 no se toca.
+- Cascarones laterales de importancia (×2,15 cada 10 cm): primeras cuentas DIRECTAS fuera del muro: 0,002–0,008 µSv/h
+  (media de cara, contacto 0–30 cm), parche frente a T1 0,027 µSv/h. Transmisión del muro 0,6–2,5e-9; TVL 25–28 cm
+  (SRG Tabla 9 ≈ 30 cm). Fracción de dosis fuera del bloque 2,7e-4 (criterio F70 < 0,05).
+- F78 CONTRADICHA: μ = 0,0142 cm⁻¹ (TVL 162 cm) da T(225 cm) = 4,1e-2; F83 da 2,4e-9 → la extrapolación de F78
+  sobreestima la dosis exterior ~1,7e7 veces (conservadora, no representativa). Registro append-only.
+- Activación de saturación (Høgdahl): Co60 10 GBq, Eu152 4,8 GBq, Cu64 590 GBq (0,7–1,6 × F72), Ag110m 0,57 GBq
+  (0,025 × F72; I0 Ag109→110m EST). 12 corridas × 2000 historias, error estándar entre corridas.
+- Artefacto de varianza declarado (meseta a 1,4–2,0 m de profundidad); F71/F76/F77 siguen afectadas. 4 pruebas.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
