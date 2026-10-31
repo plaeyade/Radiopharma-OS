@@ -1,5 +1,11 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.16.0 — F90 ecosistema
+- Contrato `cyclotron-sim/termino_fuente@1` (fixture KIUBE) y verificación de planes de producción contra el presupuesto operativo del blindaje (corriente máxima, µA·h/semana).
+- F86–F89 (Zumaya) migradas a `plaeyade/Zumaya-AI`; F81–F85 también en `plaeyade/Cyclotron-SIM`.
+- `config/ecosistema.yaml`, `docs/ecosistema.md`. 3 pruebas.
+
+
 ## v1.25.0 — F58-multi + F59 Batch Manager + F60 eficiencias citadas (2026-10-14)
 - F58-multi: lotes teóricos e2e ¹¹C/⁶⁸Ga/⁶⁴Cu (pipelines/lotes_multi_f58.py,
   4 tests), datasets IAEA versionados, λ de biblioteca nuclear, registro
