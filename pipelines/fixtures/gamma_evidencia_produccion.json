@@ -1,0 +1,349 @@
+{
+ "contrato": "gamma/paquete_evidencia@1",
+ "generado_utc": "2026-11-01T19:16:24+00:00",
+ "incluye_en_revision": true,
+ "consultas": [
+  {
+   "id": "kiube_corriente",
+   "seccion": "ciclotron",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "Cyclone KIUBE maximum beam current dual beam uA",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:22+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_d1b26ebf916cd9da39ca66e9b2bf3117",
+      "sha256_documento": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc",
+      "pagina": 7,
+      "fragmento_sha256": "627c428a68a5734ecd351d21104caeba807d8139528a3216884d17b8fdc8fa44",
+      "texto": "Qty Unit Dual Beam for Cyclone® KIUBE",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_2a578b0af069a47658367bde153bf504",
+      "sha256_documento": "2a578b0af069a47658367bde153bf504289d07564f03fab81224b3c8a503fd71",
+      "pagina": 19,
+      "fragmento_sha256": "fc8ae33fd4415616503e5a99a8f85413a724ed73e9d37b39a4ea2372734e5076",
+      "texto": "KIUBE 180 dual beam",
+      "puntaje": 0.016129
+     },
+     {
+      "source_id": "source_2a578b0af069a47658367bde153bf504",
+      "sha256_documento": "2a578b0af069a47658367bde153bf504289d07564f03fab81224b3c8a503fd71",
+      "pagina": 16,
+      "fragmento_sha256": "a6133fd64eff2bdfaf9663eace36a74d1b7684e5d8f7fb5a68853336be3328e5",
+      "texto": "Table 5: Cyclone® KIUBE beam energy and current",
+      "puntaje": 0.015625
+     }
+    ]
+   }
+  },
+  {
+   "id": "kiube_energia",
+   "seccion": "ciclotron",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "KIUBE proton energy 18 MeV variable energy extraction ports",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:22+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_3e4c9f5c0ba8a7f2b71ef2d22a389caf",
+      "sha256_documento": "3e4c9f5c0ba8a7f2b71ef2d22a389caf6ca0cb6c9c08f73d893a962efe2e4118",
+      "pagina": 2,
+      "fragmento_sha256": "29515b800fee7906f0c158e09517d549546832637d31f71c0e8bb2114934a5bd",
+      "texto": "Energy (MeV) proton 18 deuteron 9",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_d9f0eb03e64e5b9870a61d47ca2b01e6",
+      "sha256_documento": "d9f0eb03e64e5b9870a61d47ca2b01e634374b3ef43f8cd97c3c02e0b90f7339",
+      "pagina": 2,
+      "fragmento_sha256": "87f01650dcbfe6837403cfd587365ccb8208837b50c544ecb89ab3e9c9597da1",
+      "texto": "Figure 3: Closed and extraction orbits for extraction energy range 18 MeV  Wex  24 MeV.",
+      "puntaje": 0.016129
+     },
+     {
+      "source_id": "source_18f6c4c7dcf38d9506b71f6dde93c00c",
+      "sha256_documento": "18f6c4c7dcf38d9506b71f6dde93c00c3acd38b61bb9b5eb3562aabc0583d45b",
+      "pagina": 6,
+      "fragmento_sha256": "4f4fcc2473283643fa31912b4fc26ed3ff85a75c68841bcce009ac575e731be8",
+      "texto": "Beam energy 18 MeV 16 MeV 18 MeV",
+      "puntaje": 0.015873
+     }
+    ]
+   }
+  },
+  {
+   "id": "f18_blanco",
+   "seccion": "F18",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "18F fluoride production enriched H2 18O water target yield",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:22+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_d1b26ebf916cd9da39ca66e9b2bf3117",
+      "sha256_documento": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc",
+      "pagina": 9,
+      "fragmento_sha256": "647e1bdd3486c0c004af9ace9c7943d58fa8eaeb486217ca226133a6388ee6e7",
+      "texto": "High yield Nirta® Helium Cooling Free Target F18. Water target - enriched water - Niobium insert - for reaction 18O(p,n)18F for production of up to 700GBq of fluoride- 18 (after 2 hours irradiation, EOBA). Including window assembly, valves, controls, water cooling and electrical isolation; pressure transducer; quick disconnect.",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_2922a45d4d32133cb5dc55458ac32fe1",
+      "sha256_documento": "2922a45d4d32133cb5dc55458ac32fe1b69d3f960b460aecbf5c2e7d3cb0ecb4",
+      "pagina": 20,
+      "fragmento_sha256": "3344b8596e96fa64dd88f4af1fd625320a170290ee465b77fb3711d6579b6e15",
+      "texto": "18O (enriched water) in the supply vial.",
+      "puntaje": 0.016129
+     },
+     {
+      "source_id": "source_d5ca725c27dd4941b422233dac53ad6b",
+      "sha256_documento": "d5ca725c27dd4941b422233dac53ad6ba596ac9fc90a20a93de595c24aa2b487",
+      "pagina": 3,
+      "fragmento_sha256": "efd673e8cf0d8d25d47d493689229d9716154a43368d4e93fe71a623c3ab53e3",
+      "texto": "enriched water as compared to the currently available IBA target systems without affecting the yield.",
+      "puntaje": 0.015873
+     }
+    ]
+   }
+  },
+  {
+   "id": "ga68_blanco",
+   "seccion": "Ga68",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "68Ga production solid zinc-68 target cyclotron irradiation",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:22+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_47e2fd0c463396f7ef77c50548d3d679",
+      "sha256_documento": "47e2fd0c463396f7ef77c50548d3d679584ae2da8507e2d75b6e4d3f98d7a535",
+      "pagina": 1,
+      "fragmento_sha256": "80876f439211cab98654b77209482fc2952c478fca01b6e726c002f486a0ae1b",
+      "texto": "Novel solid target and irradiation methods for theranostic radioisotope production at the Bern medical cyclotron",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_64460f58a30d064f1e1e3fa999a95acc",
+      "sha256_documento": "64460f58a30d064f1e1e3fa999a95accd2efc76e45f8fec4c95f681377c0b16f",
+      "pagina": 1,
+      "fragmento_sha256": "f3bd47ab366518d0a764295dd43d16ea9409c0ad10b270015477ceae79ecd1f7",
+      "texto": "In solid target irradiation systems the solid target must be transferred to the irradiation position for irradiation and then removed for processing.",
+      "puntaje": 0.016129
+     },
+     {
+      "source_id": "source_18f6c4c7dcf38d9506b71f6dde93c00c",
+      "sha256_documento": "18f6c4c7dcf38d9506b71f6dde93c00c3acd38b61bb9b5eb3562aabc0583d45b",
+      "pagina": 2,
+      "fragmento_sha256": "77c1efe54c3380844355c95546b5a1eacfd08e335fc7a6c9a627490f36aae067",
+      "texto": "Ga-68 production using a liquid target EP15170854",
+      "puntaje": 0.015873
+     }
+    ]
+   }
+  },
+  {
+   "id": "cu64_blanco",
+   "seccion": "Cu64",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "64Cu production nickel-64 electroplated solid target",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:23+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_2a578b0af069a47658367bde153bf504",
+      "sha256_documento": "2a578b0af069a47658367bde153bf504289d07564f03fab81224b3c8a503fd71",
+      "pagina": 17,
+      "fragmento_sha256": "97771796472c6b919ffbae4f3347bd6413049767b4cf0804e1f9f3d9ac874350",
+      "texto": "• With solid target (option): 124I, 123I, 64Cu, 89Zr, 99mTc…",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_b899b5034fa514181b99425e1f9cc523",
+      "sha256_documento": "b899b5034fa514181b99425e1f9cc523406226f99e02681f7b900c9c6e461ffd",
+      "pagina": 16,
+      "fragmento_sha256": "5a740ac34ed0af1f6f16c6675cac61fbbd42fb703eb623eba2dcdebbd5ee293b",
+      "texto": " With solid target (option): 124I, 123I, 64Cu, 89Zr, 99mTc…",
+      "puntaje": 0.016129
+     },
+     {
+      "source_id": "source_18f6c4c7dcf38d9506b71f6dde93c00c",
+      "sha256_documento": "18f6c4c7dcf38d9506b71f6dde93c00c3acd38b61bb9b5eb3562aabc0583d45b",
+      "pagina": 3,
+      "fragmento_sha256": "5434ec775f3b459fc785fe05439fb253917905e1c512239d33366812fd5c09e3",
+      "texto": "In addition, IBA provides Nirta® Solid target technology for the production of radioisotopes such as 68Ga, 64Cu,",
+      "puntaje": 0.015873
+     }
+    ]
+   }
+  },
+  {
+   "id": "blanco_solido",
+   "seccion": "Ga68",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "solid target station NIRTA irradiation transfer",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:23+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_18f6c4c7dcf38d9506b71f6dde93c00c",
+      "sha256_documento": "18f6c4c7dcf38d9506b71f6dde93c00c3acd38b61bb9b5eb3562aabc0583d45b",
+      "pagina": 6,
+      "fragmento_sha256": "abe11ee40777f559daf7900edec08a01fd2dde74dad3762a2fd4332018b9692c",
+      "texto": "depends on the irradiation station (Nirta® Solid, Nirta® Solid Plus, Nirta® High power solid).",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_3e9d8f98cb799522f3e8509de278745d",
+      "sha256_documento": "3e9d8f98cb799522f3e8509de278745d78a83adf7154d48f28dc0de95ec17ffd",
+      "pagina": 6,
+      "fragmento_sha256": "66fa2a5eef4b92e808894427fd90d4a34ad89e9bcbd469a8431e1212c21c88d3",
+      "texto": "The maximum target current depends on the irradiation station (Nirta® Solid, Nirta® Solid Plus, Nirta® High power solid) (3) depending on target material thickness. 0.073 mCi/µAh/mg of Ni-64",
+      "puntaje": 0.016129
+     }
+    ]
+   }
+  },
+  {
+   "id": "blindaje_boveda",
+   "seccion": "blindaje",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "cyclotron vault shielding neutron dose rate",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:23+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_1414ded940d68843942281895404a675",
+      "sha256_documento": "1414ded940d68843942281895404a675f083426320fc67931e48984f09d7d1ed",
+      "pagina": 97,
+      "fragmento_sha256": "993bc513668fa9547e2ae339d3cf986f4c9db99704f5c8c422333adf9d03deb8",
+      "texto": "Maze Neutron Unshielded Dose Rate",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_d1b26ebf916cd9da39ca66e9b2bf3117",
+      "sha256_documento": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc",
+      "pagina": 23,
+      "fragmento_sha256": "c787fd3e30558ac5eee6afb9df4a763bf0aaef5e30ccdde67e6d26f8c8644b1a",
+      "texto": "Qty Unit Gamma dose rate area monitors - Cyclotron vault",
+      "puntaje": 0.016129
+     }
+    ]
+   }
+  },
+  {
+   "id": "fdg_qc",
+   "seccion": "F18",
+   "evidencia": {
+    "contrato": "gamma/evidencia@1",
+    "consulta": "FDG radiochemical purity quality control release",
+    "perfil": "ECOSISTEMA-BM25-EN-REVISION",
+    "generado_utc": "2026-11-01T19:16:24+00:00",
+    "estado": "experimental_sin_validacion_clinica",
+    "no_apto_para_firma": true,
+    "citas": [
+     {
+      "source_id": "source_d1b26ebf916cd9da39ca66e9b2bf3117",
+      "sha256_documento": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc",
+      "pagina": 18,
+      "fragmento_sha256": "da5685ac3f26b04926c98498f17a4bbad41b021a65a2a61230e9c88f4959f294",
+      "texto": "Quality Control",
+      "puntaje": 0.016393
+     },
+     {
+      "source_id": "source_d1b26ebf916cd9da39ca66e9b2bf3117",
+      "sha256_documento": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc",
+      "pagina": 19,
+      "fragmento_sha256": "da5685ac3f26b04926c98498f17a4bbad41b021a65a2a61230e9c88f4959f294",
+      "texto": "Quality Control",
+      "puntaje": 0.016129
+     }
+    ]
+   }
+  }
+ ],
+ "fuentes": {
+  "source_1414ded940d68843942281895404a675": {
+   "titulo": "Room shielding design (referencia)",
+   "emisor": "referencia técnica",
+   "sha256": "1414ded940d68843942281895404a675f083426320fc67931e48984f09d7d1ed"
+  },
+  "source_18f6c4c7dcf38d9506b71f6dde93c00c": {
+   "titulo": "Cyclone KIUBE V6 web",
+   "emisor": "",
+   "sha256": "18f6c4c7dcf38d9506b71f6dde93c00c3acd38b61bb9b5eb3562aabc0583d45b"
+  },
+  "source_2922a45d4d32133cb5dc55458ac32fe1": {
+   "titulo": "660565428-Manual-Book-Cyclotron-KIUBE",
+   "emisor": "",
+   "sha256": "2922a45d4d32133cb5dc55458ac32fe1b69d3f960b460aecbf5c2e7d3cb0ecb4"
+  },
+  "source_2a578b0af069a47658367bde153bf504": {
+   "titulo": "861876572-MID-55672-F-Cyclone-KIUBE-Site-Requirement-Guide",
+   "emisor": "",
+   "sha256": "2a578b0af069a47658367bde153bf504289d07564f03fab81224b3c8a503fd71"
+  },
+  "source_3e4c9f5c0ba8a7f2b71ef2d22a389caf": {
+   "titulo": "Detailed study of the distribution of activation inside the magnet coils",
+   "emisor": "",
+   "sha256": "3e4c9f5c0ba8a7f2b71ef2d22a389caf6ca0cb6c9c08f73d893a962efe2e4118"
+  },
+  "source_3e9d8f98cb799522f3e8509de278745d": {
+   "titulo": "Cyclone20Kiube20",
+   "emisor": "",
+   "sha256": "3e9d8f98cb799522f3e8509de278745d78a83adf7154d48f28dc0de95ec17ffd"
+  },
+  "source_47e2fd0c463396f7ef77c50548d3d679": {
+   "titulo": "Novel solid target and irradiation methods for the",
+   "emisor": "",
+   "sha256": "47e2fd0c463396f7ef77c50548d3d679584ae2da8507e2d75b6e4d3f98d7a535"
+  },
+  "source_64460f58a30d064f1e1e3fa999a95acc": {
+   "titulo": "instruments-03-00014-v2",
+   "emisor": "",
+   "sha256": "64460f58a30d064f1e1e3fa999a95accd2efc76e45f8fec4c95f681377c0b16f"
+  },
+  "source_b899b5034fa514181b99425e1f9cc523": {
+   "titulo": "MID 55672 F Cyclone KIUBE SRG Rev G",
+   "emisor": "",
+   "sha256": "b899b5034fa514181b99425e1f9cc523406226f99e02681f7b900c9c6e461ffd"
+  },
+  "source_d1b26ebf916cd9da39ca66e9b2bf3117": {
+   "titulo": "IBA CYC y RF 4ta Propuesta",
+   "emisor": "",
+   "sha256": "d1b26ebf916cd9da39ca66e9b2bf31175a3851ac14c5b8d146fc19955606a3cc"
+  },
+  "source_d5ca725c27dd4941b422233dac53ad6b": {
+   "titulo": "wepsh043",
+   "emisor": "",
+   "sha256": "d5ca725c27dd4941b422233dac53ad6ba596ac9fc90a20a93de595c24aa2b487"
+  },
+  "source_d9f0eb03e64e5b9870a61d47ca2b01e6": {
+   "titulo": "SIMULATION OF BEAM EXTRACTION FROM TR24",
+   "emisor": "",
+   "sha256": "d9f0eb03e64e5b9870a61d47ca2b01e634374b3ef43f8cd97c3c02e0b90f7339"
+  }
+ }
+}

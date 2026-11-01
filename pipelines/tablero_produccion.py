@@ -117,6 +117,8 @@ def tablero(lotes: list[dict], plan: dict | None = None, qc=None) -> dict:
         "lotes": filas,
         "resumen": resumen,
         "plan_cumple": plan["cumple"],
+        "fichas_evidencia": {k: v for k, v in plan.get("fichas_evidencia", {}).items()
+                             if k in resumen or k == "ciclotron"},
         "advertencias": [
             "Recomendación técnica de QC; la liberación la firma el responsable sanitario.",
             "EOB teórico con datos IAEA citados: no incluye la eficiencia real del blanco.",
@@ -137,6 +139,12 @@ def a_html(t: dict) -> str:
         f"<td>{r['rendimiento_blanco_medio']}</td><td>{r['rendimiento_sintesis_medio']}</td>"
         f"<td>{e(json.dumps(r['qc']))}</td></tr>" for i, r in t["resumen"].items())
     adv = "".join(f"<li>{e(a)}</li>" for a in t["advertencias"])
+    fichas = "".join(
+        f"<h3>{e(k)}</h3><ul>"
+        + "".join(f"<li>{e(r['texto'])}</li>" for r in v["referencias"])
+        + (f"<li><em>{e(v['pendiente'])}</em></li>" if v.get("pendiente") else "")
+        + "</ul>"
+        for k, v in t.get("fichas_evidencia", {}).items())
     return f"""<!doctype html><html lang="es"><meta charset="utf-8"><title>Tablero de producción</title>
 <style>body{{font:14px system-ui;margin:16px;background:#fff;color:#111}}table{{border-collapse:collapse;margin:8px 0}}
 td,th{{border:1px solid #ccc;padding:4px 6px;text-align:right}}td:first-child{{text-align:left}}
@@ -144,6 +152,7 @@ tr.rechazo{{background:#fde2e2}}tr.revision{{background:#fff4d6}}tr.liberacion{{
 <h1>Tablero de producción</h1><h2>Resumen por isótopo</h2><table><tr><th>Isótopo</th><th>Lotes</th><th>EOB total GBq</th>
 <th>EOB teórico semana (plan)</th><th>Rend. blanco</th><th>Rend. síntesis</th><th>QC</th></tr>{res}</table>
 <h2>Lotes</h2><table><tr>{''.join(f'<th>{c}</th>' for c in cols)}<th>alertas</th></tr>{filas}</table>
+<h2>Fichas: evidencia citada por GAMMA-AI</h2>{fichas or '<p>Sin paquete de evidencia.</p>'}
 <h2>Advertencias</h2><ul>{adv}</ul></html>"""
 
 
