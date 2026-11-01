@@ -10,9 +10,10 @@ historias, muros alineados por construcción, F71), aplicado a la losa interior
 medida de F70. Incertidumbre del ajuste propagada y declarada. No es decisión
 operacional (18.10); validación experimental bloqueada (memoria 3).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase78"
 OUT.mkdir(parents=True, exist_ok=True)
 

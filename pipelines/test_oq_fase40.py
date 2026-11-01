@@ -1,5 +1,6 @@
 """Pruebas del informe OQ de fase 40 (evidencia real F38/F39/F42)."""
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 import sys
@@ -8,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import oq_fase40 as f40  # noqa: E402
 
-EV = Path("/mnt/agents/work/evidencia_v072")
+EV = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 
 
 def test_informe_real_parcial_honesto():

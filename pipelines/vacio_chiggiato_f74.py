@@ -10,9 +10,10 @@ Tercer método independiente sobre la misma cámara KIUBE (KIUBE-V04, supuesto d
 Reglas canónicas: simulacion_teorica, pq no_declarada_nunca, fuentes citadas (49.11),
 sin ciclotrón real (memoria 3), recomendación != decisión operacional (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase74"
 OUT.mkdir(parents=True, exist_ok=True)
 

@@ -2,6 +2,7 @@
 
 Simulación teórica (memoria 3). PQ no_declarada_nunca (Informe 14.9).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import subprocess
 import sys
@@ -12,7 +13,7 @@ import pytest
 
 RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ / "pipelines"))
-EVID = Path("/mnt/agents/work/evidencia_v072/fase67")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase67")
 JSON67 = EVID / "molflow_xval_f67.json"
 CSV = "/tmp/mfrun/out3/facet_physics.csv"
 XML = "/tmp/kiube_camara.xml"

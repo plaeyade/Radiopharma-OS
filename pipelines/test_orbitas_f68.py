@@ -2,6 +2,7 @@
 
 Simulación teórica (memoria 3). PQ no_declarada_nunca (Informe 14.9).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import math
 import sys
@@ -17,7 +18,7 @@ for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
 from app.domain.orbita_central import (CampoKIUBE, RFKIUBE, brho_mev_tm,  # noqa: E402
                                        medir_f_rev_orbita, simular_aceleracion)
 
-EVID = Path("/mnt/agents/work/evidencia_v072/fase68")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase68")
 JSON68 = EVID / "orbitas_centrales_f68.json"
 
 

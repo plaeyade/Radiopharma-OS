@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F78 — exterior F70 por extrapolación declarada (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase78")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase78")
 E = json.load(open(EV / "exterior_f70_f78.json"))
 
 

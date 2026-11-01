@@ -6,12 +6,13 @@ cada valor con fuente citada (49.11). Materiales sin fuente confiable quedan
 pendiente_fuente — nunca inventados. Gases/fluidos: E/nu no aplican (declarado).
 Reglas canónicas: simulacion_teorica, pq no_declarada_nunca, 18.10.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase79"
 OUT.mkdir(parents=True, exist_ok=True)
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
+F70 = pathlib.Path(f"{_RPOS_RAIZ}/work/f70_mc")
 
 def md5(p):
     h = hashlib.md5()

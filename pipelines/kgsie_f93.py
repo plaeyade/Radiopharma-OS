@@ -15,12 +15,13 @@ Reglas canónicas:
 - Honestidad: entidades sembradas desde evidencia real de fases previas
   (F81/F83/F86/F88/F89/F90/F91/F92); los ejemplos V&V se declaran.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import hashlib, json, os, sys
 from datetime import datetime, timezone
 
 FASE = "fase93"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase93"
-EV_BASE = "/mnt/agents/work/evidencia_v072"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase93"
+EV_BASE = f"{_RPOS_RAIZ}/work/evidencia_v072"
 
 # --- 44.6 Ontology Manager ---------------------------------------------------------
 ONTOLOGIA = {

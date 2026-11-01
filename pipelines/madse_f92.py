@@ -19,12 +19,13 @@ Reglas canónicas:
   consultan evidencia real de fases previas (F82/F83/F86/F87/F90); no se
   simulan lecturas ni resultados. Agentes con datos pendientes lo declaran.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import hashlib, json, os, sys
 from datetime import datetime, timezone
 
 FASE = "fase92"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase92"
-EV_BASE = "/mnt/agents/work/evidencia_v072"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase92"
+EV_BASE = f"{_RPOS_RAIZ}/work/evidencia_v072"
 
 DOMINIOS_43_7 = ["fisica_medica", "radioquimica", "control_calidad", "produccion",
                  "operacion", "proteccion_radiologica", "mantenimiento", "economia",

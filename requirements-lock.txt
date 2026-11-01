@@ -25,3 +25,11 @@ scipy==1.16.2
 SQLAlchemy==2.0.54
 tqdm==4.70.1
 uvicorn==0.34.2
+# --- añadidos en la depuración 2026-10-31: importados por servicios/pruebas y ausentes del lock ---
+pikepdf==10.17.0        # data_lake_service: PDF/A-2b del eBR
+pypdf==6.21.4           # surrogate_service: extracción PDF
+python-docx==1.2.0      # surrogate_service: extracción DOCX
+PyYAML==6.0.3           # pipelines: dags/dashboards
+reportlab==5.1.0        # data_lake_service: informes PDF
+SimpleITK==2.5.7        # nuclear_data_service: prueba F37 (HP vs BERT)
+pytesseract==0.3.13     # surrogate_service: OCR (requiere binario tesseract-ocr)

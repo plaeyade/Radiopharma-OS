@@ -13,11 +13,14 @@ Entradas (repositorio kiube): out/mc_f70v035/<caso>/resultado_mapa.json y mapa_h
 Reglas: simulacion_teorica, pq no_declarada_nunca, append-only, 18.10, memoria 3.
 Rutas: KIUBE_RAIZ, RPOS_EVIDENCIA, F83_CASO (por defecto out/mc_f70v035/h2500_t1450).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import datetime, hashlib, json, math, os, pathlib
 
-KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", "/mnt/agents/work/kiube_v035/kiube"))
+KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", (_RPOS_RAIZ + "/work/kiube_v035/kiube")))
 CASO = KIUBE / os.environ.get("F83_CASO", "out/mc_f70v035/h2500_t1450")
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072"))
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", (_RPOS_RAIZ + "/work/evidencia_v072")))
 OUT = EV / "fase83"
 
 # valores de referencia de F70/F72/F78 citados de los mensajes de commit/CHANGELOG del repositorio (la evidencia JSON de

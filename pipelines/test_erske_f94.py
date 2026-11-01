@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """F94 — V&V del ERSKE (cap. 45). 4 pruebas."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, sys
 
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import erske_f94 as f
 
-EV = "/mnt/agents/work/evidencia_v072/fase94/erske_f94.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase94/erske_f94.json"
 
 
 def test_registry_y_validacion_45_21():
@@ -61,7 +63,7 @@ def test_evidencia_consultas_y_auditoria():
     for c in ev["consultas_demostradas"]:
         assert c["cita_top1"]["fuente"]["origen"]  # trazabilidad 45.10/45.11
     reg = [json.loads(l) for l in
-           open("/mnt/agents/work/evidencia_v072/fase94/registro_erske_f94.jsonl",
+           open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase94/registro_erske_f94.jsonl",
                 encoding="utf-8").read().splitlines() if l.strip()]
     acciones = [r["accion"] for r in reg]
     assert acciones.count("consultar") == 3  # 45.23: cada consulta registrada

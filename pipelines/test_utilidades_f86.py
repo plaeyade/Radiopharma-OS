@@ -1,14 +1,16 @@
 """Tests F86 - utilidades completas 5.12 (stdlib + pytest)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, subprocess, sys, hashlib
 
-EV = "/mnt/agents/work/evidencia_v072/fase86"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase86"
 EVJ = os.path.join(EV, "utilidades_completas_f86.json")
-PIPE = "/mnt/agents/work/rpos25/pipelines/utilidades_completas_f86.py"
+PIPE = f"{_RPOS_REPO}/pipelines/utilidades_completas_f86.py"
 
 
 def setup_module(module):
     if not os.path.exists(EVJ):
-        subprocess.run([sys.executable, PIPE], check=True)
+        subprocess.run([sys.executable, PIPE], check=True, capture_output=True, text=True)
 
 
 def test_estructura_y_fuentes():

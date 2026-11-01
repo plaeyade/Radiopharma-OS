@@ -13,11 +13,12 @@ Referencias declaradas: Gmehling et al., Vapor-Liquid Equilibrium Data Collectio
 Utilidades: mezcla de salidas DWSIM (IAPWS/PR78) y formulas analiticas declaradas;
 los supuestos de consumo (caudales, horas) son SUPUESTOS declarados, no mediciones.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, subprocess, datetime, shutil, re, math
 
-EV = "/mnt/agents/work/evidencia_v072/fase85"
-APP = "/mnt/agents/work/sci_runtime/f85_app/bin/Release/net8.0/f85app.dll"
-DWSIM = "/mnt/agents/work/sci_runtime/dwsim"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase85"
+APP = f"{_RPOS_RAIZ}/work/sci_runtime/f85_app/bin/Release/net8.0/f85app.dll"
+DWSIM = f"{_RPOS_RAIZ}/work/sci_runtime/dwsim"
 
 REF_VLE = {
     "Tb_EtOH_K": 351.44,      # DECHEMA/Perry's, 1 atm

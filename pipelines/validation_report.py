@@ -23,6 +23,7 @@ caso contrario. Las evidencias que requieren solvers externos se
 reportan con su disponibilidad real, nunca simuladas.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import argparse
 import hashlib
@@ -123,7 +124,7 @@ print(json.dumps({'a': decay_correction(100.0, 109.77, 109.77, False)}))
         check("decaimiento_exacto", False, f"error: {exc}", "10.15")
 
     # (c) evidencias de solvers reales persistidas (nunca simuladas)
-    evid = Path("/mnt/agents/work/sci_runtime/mc_e2e_evidencia.json")
+    evid = Path(f"{_RPOS_RAIZ}/work/sci_runtime/mc_e2e_evidencia.json")
     if evid.is_file():
         try:
             mc = json.loads(evid.read_text())
@@ -213,7 +214,7 @@ def validacion_pre_despliegue() -> list[dict]:
     check("dependencias", not faltan,
           "todas presentes" if not faltan else f"faltan: {faltan}")
 
-    zip_path = Path("/mnt/agents/output/radiopharma-os-mvp.zip")
+    zip_path = Path(f"{_RPOS_RAIZ}/output/radiopharma-os-mvp.zip")
     if zip_path.is_file():
         h = hashlib.sha256(zip_path.read_bytes()).hexdigest()[:16]
         check("integridad_artefacto", zip_path.stat().st_size > 1_000_000,

@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests F70 — sin numpy (stdlib), ejecutables con python3.11+pytest o python3.12."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, struct
 
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
-EVI = pathlib.Path("/mnt/agents/work/evidencia_v072/fase70")
+F70 = pathlib.Path(f"{_RPOS_RAIZ}/work/f70_mc")
+EVI = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase70")
 
 def leer_voxel(path):
     d = open(path, "rb").read()
@@ -29,7 +30,7 @@ def leer_voxel(path):
 
 def test_voxel_2cm_fracciones_volumen():
     vox = leer_voxel(F70 / "voxel_map_2cm.bin")
-    vj = json.load(open("/mnt/agents/work/kiube_v08/kiube/out/mc/volumes.json"))
+    vj = json.load(open(f"{_RPOS_RAIZ}/work/kiube_v08/kiube/out/mc/volumes.json"))
     ref = {}
     for info in vj.values():
         if isinstance(info, dict) and info.get("material") and info.get("volume_cm3"):

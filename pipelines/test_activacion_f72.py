@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F72 — activación y dosis al gemelo (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase72")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase72")
 E = json.load(open(EV / "activacion_gemelo_f72.json"))
 
 

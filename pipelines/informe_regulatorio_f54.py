@@ -8,12 +8,13 @@ Reglas canónicas aplicadas:
 - PQ nunca declarada (14.9): requiere entorno real.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 
 # (clave_seccion, ruta_json_relativa, fase_origen)
 SECCIONES = [

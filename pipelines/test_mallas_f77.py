@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests F77 — mallas por voxel para el gemelo (stdlib + numpy)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 import numpy as np
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase77")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase77")
 E = json.load(open(EV / "mallas_gemelo_f77.json"))
 Z = np.load(EV / "f77_mallas_gemelo.npz")
 
@@ -34,7 +35,7 @@ def test_estadistica_declarada():
 
 def test_coherencia_con_f76():
     # la media de dosis debe coincidir con la malla guardada en F76 (mismas semillas/protocolo)
-    f76 = np.load("/mnt/agents/work/evidencia_v072/fase76/f76_f70_dosis_mesh_media.npy")
+    f76 = np.load(f"{_RPOS_RAIZ}/work/evidencia_v072/fase76/f76_f70_dosis_mesh_media.npy")
     d = Z["dose_h10_media"]
     assert d.shape == f76.shape
     s1, s2 = d.sum(), f76.sum()

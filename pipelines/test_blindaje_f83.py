@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F83 — re-corrida de F70 con la geometría kiube v0.35 (Geant4)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, os, pathlib
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072")) / "fase83"
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072")) / "fase83"
 E = json.load(open(EV / "blindaje_v035_f83.json"))
 
 

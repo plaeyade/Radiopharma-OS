@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F85 — cierre de la cadena de blindaje F70–F78 (kiube v0.35, Geant4 v2)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, os, pathlib
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072")) / "fase85"
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072")) / "fase85"
 E = json.load(open(EV / "cierre_blindaje_f85.json"))
 
 

@@ -18,6 +18,7 @@ Reglas: simulacion_teorica, pq no_declarada_nunca, append-only, 18.10, memoria 3
 Rutas: KIUBE_RAIZ, RPOS_EVIDENCIA.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import datetime, hashlib, json, math, os, pathlib, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -28,8 +29,8 @@ from app.domain.vacuum_tpmc import CamaraVacio, simular_mapa_presion, R_GAS     
 from app.domain.gas_stripping import (PerfilPresion, simular_perdida_gas, sigma_mezcla_cm2,   # noqa: E402
                                       sigma_molecula_cm2, COMPOSICION_RESIDUAL_NAKHAI)
 
-KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", "/mnt/agents/work/kiube_v035/kiube"))
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072"))
+KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", f"{_RPOS_RAIZ}/work/kiube_v035/kiube"))
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072"))
 OUT = EV / "fase82"
 N_MOL = int(os.environ.get("F82_N_MOL", "600000"))
 T_K = 293.15

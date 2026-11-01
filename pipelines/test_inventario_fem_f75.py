@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F75 — inventario FEM (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase75")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase75")
 E = json.load(open(EV / "inventario_fem_f75.json"))
 
 
@@ -13,10 +14,10 @@ def test_campos_canonicos():
 
 
 def test_inventario_completo_y_masas():
-    vols = json.load(open("/mnt/agents/work/kiube_v08/kiube/out/mc/volumes.json"))
+    vols = json.load(open(f"{_RPOS_RAIZ}/work/kiube_v08/kiube/out/mc/volumes.json"))
     assert E["n_componentes"] == len(vols) == len(E["componentes"])
     # masa de cada componente = V * rho (cuando hay densidad)
-    mats = json.load(open("/mnt/agents/work/f70_mc/materials.json"))
+    mats = json.load(open(f"{_RPOS_RAIZ}/work/f70_mc/materials.json"))
     for nombre, c in E["componentes"].items():
         d = mats.get(c["material"], {}).get("density")
         if d:

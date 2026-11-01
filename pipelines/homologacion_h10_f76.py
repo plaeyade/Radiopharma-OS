@@ -7,10 +7,11 @@ losas del muro este BIND (interior 282-322 cm, exterior 492-532 cm) donde la
 geometría lo permite. Reglas canónicas: simulacion_teorica, pq
 no_declarada_nunca, ceros y límites declarados, fuentes citadas (49.11).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime
 import numpy as np
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase76"
 
 def md5(p):

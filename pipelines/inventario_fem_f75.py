@@ -9,13 +9,14 @@ no_declarada_nunca, propiedades sin fuente = pendiente_fuente (nunca inventadas)
 recomendación != decisión operacional (18.10). FEM 3D completo diferido a versión
 final (decisión del usuario); esto es el INVENTARIO, no la corrida FEM.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase75"
 OUT.mkdir(parents=True, exist_ok=True)
-KIUBE = pathlib.Path("/mnt/agents/work/kiube_v08/kiube/out/mc")
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
+KIUBE = pathlib.Path(f"{_RPOS_RAIZ}/work/kiube_v08/kiube/out/mc")
+F70 = pathlib.Path(f"{_RPOS_RAIZ}/work/f70_mc")
 
 def md5(p):
     h = hashlib.md5()

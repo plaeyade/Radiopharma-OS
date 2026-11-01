@@ -11,9 +11,12 @@ Cotejo interno (documental, sin decision operativa, 18.10):
 - Equivalencia de atenuacion aproximada via densidad*espesor (g/cm2) SOLO como
   comparacion gruesa declarada: no sustituye transporte de neutrones (NCRP-144).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-EV = "/mnt/agents/work/evidencia_v072/fase83"
+EV = (_RPOS_RAIZ + "/work/evidencia_v072/fase83")
 
 DOC = {
     "titulo": "ESTIMACION DE BLINDAJE CICLOTRON ONCOLOGIA ZUMAYA",
@@ -89,7 +92,7 @@ def md5_file(p, chunk=1 << 20):
 
 def main():
     os.makedirs(EV, exist_ok=True)
-    src = "/mnt/agents/upload/ESTIMACIÓN DE BLINDAJE CICLOTRON ONCOLOGÍA ZUMAYA.pdf"
+    src = (_RPOS_RAIZ + "/upload/ESTIMACIÓN DE BLINDAJE CICLOTRON ONCOLOGÍA ZUMAYA.pdf")
     ev = {
         "fase": "F83",
         "fecha_utc": datetime.datetime.utcnow().isoformat() + "Z",

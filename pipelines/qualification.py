@@ -17,6 +17,7 @@ Uso:  python pipelines/qualification.py [--out qualification.json]
 Exit: 0 si DQ+IQ+OQ pasan; 1 en caso contrario. PQ nunca se declara.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import argparse
 import hashlib
@@ -56,7 +57,7 @@ def dq() -> dict:
     docs = {"Informe": "Informe_RadiopharmaOS_v2.0_Digital_Twins.docx",
             "EDS": "ESPECIFICACIÓN TÉCNICA DEL MVP INDUSTRIAL.docx",
             "SEH": "Software Engineering Handbook (SEH).docx"}
-    upload = Path("/mnt/agents/upload")
+    upload = Path(f"{_RPOS_RAIZ}/upload")
     for nombre, fichero in docs.items():
         p = upload / fichero
         ok = p.is_file() and p.stat().st_size > 100_000

@@ -10,9 +10,12 @@ ambiguedad_declarada=True. NADA se inventa; valores no legibles se omiten.
 Reglas canonicas: plataforma honesta, registro append-only ALCOA+ md5-encadenado,
 fuente citada (49.11), esto es registro documental, no decision de diseno (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-EV = "/mnt/agents/work/evidencia_v072/fase82"
+EV = (_RPOS_RAIZ + "/work/evidencia_v072/fase82")
 
 DOC = {
     "titulo": "ESTIMACION DE BLINDAJES ONCOLOGIA ZUMAYA",
@@ -183,7 +186,7 @@ def coherencia():
 
 def main():
     os.makedirs(EV, exist_ok=True)
-    src = "/mnt/agents/upload/ESTIMACIÓN DE BLINDAJES ONCOLOGÍA ZUMAYA.pdf"
+    src = (_RPOS_RAIZ + "/upload/ESTIMACIÓN DE BLINDAJES ONCOLOGÍA ZUMAYA.pdf")
     checks = coherencia()
     ev = {
         "fase": "F82",

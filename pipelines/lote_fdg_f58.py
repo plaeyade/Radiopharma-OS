@@ -14,6 +14,8 @@ Reglas canónicas aplicadas:
 - Registro append-only ALCOA+ en evidencia.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 
 import json
 import math
@@ -21,7 +23,7 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 
 # Parámetros de irradiación DECLARADOS (escenario teórico, no medición):
 BEAM_MEV = 16.5
@@ -41,7 +43,7 @@ T_DESPACHO_MIN = 90.0  # EOS → despacho (supuesto logístico declarado)
 
 
 def correr_lote(evidencia: Path = EVIDENCIA_DEF) -> dict:
-    sys.path.insert(0, "/mnt/agents/work/rpos25/services/yield_engine")
+    sys.path.insert(0, f"{_RPOS_REPO}/services/yield_engine")
     for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
         del sys.modules[_m]
     from app.domain.entities import Beam, TargetMaterial
@@ -50,7 +52,7 @@ def correr_lote(evidencia: Path = EVIDENCIA_DEF) -> dict:
         LocalReactionDataProvider)
     from app.infrastructure.stopping.factory import build_stopping_provider
 
-    base = Path("/mnt/agents/work/rpos25/services/yield_engine")
+    base = Path(f"{_RPOS_REPO}/services/yield_engine")
     yc = YieldCalculator(build_stopping_provider(str(base / "data" / "stopping")),
                          LocalReactionDataProvider(base / "data"))
     target = TargetMaterial("h2_18o", "H2-18O 97%", "h2o", "18O",

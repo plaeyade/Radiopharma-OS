@@ -15,10 +15,13 @@ intermedios), NO mediciones. Sensores: estado honesto pendiente_telemetria
 (fuente citada). Alarmas: V&V con vectores sinteticos DECLARADOS (no son
 lecturas reales).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-EV = "/mnt/agents/work/evidencia_v072/fase88"
-F86 = "/mnt/agents/work/evidencia_v072/fase86/utilidades_completas_f86.json"
+EV = (_RPOS_RAIZ + "/work/evidencia_v072/fase88")
+F86 = (_RPOS_RAIZ + "/work/evidencia_v072/fase86/utilidades_completas_f86.json")
 
 # Zonas (espacios reales F81) con objetivos de diseno DECLARADOS.
 # dP en Pa respecto a exterior (0). Radiofarmacia: cascada negativa hacia

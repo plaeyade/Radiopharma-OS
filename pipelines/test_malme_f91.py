@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """F91 — V&V del MALME (cap. 42). 4 pruebas."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, sys
 
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import malme_f91 as f
 
-EV = "/mnt/agents/work/evidencia_v072/fase91/malme_f91.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase91/malme_f91.json"
 
 
 def test_entrenamiento_y_metricas_reales():
@@ -71,7 +73,7 @@ def test_evidencia_y_auditoria_md5():
     assert ev["modelo_deficiente"]["despliegue_bloqueado"] is True
     assert ev["modelo_deficiente"]["estado"] == "en_validacion"
     reg = [json.loads(l) for l in
-           open("/mnt/agents/work/evidencia_v072/fase91/registro_malme_f91.jsonl",
+           open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase91/registro_malme_f91.jsonl",
                 encoding="utf-8").read().splitlines() if l.strip()]
     assert len(reg) >= 8
     for prev, cur in zip(reg, reg[1:]):

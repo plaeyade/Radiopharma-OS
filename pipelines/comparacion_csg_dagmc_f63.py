@@ -9,6 +9,7 @@ Replica el caso F62 en geometría CSG pura con la API Python de OpenMC:
 Resultado de referencia DAGMC (F62): 595.88 ± 0.13 cm/partícula.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 import sys
@@ -16,14 +17,14 @@ from pathlib import Path
 
 import numpy as np
 
-E_DEF = Path("/mnt/agents/work/evidencia_v072/fase63")
+E_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase63")
 
 
 def correr_csg(n_particles: int = 200_000, batches: int = 20,
                salida: Path = E_DEF) -> dict:
     import openmc
 
-    spec = np.loadtxt("/mnt/agents/work/evidencia_v072/fase32/nspec_o18.tot",
+    spec = np.loadtxt(f"{_RPOS_RAIZ}/work/evidencia_v072/fase32/nspec_o18.tot",
                       comments="#")
     Ee = spec[:, 0]; w = spec[:, 1]
     m = w > 0
@@ -75,7 +76,7 @@ def correr_csg(n_particles: int = 200_000, batches: int = 20,
     import os, tempfile
     with tempfile.TemporaryDirectory() as td:
         os.environ["OPENMC_CROSS_SECTIONS"] = (
-            "/mnt/agents/work/sci_runtime/openmc_data/endfb80/"
+            f"{_RPOS_RAIZ}/work/sci_runtime/openmc_data/endfb80/"
             "cross_sections_sab.xml")
         sp = model.run(cwd=td)
         with openmc.StatePoint(sp) as s:

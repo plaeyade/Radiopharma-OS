@@ -16,3 +16,6 @@ lote_*_counts.*
 *.blend
 *.blend1
 __pycache__/
+
+# logs de servicios (se regeneran)
+out/*.log

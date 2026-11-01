@@ -15,12 +15,15 @@ afectada. Un esquema v2 (importancia también en techo y losa) se probó y se de
 Reglas: simulacion_teorica, pq no_declarada_nunca, append-only, 18.10, memoria 3.
 Rutas: KIUBE_RAIZ, RPOS_EVIDENCIA, F85_CASO (por defecto out/mc_f70v035/h2500_t1450).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import datetime, hashlib, json, math, os, pathlib
 import numpy as np
 
-KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", "/mnt/agents/work/kiube_v035/kiube"))
+KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", (_RPOS_RAIZ + "/work/kiube_v035/kiube")))
 CASO = KIUBE / os.environ.get("F85_CASO", "out/mc_f70v035/h2500_t1450")
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072"))
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", (_RPOS_RAIZ + "/work/evidencia_v072")))
 OUT = EV / "fase85"
 # carga de trabajo anual del proyecto (kiube v0.28, estudio del techo): 50–150 k µAh/año; KIUBE 180 → 180 µA en blanco
 CARGA_uAh = (50e3, 150e3)

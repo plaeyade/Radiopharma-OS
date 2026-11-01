@@ -4,6 +4,7 @@ Cada veredicto nace de una prueba real en este sandbox (instalación intentada,
 API inspeccionada) o se declara pendiente_entorno. Nada se afirma de memoria.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 import shutil
@@ -11,7 +12,7 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 ENV_PY = "/workspace/rpos_cache/openmc_env/bin/python3"
 
 

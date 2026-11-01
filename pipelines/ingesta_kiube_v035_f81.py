@@ -19,11 +19,12 @@ Reglas canónicas: simulacion_teorica, pq no_declarada_nunca (14.9), cifras con 
 recomendación != decisión operacional (18.10).
 Rutas: KIUBE_RAIZ (repo kiube), RPOS_EVIDENCIA (evidencia_v072).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import datetime, hashlib, json, os, pathlib
 
-KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", "/mnt/agents/work/kiube_v035/kiube"))
+KIUBE = pathlib.Path(os.environ.get("KIUBE_RAIZ", f"{_RPOS_RAIZ}/work/kiube_v035/kiube"))
 PAQ = KIUBE / "out/rpos_v035"
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072"))
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072"))
 OUT = EV / "fase81"
 ETQ_IBA = "fuente_modelo_oficial_IBA (vía usuario)"
 FASES_CAMARA = {"F66", "F74", "F67", "F65"}

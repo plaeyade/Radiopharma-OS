@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F74 — validación Chiggiato del vacío (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase74")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase74")
 E = json.load(open(EV / "vacio_chiggiato_f74.json"))
 
 

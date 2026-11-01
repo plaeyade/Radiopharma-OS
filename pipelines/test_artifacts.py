@@ -61,6 +61,9 @@ def test_verificacion_falla_con_artefacto_modificado(tmp_path):
 
 def test_proveedor_osrm_honesto():
     sys.path.insert(0, str(ROOT / "services" / "process_service"))
+    # otro servicio pudo dejar su paquete `app` en sys.modules (orden de recolección)
+    for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
+        del sys.modules[_m]
     from app.domain.logistics import GeoPoint
     from app.infrastructure.routing import (OsrmRoutingProvider,
                                             OsrmUnavailable)

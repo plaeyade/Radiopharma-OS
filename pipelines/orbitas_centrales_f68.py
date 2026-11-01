@@ -20,6 +20,7 @@ completa requiere diseño de región central (bump de 1er armónico / geometría
 de fuente) cuyos datos no son públicos, o mapa OPERA — pendiente declarado.
 PQ no_declarada_nunca (14.9); resultado informativo, no decisión (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import sys
 from datetime import datetime, timezone
@@ -37,7 +38,7 @@ from app.domain.orbita_central import (  # noqa: E402
     M_HMINUS, CLIGHT, FUENTES_ORBITA)
 import math  # noqa: E402
 
-EVID = Path("/mnt/agents/work/evidencia_v072/fase68")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase68")
 EVID.mkdir(parents=True, exist_ok=True)
 
 

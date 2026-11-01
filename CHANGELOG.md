@@ -1,5 +1,12 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.17.0 — Depuración (2026-10-31)
+- Pruebas ya no escriben en datos versionados (Yield Engine: 84 tablas de stopping de prueba retiradas; Process Service: costos).
+- Raíz única `RPOS_AGENTS_ROOT` en lugar de 158 rutas `/mnt/agents` fijas; pipelines se ejecutan desde este repo.
+- `pipelines/conftest.py`: evidencia externa ausente → omitida con motivo; `RPOS_REQUIRE_EVIDENCIA=1` la exige.
+- Dependencias completas (lock y surrogate_service); Tesseract en la imagen de surrogate.
+- `make test`: 1.325 pasan, 0 fallan. CI en GitHub Actions. Detalle: `docs/DEPURACION.md`.
+
 ## v3.16.0 — F90 ecosistema
 - Contrato `cyclotron-sim/termino_fuente@1` (fixture KIUBE) y verificación de planes de producción contra el presupuesto operativo del blindaje (corriente máxima, µA·h/semana).
 - F86–F89 (Zumaya) migradas a `plaeyade/Zumaya-AI`; F81–F85 también en `plaeyade/Cyclotron-SIM`.

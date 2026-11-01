@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests del generador PHITS (Fase 33)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 
 import pytest
@@ -8,7 +9,7 @@ from app.infrastructure.phits.phits_case import (
     ESTADO_PENDIENTE, PhitsBunkerCase, build_phits_case, phits_status,
 )
 
-SPEC = "/mnt/agents/work/evidencia_v072/fase32/nspec_o18.tot"
+SPEC = f"{_RPOS_RAIZ}/work/evidencia_v072/fase32/nspec_o18.tot"
 
 
 def test_estado_honesto_sin_binario(monkeypatch):
