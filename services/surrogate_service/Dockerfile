@@ -12,8 +12,8 @@ LABEL org.opencontainers.image.title="radiopharma-os/surrogate_service" \
       org.opencontainers.image.description="Radiopharma OS MVP — surrogate_service (EDS 10.17)"
 
 WORKDIR /srv
-# OCR real: binario Tesseract con inglés y español (document_extractor.idiomas_ocr)
-RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa \
+# OCR real: Tesseract (inglés y español) + poppler (pdftoppm) para páginas PDF sin capa de texto
+RUN apt-get update && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

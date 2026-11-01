@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-spa poppler-utils
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-lock.txt
       # Evidencia externa: sin RPOS_AGENTS_ROOT las pruebas usan una raíz temporal y omiten (con motivo)
