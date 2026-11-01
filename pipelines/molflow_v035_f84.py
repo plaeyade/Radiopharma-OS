@@ -17,6 +17,7 @@ Reglas: simulacion_teorica, pq no_declarada_nunca, append-only, 18.10, memoria 3
 Rutas: RPOS_EVIDENCIA, MOLFLOW_CLI (binario), F84_NDES (desorciones por gas; por defecto 2e6).
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import csv, datetime, hashlib, json, math, os, pathlib, subprocess, sys
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -28,7 +29,7 @@ for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
 from app.domain.gas_stripping import PerfilPresion, simular_perdida_gas            # noqa: E402
 import kiube_camara_molflow as KM                                                  # noqa: E402
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072"))
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072"))
 OUT = EV / "fase84"
 CLI = os.environ.get("MOLFLOW_CLI", "molflowCLI")
 NDES = float(os.environ.get("F84_NDES", "2e6"))

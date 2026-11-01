@@ -5,9 +5,10 @@ Reglas canónicas: simulacion_teorica, pq no_declarada_nunca, métricas NO homog
 declaradas explícitamente (cada fase midió cantidades distintas); figuras/cifras solo
 con fuente citada (49.11); recomendaciones no son decisiones operativas (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase71"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -89,7 +90,7 @@ out = {
     "advertencias": advertencias,
     "fuentes": ["RPOS-PLANO (BIND)", "evidencia_v072/fase52", "evidencia_v072/fase62",
                 "evidencia_v072/fase70", "ICRP-74/116", "ENDF/B-VIII.0"],
-    "md5_fuentes": {k: md5("/mnt/agents/work/" + v["fuente"]) for k, v in comparacion.items()},
+    "md5_fuentes": {k: md5(f"{_RPOS_RAIZ}/work/" + v["fuente"]) for k, v in comparacion.items()},
 }
 json.dump(out, open(OUT / "comparacion_triple_f71.json", "w"), indent=1)
 

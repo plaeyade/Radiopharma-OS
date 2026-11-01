@@ -15,9 +15,10 @@ Reglas canonicas respetadas:
   V&V del motor (no hay ciclotron operativo - memoria 3). Nunca se presentan
   como resultados QC reales.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime, math, statistics
 
-EV = "/mnt/agents/work/evidencia_v072/fase87"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase87"
 
 D2 = 1.128  # constante carta I-MR (n=2)
 

@@ -31,6 +31,7 @@ Verificaciones:
 PQ no_declarada_nunca (14.9); resultado informativo, no decisión (18.10).
 Fuentes (49.11): KEY22, KEY22-GEOM, S09, T04F2, T04F8, TUD03, CALC.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import math
 import sys
@@ -48,7 +49,7 @@ from app.domain.orbita_central import (  # noqa: E402
     medir_f_rev_orbita, simular_aceleracion, brho_mev_tm, wrap_pi,
     _paso_exacto, M_HMINUS, CLIGHT, FUENTES_ORBITA)
 
-EVID = Path("/mnt/agents/work/evidencia_v072/fase69")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase69")
 EVID.mkdir(parents=True, exist_ok=True)
 CSV_KEY22 = RAIZ / "data" / "kiube" / "kiube_Bavg_flutter_KEY22.csv"
 

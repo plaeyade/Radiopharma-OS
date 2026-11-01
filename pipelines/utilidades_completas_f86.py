@@ -9,10 +9,11 @@ Las cargas HVAC/vapor/gases son ANALITICAS con supuestos declarados.
 Tarifas: SUPUESTOS declarados en MXN - tarifas CFE reales y tipo de cambio siguen
 pendientes (declarado en pendientes del proyecto); nunca se presentan como reales.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-EV = "/mnt/agents/work/evidencia_v072/fase86"
-F85 = "/mnt/agents/work/evidencia_v072/fase85/nrtl_utilidades_f85.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase86"
+F85 = f"{_RPOS_RAIZ}/work/evidencia_v072/fase85/nrtl_utilidades_f85.json"
 
 TARIFAS_DECLARADAS_MXN = {
     "electricidad_kWh": 2.50,     # supuesto declarado; tarifa CFE real pendiente

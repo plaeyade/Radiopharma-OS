@@ -21,11 +21,14 @@ Parámetros declarados con fuente:
 - Impureza ¹³N (T½ 9.965 min, NNDC): fracción declarada 0.3 % del canal
   principal (16O residual) — modelo simplificado declarado.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import hashlib, json, math, os, sys
 from datetime import datetime, timezone
 
 FASE = "fase96"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase96"
+EV_DIR = (_RPOS_RAIZ + "/work/evidencia_v072/fase96")
 
 E_CHARGE = 1.602176634e-19
 UMA_G = 1.66053906660e-24

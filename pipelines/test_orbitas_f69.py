@@ -6,6 +6,7 @@ medido, convergencia del shim radial, JSON canónico (49.11, 14.9, 18.10),
 órbita 18 MeV coherente con F68, registro append-only y compatibilidad F68
 (sin KEY22 el campo es el analítico γ·B0 de siempre).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import math
 import sys
@@ -21,7 +22,7 @@ from app.domain.orbita_central import (  # noqa: E402
     medir_f_rev_orbita, brho_mev_tm)
 
 CSV = RAIZ / "data" / "kiube" / "kiube_Bavg_flutter_KEY22.csv"
-EVID = Path("/mnt/agents/work/evidencia_v072/fase69")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase69")
 
 
 def test_csv_existe_y_carga():

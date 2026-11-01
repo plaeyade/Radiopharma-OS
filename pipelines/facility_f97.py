@@ -16,12 +16,13 @@ Reglas canónicas:
   ambiental), F89 (equipos), F86 (utilidades). Estados sin telemetría =
   pendiente declarado (memoria 3), jamás simulados.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import hashlib, json, os, sys
 from datetime import datetime, timezone
 
 FASE = "fase97"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase97"
-EV_ROOT = "/mnt/agents/work/evidencia_v072"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase97"
+EV_ROOT = f"{_RPOS_RAIZ}/work/evidencia_v072"
 
 REGLA_33_3 = ("Facility Twin representa exclusivamente infraestructura: "
               "no ejecuta producción, simulaciones físicas, CQ ni programación clínica.")

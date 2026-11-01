@@ -17,6 +17,7 @@ PQ sigue sin declararse nunca.
 Uso:  python pipelines/oq_fase40.py [--evidencia DIR] [--out f40.json]
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import argparse
 import json
@@ -24,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 
 
 def _ahora() -> str:

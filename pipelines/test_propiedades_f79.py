@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Tests F79 — propiedades termo-mecánicas con fuente (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase79")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase79")
 E = json.load(open(EV / "propiedades_fem_f79.json"))
-MATS = json.load(open("/mnt/agents/work/f70_mc/materials.json"))
+MATS = json.load(open(f"{_RPOS_RAIZ}/work/f70_mc/materials.json"))
 
 
 def test_campos_canonicos():

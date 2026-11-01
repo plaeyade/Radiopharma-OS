@@ -12,9 +12,10 @@ No se inventan espacios ni cotas; las etiquetas no encontradas se declaran no_en
 Reglas canonicas: plataforma honesta (estado declarado), registro append-only ALCOA+
 (md5-encadenado), recomendaciones != decisiones operativas (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-BASE = "/mnt/agents/work"
+BASE = f"{_RPOS_RAIZ}/work"
 EV = os.path.join(BASE, "evidencia_v072", "fase81")
 EXTR = os.path.join(EV, "extraccion_dxf_f81.json")
 

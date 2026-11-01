@@ -13,13 +13,15 @@ Reglas canónicas aplicadas:
   planta física, IQ/OQ/PQ reales y expediente regulatorio.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 
 import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 
 JORNADA = [
     ("FDG", "F18", "06:00", "lote_fdg"),
@@ -30,7 +32,7 @@ JORNADA = [
 
 
 def correr_simulacro(evidencia: Path = EVIDENCIA_DEF) -> dict:
-    sys.path.insert(0, "/mnt/agents/work/rpos25")
+    sys.path.insert(0, f"{_RPOS_REPO}")
     from pipelines.lotes_multi_f58 import correr_lotes
     from pipelines.lote_fdg_f58 import correr_lote
     from pipelines.eficiencias_citadas_f60 import correr_f60

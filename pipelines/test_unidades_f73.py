@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F73 — revisión de unidades de tallies F70 (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase73")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase73")
 E = json.load(open(EV / "revision_unidades_tallies_f73.json"))
 S_n = 4616232340295.063
 
@@ -21,7 +22,7 @@ def test_prueba_ab_consistente():
 
 def test_activacion_corregida_plausible():
     # corregidas deben ser las de F72 divididas por S_n
-    f72 = json.load(open("/mnt/agents/work/evidencia_v072/fase72/activacion_gemelo_f72.json"))
+    f72 = json.load(open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase72/activacion_gemelo_f72.json"))
     for iso, v in E["activacion_corregida"].items():
         esperado = f72["isotopos"][iso]["A_sat_Bq"] / S_n
         assert abs(v["A_sat_Bq"] - esperado) / esperado < 1e-9

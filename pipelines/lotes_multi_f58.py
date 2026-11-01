@@ -14,6 +14,8 @@ Reglas canónicas:
 - QC/liberación: nunca liberado (18.10/14.9); registro append-only ALCOA+.
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 
 import json
 import math
@@ -21,8 +23,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-EVIDENCIA_DEF = Path("/mnt/agents/work/evidencia_v072")
-YE = Path("/mnt/agents/work/rpos25/services/yield_engine")
+EVIDENCIA_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
+YE = Path(f"{_RPOS_REPO}/services/yield_engine")
 
 # Escenarios teóricos DECLARADOS (no mediciones):
 ESCENARIOS = {

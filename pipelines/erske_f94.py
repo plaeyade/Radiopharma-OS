@@ -17,13 +17,15 @@ Reglas canónicas:
   versión del índice y parámetros (jsonl md5, ALCOA+).
 - 45.4/45.13: la recuperación permanece desacoplada del razonamiento.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import hashlib, json, math, os, re, sys
 from datetime import datetime, timezone
 
 FASE = "fase94"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase94"
-EV_BASE = "/mnt/agents/work/evidencia_v072"
-REPO = "/mnt/agents/work/rpos25"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase94"
+EV_BASE = f"{_RPOS_RAIZ}/work/evidencia_v072"
+REPO = f"{_RPOS_REPO}"
 
 EMBEDDING_MODEL = {"id": "hashing-tfidf-v1", "dims": 256,
                    "tipo": "hashing_trick_determinista_stdlib",

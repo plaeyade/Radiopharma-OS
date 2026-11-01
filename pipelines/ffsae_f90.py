@@ -17,16 +17,18 @@ Reglas canónicas:
 - Trazabilidad 40.22: cada simulación registra escenario, versión, fecha y
   parámetros utilizados (registro jsonl encadenado md5, append-only).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import hashlib, json, os, subprocess, sys
 from datetime import datetime, timezone
 
 FASE = "fase90"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase90"
-REPO = "/mnt/agents/work/rpos25"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase90"
+REPO = f"{_RPOS_REPO}"
 
 # --- Fuentes citadas (49.11) -------------------------------------------------
-F86_EVIDENCIA = "/mnt/agents/work/evidencia_v072/fase86/utilidades_completas_f86.json"
-F87_EVIDENCIA = "/mnt/agents/work/evidencia_v072/fase87/stae_f87.json"
+F86_EVIDENCIA = f"{_RPOS_RAIZ}/work/evidencia_v072/fase86/utilidades_completas_f86.json"
+F87_EVIDENCIA = f"{_RPOS_RAIZ}/work/evidencia_v072/fase87/stae_f87.json"
 
 # Costos por lote verificados en F86 (cap. 5.12, tarifas declaradas MXN;
 # tarifa CFE real pendiente — declarado en F86).

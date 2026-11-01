@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F76 — homologación H*(10) (stdlib + numpy)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase76")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase76")
 E = json.load(open(EV / "homologacion_h10_f76.json"))
 
 

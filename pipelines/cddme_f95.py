@@ -18,11 +18,14 @@ Reglas canónicas:
 - Honestidad/privacidad: la agenda de pacientes es SINTÉTICA DECLARADA (V&V);
   identificadores internos, jamás datos clínicos reales.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import hashlib, json, math, os, sys
 from datetime import datetime, timezone
 
 FASE = "fase95"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase95"
+EV_DIR = (_RPOS_RAIZ + "/work/evidencia_v072/fase95")
 
 T12_F18_MIN = 109.77  # NNDC (declarado)
 

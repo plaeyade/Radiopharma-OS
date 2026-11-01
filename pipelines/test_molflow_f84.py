@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F84 — Molflow+ oficial con la cámara v0.35 y correcciones de los motores de vacío."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, os, pathlib
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072")) / "fase84"
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072")) / "fase84"
 E = json.load(open(EV / "molflow_v035_f84.json"))
 
 

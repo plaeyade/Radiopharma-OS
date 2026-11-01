@@ -1,14 +1,16 @@
 """Tests F81 - plantas BIND 20-10-26 (stdlib + pytest)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, subprocess, sys
 
-EV = "/mnt/agents/work/evidencia_v072/fase81"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase81"
 EVJ = os.path.join(EV, "plantas_bind_f81.json")
-PIPE = "/mnt/agents/work/rpos25/pipelines/plantas_bind_f81.py"
+PIPE = f"{_RPOS_REPO}/pipelines/plantas_bind_f81.py"
 
 
 def setup_module(module):
     if not os.path.exists(EVJ):
-        subprocess.run([sys.executable, PIPE], check=True)
+        subprocess.run([sys.executable, PIPE], check=True, capture_output=True, text=True)
 
 
 def test_evidencia_existe_y_fuente_registrada():

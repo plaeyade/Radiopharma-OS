@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """F92 — V&V del MADSE (cap. 43). 4 pruebas."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, sys
 
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import madse_f92 as f
 
-EV = "/mnt/agents/work/evidencia_v072/fase92/madse_f92.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase92/madse_f92.json"
 
 
 def test_registry_versionado():
@@ -61,7 +63,7 @@ def test_validacion_eventos_y_evidencia_auditoria():
     assert ev["conversacion"]["resultados"]["recomendacion"] in (
         "favorable_con_condiciones", "precaucion")
     reg = [json.loads(l) for l in
-           open("/mnt/agents/work/evidencia_v072/fase92/registro_madse_f92.jsonl",
+           open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase92/registro_madse_f92.jsonl",
                 encoding="utf-8").read().splitlines() if l.strip()]
     assert len(reg) >= 6
     for prev, cur in zip(reg, reg[1:]):

@@ -20,6 +20,7 @@ Fuentes (49.11):
 Figuras sin fuente -> supuesto_declarado_pendiente_fuente (Informe 49.11).
 PQ: no_declarada_nunca (Informe 14.9). Recomendación != decisión (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json
 import sys
 import xml.etree.ElementTree as ET
@@ -35,7 +36,7 @@ for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
 
 from app.domain.gas_stripping import PerfilPresion, simular_perdida_gas  # noqa: E402
 
-EVID = Path("/mnt/agents/work/evidencia_v072/fase67")
+EVID = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase67")
 EVID.mkdir(parents=True, exist_ok=True)
 
 FUENTES = {

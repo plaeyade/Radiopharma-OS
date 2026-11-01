@@ -1,5 +1,6 @@
 """Tests F58-multi y F60: lotes teóricos 11C/68Ga/64Cu y eficiencias citadas."""
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 import math
@@ -71,7 +72,7 @@ def test_f60_multi_citados(tmp_path):
 
 def test_f63_json_coherente(tmp_path):
     import json as j, math
-    p = "/mnt/agents/work/evidencia_v072/fase63/comparacion_csg_dagmc_f63.json"
+    p = f"{_RPOS_RAIZ}/work/evidencia_v072/fase63/comparacion_csg_dagmc_f63.json"
     r = j.loads(open(p).read())
     csg = r["csg"]["flujo_muro"]; dag = r["dagmc_f62"]["flujo_muro"]
     assert r["diferencia_relativa"] == abs(csg - dag) / dag

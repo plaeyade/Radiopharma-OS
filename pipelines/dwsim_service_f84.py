@@ -10,11 +10,12 @@ declarada; unit operations COCO de terceros no instalados - pendiente_entorno).
 Si el runtime no esta disponible, el pipeline reporta estado honesto
 pendiente_entorno y NO fabrica resultados.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, subprocess, datetime, shutil, re
 
-EV = "/mnt/agents/work/evidencia_v072/fase84"
-APP = "/mnt/agents/work/sci_runtime/dwsim_app/bin/Release/net8.0/dwsimtest.dll"
-DWSIM = "/mnt/agents/work/sci_runtime/dwsim"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase84"
+APP = f"{_RPOS_RAIZ}/work/sci_runtime/dwsim_app/bin/Release/net8.0/dwsimtest.dll"
+DWSIM = f"{_RPOS_RAIZ}/work/sci_runtime/dwsim"
 
 # Supuestos declarados del caso (radiofarmacia FDG tipica, ajustables):
 CASO = {

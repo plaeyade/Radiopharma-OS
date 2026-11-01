@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F81 — ingesta kiube v0.35 y verificación cruzada (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, os, pathlib
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072")) / "fase81"
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072")) / "fase81"
 E = json.load(open(EV / "ingesta_kiube_v035_f81.json"))
 ETQ = "fuente_modelo_oficial_IBA (vía usuario)"
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests Fase 42 — caso búnker OpenMC (equivalencia geométrica analítica)."""
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 
@@ -53,7 +54,7 @@ def test_modelo_construible_si_openmc_disponible():
     except ImportError:
         return  # entorno OpenMC no instalado en el runner — no bloqueante
     import numpy as np
-    spec = "/mnt/agents/work/evidencia_v072/fase32/nspec_o18.tot"
+    spec = f"{_RPOS_RAIZ}/work/evidencia_v072/fase32/nspec_o18.tot"
     import os
     if not os.path.exists(spec):
         return

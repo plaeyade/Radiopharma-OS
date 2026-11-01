@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Tests F71 — comparación triple de blindaje (stdlib only)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072/fase71")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase71")
 E = json.load(open(EV / "comparacion_triple_f71.json"))
 
 

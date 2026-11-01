@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """F93 — V&V del KGSIE (cap. 44). 4 pruebas."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, sys
 
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import kgsie_f93 as f
 
-EV = "/mnt/agents/work/evidencia_v072/fase93/kgsie_f93.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase93/kgsie_f93.json"
 u = f.urn
 
 
@@ -65,12 +67,12 @@ def test_evidencia_sync_export_y_auditoria():
     assert any("tipo_fuera_de_ontologia" in e for e in ev["eventos_validacion_44_21"])
     assert any("predicado_fuera_de_ontologia" in e for e in ev["eventos_validacion_44_21"])
     assert ev["consulta_demostrada"]["camino"]  # agente→…→f18 multi-dominio
-    grafo = json.load(open("/mnt/agents/work/evidencia_v072/fase93/grafo_f93.json",
+    grafo = json.load(open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase93/grafo_f93.json",
                            encoding="utf-8"))
     assert len(grafo["nodos"]) == st["entidades"]
     assert len(grafo["aristas"]) == st["relaciones"]
     reg = [json.loads(l) for l in
-           open("/mnt/agents/work/evidencia_v072/fase93/registro_kgsie_f93.jsonl",
+           open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase93/registro_kgsie_f93.jsonl",
                 encoding="utf-8").read().splitlines() if l.strip()]
     for prev, cur in zip(reg, reg[1:]):
         assert cur["prev_md5"] == prev["md5"]

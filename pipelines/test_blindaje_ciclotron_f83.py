@@ -1,14 +1,16 @@
 """Tests F83 - blindaje ciclotron Zumaya (stdlib + pytest)."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, os, subprocess, sys, hashlib
 
-EV = "/mnt/agents/work/evidencia_v072/fase83"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase83"
 EVJ = os.path.join(EV, "blindaje_ciclotron_f83.json")
-PIPE = "/mnt/agents/work/rpos25/pipelines/blindaje_ciclotron_f83.py"
+PIPE = f"{_RPOS_REPO}/pipelines/blindaje_ciclotron_f83.py"
 
 
 def setup_module(module):
     if not os.path.exists(EVJ):
-        subprocess.run([sys.executable, PIPE], check=True)
+        subprocess.run([sys.executable, PIPE], check=True, capture_output=True, text=True)
 
 
 def test_fuente_y_regimen():

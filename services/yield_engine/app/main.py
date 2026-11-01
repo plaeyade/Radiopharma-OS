@@ -36,7 +36,8 @@ app = FastAPI(
 from app.infrastructure.stopping.external_tables import ExternalStoppingTables
 from app.infrastructure.stopping.promoted_stopping import PromotedStoppingPower
 
-_tablas_ext = ExternalStoppingTables(DATA_DIR / "stopping" / "external")
+_tablas_ext = ExternalStoppingTables(Path(os.environ.get(
+    "YE_STOPPING_EXTERNAL", DATA_DIR / "stopping" / "external")))
 # Promoción de tablas externas calibradas (EDS 19.10): el proveedor
 # activo es el base (ATIMA) salvo en materiales con tabla promovida.
 # Mapeo clave interna → nombre del material externo registrado.

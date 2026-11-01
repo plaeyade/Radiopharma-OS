@@ -8,11 +8,12 @@ sandbox, 2026-10-18) con reanudación automática documentada.
 Canon: simulacion_teorica; fuentes citadas (49.11); PQ no_declarada_nunca
 (14.9); registro append-only ALCOA+.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, struct, subprocess, sys
 
 HERE = pathlib.Path(__file__).resolve().parent          # repo/pipelines
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
-EVI = pathlib.Path("/mnt/agents/work/evidencia_v072/fase70")
+F70 = pathlib.Path(f"{_RPOS_RAIZ}/work/f70_mc")
+EVI = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase70")
 EVI.mkdir(parents=True, exist_ok=True)
 
 def md5(p):
@@ -47,7 +48,7 @@ def leer_voxel(path):
 
 def ejecutar():
     # 1) validación de fracciones de volumen (voxel 2 cm vs CAD volumes.json)
-    vj = json.load(open("/mnt/agents/work/kiube_v08/kiube/out/mc/volumes.json"))
+    vj = json.load(open(f"{_RPOS_RAIZ}/work/kiube_v08/kiube/out/mc/volumes.json"))
     ref = {}
     for info in vj.values():
         if isinstance(info, dict) and info.get("material") and info.get("volume_cm3"):

@@ -1,5 +1,7 @@
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, math, os, sys
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import burnup_f96 as b
 
 

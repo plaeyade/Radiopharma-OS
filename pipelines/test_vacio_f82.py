@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Tests F82 — re-corrida F66/F74/F65 con la cámara y el bombeo de kiube v0.35."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, os, pathlib, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -8,7 +9,7 @@ for _m in [k for k in list(sys.modules) if k == "app" or k.startswith("app.")]:
     del sys.modules[_m]
 from app.domain.gas_stripping import MBAR_A_PA, densidad_gas_cm3            # noqa: E402
 
-EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", "/mnt/agents/work/evidencia_v072")) / "fase82"
+EV = pathlib.Path(os.environ.get("RPOS_EVIDENCIA", f"{_RPOS_RAIZ}/work/evidencia_v072")) / "fase82"
 E = json.load(open(EV / "vacio_v035_f82.json"))
 
 

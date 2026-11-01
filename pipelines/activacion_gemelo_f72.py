@@ -10,12 +10,15 @@ Reglas canónicas: simulacion_teorica; escenario operativo TEÓRICO declarado (n
 ciclotrón real aún — memoria permanente 3); pq no_declarada_nunca; cifras solo con
 fuente citada (49.11); recomendación != decisión operativa (18.10).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", f"{_RPOS_RAIZ}")  # raíz de evidencia/datos externos
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", (_RPOS_RAIZ + ""))  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path((_RPOS_RAIZ + "/work/evidencia_v072"))
 OUT = EV / "fase72"
 OUT.mkdir(parents=True, exist_ok=True)
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
+F70 = pathlib.Path((_RPOS_RAIZ + "/work/f70_mc"))
 
 def md5(p):
     h = hashlib.md5()

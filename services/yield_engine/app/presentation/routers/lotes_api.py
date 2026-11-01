@@ -12,6 +12,7 @@ Reglas canónicas:
 - Eficiencias: supuesto_declarado_pendiente_fuente salvo FDG citado (F60).
 """
 from __future__ import annotations
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 
 import json
 import math
@@ -27,7 +28,7 @@ from app.application.production_service import ProductionService
 
 router = APIRouter(prefix="/lotes", tags=["batch-manager"])
 
-REGISTRO_DEF = Path("/mnt/agents/work/evidencia_v072/fase58/registro_lotes.jsonl")
+REGISTRO_DEF = Path(f"{_RPOS_RAIZ}/work/evidencia_v072/fase58/registro_lotes.jsonl")
 
 ESCENARIOS = {
     "F18": {"reaction_id": "o18_p_n_f18", "target_id": "h2_18o",

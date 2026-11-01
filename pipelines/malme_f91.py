@@ -18,11 +18,12 @@ Reglas canónicas:
   V&V del ciclo de vida; no son datos reales de producción. El entrenamiento
   es real (mínimos cuadrados) sobre ese dataset.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import hashlib, json, os, random, sys
 from datetime import datetime, timezone
 
 FASE = "fase91"
-EV_DIR = "/mnt/agents/work/evidencia_v072/fase91"
+EV_DIR = f"{_RPOS_RAIZ}/work/evidencia_v072/fase91"
 
 ESTADOS = ("entrenado", "en_validacion", "aprobado", "desplegado", "retirado")
 

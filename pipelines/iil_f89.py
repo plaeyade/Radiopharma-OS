@@ -15,9 +15,10 @@ laboratorio QC de radiofarmacia); estado de conexion honesto:
 'sin_conexion_pendiente_instrumento'. Los archivos de prueba del importador son
 vectores sinteticos DECLARADOS para V&V (no son resultados reales; memoria 3).
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, hashlib, os, datetime
 
-EV = "/mnt/agents/work/evidencia_v072/fase89"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase89"
 
 # Inventario PLANIFICADO declarado (26.6: id, fabricante, modelo, serie, fw, estado, ubicacion)
 INSTRUMENTOS = [

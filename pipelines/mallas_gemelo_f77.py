@@ -7,10 +7,11 @@ el Physics Twin / Digital Facility Twin. Resuelve el pendiente_entorno de F72.
 Reglas canónicas: simulacion_teorica, pq no_declarada_nunca, unidades declaradas
 (normalización strength, F73), fuentes citadas.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime
 import numpy as np
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase77"
 
 def md5(p):

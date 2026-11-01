@@ -48,7 +48,7 @@ facility_api.init()
 component_api.init(facility_api._twin)  # comparte el Asset Registry real
 vacuum_api.init(facility_api._twin)     # mismo Asset Registry
 from app.domain.cost_engine import CostEngine
-cost_api.init(CostEngine("data/costos/corridas.json"))  # Fase 29
+cost_api.init(CostEngine(os.environ.get("RPOS_COSTOS_CORRIDAS", "data/costos/corridas.json")))  # Fase 29
 beme_api.init()
 simulation_api.init()
 financial_api.init()

@@ -13,12 +13,13 @@ Correcciones aplicadas aquí (sin reescribir evidencias históricas, append-only
   - verif_voxel.json: reaction_rates_per_s y max_dose_rate estaban ×4.616e12 demás
   - dosis fuera del bloque (cociente) no se ve afectada.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
 import json, pathlib, hashlib, datetime, math
 
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase73"
 OUT.mkdir(parents=True, exist_ok=True)
-F70 = pathlib.Path("/mnt/agents/work/f70_mc")
+F70 = pathlib.Path(f"{_RPOS_RAIZ}/work/f70_mc")
 
 def md5(p):
     h = hashlib.md5()

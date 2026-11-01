@@ -8,10 +8,12 @@ Estados: cubierto / parcial / sin_fase — asignación por mapeo curado de palab
 clave (declarado, no inferencia automática ciega). Reglas canónicas: honestidad,
 append-only, pq no_declarada_nunca, 18.10.
 """
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, pathlib, hashlib, datetime, re
 
-ROOT = pathlib.Path("/mnt/agents/work/rpos25")
-EV = pathlib.Path("/mnt/agents/work/evidencia_v072")
+ROOT = pathlib.Path(f"{_RPOS_REPO}")
+EV = pathlib.Path(f"{_RPOS_RAIZ}/work/evidencia_v072")
 OUT = EV / "fase80"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -138,7 +140,7 @@ out = {
     ],
     "fuentes": ["ESPECIFICACIÓN TÉCNICA DEL MVP INDUSTRIAL.docx", "services/ (8 servicios)",
                 "pipelines/ (~40 pipelines productivos)", "evidencia_v072 (79+ fases)"],
-    "md5_fuentes": {"mvp": md5("/mnt/agents/upload/ESPECIFICACIÓN TÉCNICA DEL MVP INDUSTRIAL.docx")},
+    "md5_fuentes": {"mvp": md5(f"{_RPOS_RAIZ}/upload/ESPECIFICACIÓN TÉCNICA DEL MVP INDUSTRIAL.docx")},
 }
 json.dump(out, open(OUT / "matriz_trazabilidad_f80.json", "w"), indent=1)
 

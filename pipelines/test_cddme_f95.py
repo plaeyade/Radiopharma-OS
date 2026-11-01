@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """F95 — V&V del CDDME (cap. 32). 4 pruebas."""
+_RPOS_RAIZ = __import__("os").environ.get("RPOS_AGENTS_ROOT", "/mnt/agents")  # raíz de evidencia/datos externos
+_RPOS_REPO = str(__import__("pathlib").Path(__file__).resolve().parents[1])  # raíz de este repo
 import json, math, os, sys
 
-sys.path.insert(0, "/mnt/agents/work/rpos25/pipelines")
+sys.path.insert(0, f"{_RPOS_REPO}/pipelines")
 import cddme_f95 as f
 
-EV = "/mnt/agents/work/evidencia_v072/fase95/cddme_f95.json"
+EV = f"{_RPOS_RAIZ}/work/evidencia_v072/fase95/cddme_f95.json"
 
 
 def test_decay_calculator_exacto():
@@ -87,7 +89,7 @@ def test_evidencia_y_auditoria():
     assert ev["propuesta_reprogramacion_32_11"]["auto_aplicada"] is False
     assert ev["decay_calculator"]["t12_f18_min"] == 109.77
     reg = [json.loads(l) for l in
-           open("/mnt/agents/work/evidencia_v072/fase95/registro_cddme_f95.jsonl",
+           open(f"{_RPOS_RAIZ}/work/evidencia_v072/fase95/registro_cddme_f95.jsonl",
                 encoding="utf-8").read().splitlines() if l.strip()]
     for prev, cur in zip(reg, reg[1:]):
         assert cur["prev_md5"] == prev["md5"]
