@@ -1,0 +1,11 @@
+[
+ {"lote": "FDG-2611-01", "isotopo": "F18", "producto": "FDG", "fecha": "2026-11-02", "corriente_uA": 300, "horas": 2.0, "doble_haz": true,
+  "eob_GBq": 900.0, "eos_GBq": 520.0, "minutos_eob_a_eos": 30,
+  "qc": {"identidad_radionucleidica": 109.5, "pureza_radionucleidica_pct": 99.9, "pureza_radioquimica_pct": 98.2, "ph": 6.0,
+         "apariencia_score": 1, "actividad_gbq": 520.0, "k222_ppm": 10, "acetonitrilo_ppm": 50}},
+ {"lote": "FDG-2611-02", "isotopo": "F18", "producto": "FDG", "fecha": "2026-11-02", "corriente_uA": 300, "horas": 2.0, "doble_haz": true,
+  "eob_GBq": 850.0, "eos_GBq": 480.0, "minutos_eob_a_eos": 32,
+  "qc": {"identidad_radionucleidica": 109.5, "pureza_radionucleidica_pct": 99.9, "pureza_radioquimica_pct": 90.0, "ph": 6.0}},
+ {"lote": "GA-2611-01", "isotopo": "Ga68", "producto": "Ga-68 (cloruro)", "fecha": "2026-11-03", "corriente_uA": 40, "horas": 1.0,
+  "eob_GBq": 40.0}
+]
