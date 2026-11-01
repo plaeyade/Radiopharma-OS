@@ -1,5 +1,15 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.21.0 — Fichas citadas por GAMMA (2026-11-01)
+- `pipelines/gamma_evidencia.py`: consulta en vivo a GAMMA (`GAMMA_URL`) o paquete `gamma/paquete_evidencia@1` versionado, verificando el SHA-256 de cada cita.
+- El plan y el tablero incluyen fichas por isótopo (F18, Ga68, Cu64) y del ciclotrón con fuente, página y fragmento. 7 pruebas.
+
+## v3.20.0 — Tablero de producción por lote (2026-11-01)
+- `pipelines/tablero_produccion.py`: compara el EOB teórico (escalado por corriente y saturación) con el medido, calcula el rendimiento de síntesis corregido por decaimiento y la recomendación de QC del Release Engine. Salida JSON o HTML. 5 pruebas.
+
+## README (2026-11-01)
+- README nuevo y conciso; el anterior pasa a `docs/README-historico.md`.
+
 ## v3.19.0 — Plan semanal contra el ciclotrón real (2026-11-01)
 - `pipelines/plan_produccion.py` verifica cada corrida contra el término fuente de Cyclotron-SIM: versión KIUBE 300, 18 MeV fijo o 13–17 MeV en los puertos VE 3/7, y doble haz sólo F-18 en T1/T5 a energía fija.
 - Verifica el plan contra el presupuesto de blindaje de Zumaya-AI (`zumaya-ai/presupuesto_operativo@1`) y calcula el EOB teórico por corrida con Yield Engine (IAEA).
