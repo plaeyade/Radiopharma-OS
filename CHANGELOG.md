@@ -1,5 +1,10 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.18.0 — Fases ordenadas: producción aquí, física y edificio en sus repos (2026-11-01)
+- La física del gemelo KIUBE (F63, F65–F79 y re-corridas v0.35 de F81–F85), con `gas_stripping`, `vacuum_tpmc`, `orbita_central`, `data/kiube` y `tools/`, se movió a Cyclotron-SIM (`machines/iba_kiube/gemelo_fisico`); allí sus pruebas dan el mismo resultado.
+- F81–F83 de Zumaya (plantas BIND y documentos de blindaje) se movieron a Zumaya-AI (`rpos_fases_zumaya`); F82 y F83 ahora leen los PDF versionados y sus pruebas se ejecutan.
+- Ya no hay números de fase duplicados; `ecosistema_f90.py` pasa a `ecosistema.py`. Índice: `docs/FASES.md`.
+
 ## v3.17.1 — F86 parcial sin DWSIM (2026-11-01)
 - F86 ya no se rompe con TypeError cuando F85 está en «pendiente_entorno»: marca los conceptos que dependen de DWSIM como `pendiente_F85_DWSIM`, sin cantidad ni costo; el total los excluye y se advierte; el estado queda en `parcial_pendiente_F85`.
 - Nueva prueba del camino parcial; F86 sale de la lista de calificación de entorno.

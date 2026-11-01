@@ -1,6 +1,6 @@
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-import ecosistema_f90 as E
+import ecosistema as E
 
 
 def test_contrato_kiube():

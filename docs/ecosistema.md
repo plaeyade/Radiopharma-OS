@@ -11,7 +11,7 @@ radiopharma-os es el **gemelo digital de producción**: planeación de corridas,
 
 ## F90
 
-`pipelines/ecosistema_f90.py` lee el contrato del ciclotrón y verifica un plan semanal contra el presupuesto del blindaje. El número y la duración de las corridas son libres siempre que se cumplan dos límites: la corriente instantánea no excede la de diseño, y los µA·h/semana no exceden los autorizados. También reporta los neutrones por semana para trazabilidad de activación.
+`pipelines/ecosistema.py` lee el contrato del ciclotrón y verifica un plan semanal contra el presupuesto del blindaje. El número y la duración de las corridas son libres siempre que se cumplan dos límites: la corriente instantánea no excede la de diseño, y los µA·h/semana no exceden los autorizados. También reporta los neutrones por semana para trazabilidad de activación.
 
 ## Fases que salieron de este repo
 
