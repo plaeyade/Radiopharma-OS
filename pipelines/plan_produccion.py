@@ -24,6 +24,7 @@ import sys
 RAIZ = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(RAIZ))
 import ecosistema  # noqa: E402
+import gamma_evidencia  # noqa: E402
 
 CONTRATO_PRESUPUESTO = "zumaya-ai/presupuesto_operativo@1"
 VERSION = "KIUBE 300"
@@ -33,6 +34,13 @@ REACCION = {  # isótopo → (reacción, blanco) del catálogo de Yield Engine
     "Cu64": ("ni64_p_n_cu64", "ni64"),
 }
 # Mezcla declarada por el usuario (2026-10-31): fracción de radiofármacos, no de tiempo de haz.
+# Ficha por isótopo → consultas del paquete de evidencia de GAMMA (fuente, página, fragmento)
+EVIDENCIA_FICHA = {
+    "F18": ["f18_blanco", "fdg_qc"],
+    "Ga68": ["ga68_blanco", "blanco_solido"],
+    "Cu64": ["cu64_blanco", "blanco_solido"],
+    "ciclotron": ["kiube_corriente", "kiube_energia", "blindaje_boveda"],
+}
 MEZCLA_DECLARADA = {"F18": 0.80, "Ga68": 0.10, "Cu64": 0.05, "otros": 0.05}
 
 PLAN_BASE = [
@@ -87,7 +95,26 @@ def verificar_corrida(c, tf, i_max_version):
     return e
 
 
-def planificar(plan=None, tf=None, presupuesto=None, rendimiento=None):
+def cargar_evidencia(ruta=None):
+    """Paquete de GAMMA verificado; si falta o no verifica, la ficha lo declara sin citas."""
+    try:
+        return gamma_evidencia.PaqueteGamma.cargar(ruta)
+    except (OSError, ValueError) as exc:
+        return exc
+
+
+def fichas_evidencia(paquete):
+    if isinstance(paquete, Exception):
+        return {k: {"referencias": [], "pendiente": f"sin paquete de GAMMA: {paquete}"} for k in EVIDENCIA_FICHA}
+    fichas = {}
+    for clave, ids in EVIDENCIA_FICHA.items():
+        refs = [r for i in ids for r in paquete.referencias(i)]
+        sin = [i for i in ids if not paquete.referencias(i)]
+        fichas[clave] = {"referencias": refs, **({"pendiente": f"sin evidencia en GAMMA: {', '.join(sin)}"} if sin else {})}
+    return fichas
+
+
+def planificar(plan=None, tf=None, presupuesto=None, rendimiento=None, evidencia=None):
     tf = tf or cargar_tf()
     presupuesto = presupuesto or cargar_presupuesto()
     plan = plan or PLAN_BASE
@@ -124,11 +151,13 @@ def planificar(plan=None, tf=None, presupuesto=None, rendimiento=None):
         "presupuesto": {k: presupuesto[k] for k in ("corriente_max_uA", "uAh_semana", "estado")},
         "fraccion_tiempo_haz": {k: round(v / total_t, 3) for k, v in t_haz.items()},
         "mezcla_declarada_radiofarmacos": MEZCLA_DECLARADA,
+        "fichas_evidencia": fichas_evidencia(evidencia if evidencia is not None else cargar_evidencia()),
         "advertencias": [
             "EOB teórico (sección eficaz IAEA y frenado): no incluye eficiencia real de blanco ni de síntesis.",
             "La mezcla declarada es por radiofármaco y la fracción de haz por tiempo: no son comparables uno a uno.",
             "«otros» (5 %) sin isótopo ni reacción definidos: pendiente.",
             f"Presupuesto de blindaje en estado «{presupuesto.get('estado')}».",
+            "Las referencias de GAMMA son evidencia experimental (fuente, página y fragmento verificables), no validación.",
         ],
     }
 

@@ -1,0 +1,10 @@
+[
+ {"id": "kiube_corriente", "seccion": "ciclotron", "consulta": "Cyclone KIUBE maximum beam current dual beam uA", "k": 3},
+ {"id": "kiube_energia", "seccion": "ciclotron", "consulta": "KIUBE proton energy 18 MeV variable energy extraction ports", "k": 3},
+ {"id": "f18_blanco", "seccion": "F18", "consulta": "18F fluoride production enriched H2 18O water target yield", "k": 3},
+ {"id": "ga68_blanco", "seccion": "Ga68", "consulta": "68Ga production solid zinc-68 target cyclotron irradiation", "k": 3},
+ {"id": "cu64_blanco", "seccion": "Cu64", "consulta": "64Cu production nickel-64 electroplated solid target", "k": 3},
+ {"id": "blanco_solido", "seccion": "Ga68", "consulta": "solid target station NIRTA irradiation transfer", "k": 2},
+ {"id": "blindaje_boveda", "seccion": "blindaje", "consulta": "cyclotron vault shielding neutron dose rate", "k": 2},
+ {"id": "fdg_qc", "seccion": "F18", "consulta": "FDG radiochemical purity quality control release", "k": 2}
+]
