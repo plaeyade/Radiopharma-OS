@@ -1,5 +1,6 @@
 # Repos hermanos de radiopharma-os (todos privados, plaeyade). Las rutas locales se fijan con variables de entorno.
-gamma_ai:      {rol: plataforma maestra (clínica, pacientes, dosimetría, literatura), repo: "pendiente"}
+gamma_ai:      {rol: plataforma maestra (conocimiento y evidencia citada), repo: plaeyade/GAMMA-AI,
+                contratos: "gamma/ingesta@1 y gamma/evidencia@1 (ADR-0034)"}
 cyclotron_sim: {rol: modelo CAD/físico del ciclotrón, repo: plaeyade/Cyclotron-SIM, env: CYCLOTRON_SIM_RAIZ,
                 contrato: "machines/<maquina>/export/termino_fuente.json (cyclotron-sim/termino_fuente@1)"}
 zumaya_ai:     {rol: proyecto de instalación (blindajes, estructura, documentos), repo: plaeyade/Zumaya-AI, env: ZUMAYA_RAIZ,

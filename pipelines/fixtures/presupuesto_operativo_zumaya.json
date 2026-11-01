@@ -1,0 +1,9 @@
+{
+ "contrato": "zumaya-ai/presupuesto_operativo@1",
+ "ciclotron": "IBA Cyclone KIUBE 300",
+ "corriente_max_uA": 300,
+ "doble_haz": "2x150 uA, puertos opuestos T1/T5",
+ "uAh_semana": 12000,
+ "base": "300 uA x 2000 h/año (40 h/semana); objetivos de dosis F88/F90",
+ "estado": "supuesto de diseño — a fijar en la licencia CNSNS"
+}

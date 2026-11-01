@@ -1,5 +1,10 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.19.0 — Plan semanal contra el ciclotrón real (2026-11-01)
+- `pipelines/plan_produccion.py` verifica cada corrida contra el término fuente de Cyclotron-SIM: versión KIUBE 300, 18 MeV fijo o 13–17 MeV en los puertos VE 3/7, y doble haz sólo F-18 en T1/T5 a energía fija.
+- Verifica el plan contra el presupuesto de blindaje de Zumaya-AI (`zumaya-ai/presupuesto_operativo@1`) y calcula el EOB teórico por corrida con Yield Engine (IAEA).
+- Plan base (F-18 10×2 h con doble haz, Ga-68 3×1 h, Cu-64 1×4 h): cumple y usa el 52 % de los 12 000 µA·h/semana. 9 pruebas.
+
 ## v3.18.0 — Fases ordenadas: producción aquí, física y edificio en sus repos (2026-11-01)
 - La física del gemelo KIUBE (F63, F65–F79 y re-corridas v0.35 de F81–F85), con `gas_stripping`, `vacuum_tpmc`, `orbita_central`, `data/kiube` y `tools/`, se movió a Cyclotron-SIM (`machines/iba_kiube/gemelo_fisico`); allí sus pruebas dan el mismo resultado.
 - F81–F83 de Zumaya (plantas BIND y documentos de blindaje) se movieron a Zumaya-AI (`rpos_fases_zumaya`); F82 y F83 ahora leen los PDF versionados y sus pruebas se ejecutan.
