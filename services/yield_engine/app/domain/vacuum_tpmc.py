@@ -62,6 +62,9 @@ class CamaraVacio:
     q_h2_fuentes_total_mbar_l_s: float = 1e-3
     masa_gas_g_mol: float = 18.015
     temperatura_k: float = 303.0
+    # F82: bombas configurables (por defecto vacío → disposición V04: n_bombas a 45°+k·90° en la tapa superior con
+    # s_captura; F84). Cada bomba: {"x_mm", "y_mm", "lado" (+1 tapa superior, -1 inferior, 0 ambas), "r_mm", "s"}.
+    bombas: tuple = ()
 
     @property
     def v_media_mm_s(self) -> float:
@@ -81,6 +84,9 @@ class CamaraVacio:
     @property
     def s_efectiva_l_s(self) -> float:
         # S = A · v_avg/4 · s (TPMC-IPAC14); A cm², v cm/s → l/s
+        if self.bombas:
+            return sum(math.pi * (b["r_mm"] / 10) ** 2 * (self.v_media_mm_s / 10) / 4 * b["s"] / 1000.0
+                       for b in self.bombas)
         a_cm2 = math.pi * (self.r_bomba_mm / 10) ** 2
         return (self.n_bombas * a_cm2 * (self.v_media_mm_s / 10) / 4
                 * self.s_captura / 1000.0)
@@ -113,18 +119,32 @@ def simular_mapa_presion(cam: CamaraVacio, n_moleculas: int = 400_000,
     rng = np.random.default_rng(semilla)
     R, H = cam.r_pared_mm, cam.gap_mm
     zh = H / 2.0
-    bombas_xy = np.array([
-        [cam.r_pos_bomba_mm * math.cos(math.pi / 4 + math.pi / 2 * k),
-         cam.r_pos_bomba_mm * math.sin(math.pi / 4 + math.pi / 2 * k)]
-        for k in range(cam.n_bombas)])
+    if cam.bombas:
+        bombas_xy = np.array([[b["x_mm"], b["y_mm"]] for b in cam.bombas])
+        b_lado = np.array([b["lado"] for b in cam.bombas], dtype=float)
+        b_r = np.array([b["r_mm"] for b in cam.bombas], dtype=float)
+        b_s = np.array([b["s"] for b in cam.bombas], dtype=float)
+    else:
+        bombas_xy = np.array([
+            [cam.r_pos_bomba_mm * math.cos(math.pi / 4 + math.pi / 2 * k),
+             cam.r_pos_bomba_mm * math.sin(math.pi / 4 + math.pi / 2 * k)]
+            for k in range(cam.n_bombas)])
+        # F84: 4 bocas en la tapa SUPERIOR, como declaran F67 (Molflow) y F74 (N_BOMBAS = 4 aperturas). Hasta v3.9.0
+        # valían en ambas tapas (8 bocas efectivas frente a las 4 de s_efectiva_l_s).
+        b_lado = np.ones(cam.n_bombas)
+        b_r = np.full(cam.n_bombas, cam.r_bomba_mm)
+        b_s = np.full(cam.n_bombas, cam.s_captura)
 
     q_pared_total = cam.q_pared_mbar_l_s_cm2 * cam.area_total_cm2
     frac_fuente = cam.q_h2_fuentes_total_mbar_l_s / cam.q_total_mbar_l_s
 
     hits_tapa = np.zeros(n_bins_r, dtype=np.int64)
-    area_bin_m2 = np.array([
+    # F84: los impactos de AMBAS tapas se acumulan en hits_tapa → el área del anillo es la de las dos tapas. Hasta v3.9.0
+    # se usaba el área de una sola tapa y todas las presiones de F66/F82 salían ×2 (caso analítico: 1,74e-6 frente a
+    # Q/S = 8,68e-7 mbar; con la corrección 8,69e-7).
+    area_bin_m2 = 2.0 * np.array([
         math.pi * ((R * (i + 1) / n_bins_r) ** 2 - (R * i / n_bins_r) ** 2)
-        for i in range(n_bins_r)]) * 1e-6  # mm²→m²
+        for i in range(n_bins_r)]) * 1e-6  # mm²→m², dos tapas
     absorbidos = 0
     hits_bomba = 0
 
@@ -198,10 +218,12 @@ def simular_mapa_presion(cam: CamaraVacio, n_moleculas: int = 400_000,
             # ¿en boca de bomba?
             r2x = hit[:, 0:1] - bombas_xy[None, :, 0]
             r2y = hit[:, 1:2] - bombas_xy[None, :, 1]
-            en_bomba = cerca_tapa & ((r2x ** 2 + r2y ** 2)
-                                     < cam.r_bomba_mm ** 2).any(axis=1)
+            lado_ok = (b_lado[None, :] == 0) | (np.sign(hit[:, 2:3]) == b_lado[None, :])
+            dentro = ((r2x ** 2 + r2y ** 2) < b_r[None, :] ** 2) & lado_ok
+            en_bomba = cerca_tapa & dentro.any(axis=1)
             hits_bomba += int(en_bomba.sum())
-            absorbe = en_bomba & (rng.random(len(hit)) < cam.s_captura)
+            s_hit = np.where(en_bomba, b_s[np.argmax(dentro, axis=1)], 0.0)
+            absorbe = en_bomba & (rng.random(len(hit)) < s_hit)
             absorbidos += int(absorbe.sum())
 
             # impingement en tapas → presión
@@ -233,11 +255,13 @@ def simular_mapa_presion(cam: CamaraVacio, n_moleculas: int = 400_000,
 
     # ---------- conversión impingement → presión ----------
     # flujo real: Q [mbar·l/s] → moléculas/s
-    n_real_s = cam.q_total_mbar_l_s * 0.1 * 1e-3 / (K_B * cam.temperatura_k)
+    # 1 mbar·l/s = 0,1 Pa·m³/s. (F82: hasta v3.7.0 se escribía ×0,1×1e-3 y luego p_mbar = p_pa×10; ambos factores se
+    # compensaban exactamente, así que las presiones de F66/F67/F74 eran correctas. Ahora cada paso es explícito.)
+    n_real_s = cam.q_total_mbar_l_s * 0.1 / (K_B * cam.temperatura_k)
     escala = n_real_s / n_moleculas          # moléculas reales/s por virtual
     z_m2s = hits_tapa * escala / area_bin_m2
     p_pa = z_m2s * K_B * cam.temperatura_k * 4.0 / (cam.v_media_mm_s / 1000.0)
-    p_mbar = p_pa * 10.0
+    p_mbar = p_pa / 100.0
 
     r_centros = ((np.arange(n_bins_r) + 0.5) * R / n_bins_r).tolist()
     return {

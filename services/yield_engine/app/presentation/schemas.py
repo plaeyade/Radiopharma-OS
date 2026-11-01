@@ -315,6 +315,7 @@ class BatchMeasurementIn(BaseModel):
     incertidumbre_gbq: float = Field(0.0, ge=0)
     operador: str = Field(..., min_length=1)
     motivo: str = Field("", description="motivo del registro (auditoría 17.25)")
+    origen: str = Field("real", description='"real" | "simulado_declarado" (F81, memoria 3: lo simulado no entra al ajuste)')
 
 
 class BatchMeasurementOut(BaseModel):
@@ -326,6 +327,7 @@ class BatchMeasurementOut(BaseModel):
     eob_medido_gbq: float
     incertidumbre_gbq: float
     operador: str
+    origen: str = "real"
     k: float | None
     accepted: bool
     reasons: list[str]

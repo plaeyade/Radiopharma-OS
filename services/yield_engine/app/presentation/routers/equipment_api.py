@@ -137,7 +137,8 @@ def register_batch_measurement(req: BatchMeasurementIn) -> BatchMeasurementOut:
         batch_id=req.batch_id, fecha=req.fecha,
         eob_predicho_gbq=req.eob_predicho_gbq,
         eob_medido_gbq=req.eob_medido_gbq,
-        incertidumbre_gbq=req.incertidumbre_gbq, operador=req.operador)
+        incertidumbre_gbq=req.incertidumbre_gbq, operador=req.operador,
+        origen=req.origen)
     try:
         r = _cal.register_batch_measurement(
             req.reaction_id, req.equipment_id, medida, motivo=req.motivo)

@@ -163,3 +163,25 @@ con fuente y contexto declarados — no se ajusta ningún parámetro del motor.
 **Regla aplicada:** toda cifra oficial queda citada con documento, tabla y revisión;
 nada de esto modifica el estado `pendiente_entorno` de la Producción Clínica (18.19) ni
 la PQ (14.9).
+
+## 7. Verificación cruzada con el gemelo kiube v0.35 (F81, 2026-10-28)
+
+Registro append-only en `evidencia_v072/fase81/` (las secciones anteriores no se editan). Regla: un `supuesto_declarado`
+sube a `fuente_modelo_oficial_IBA (vía usuario)` solo si coincide dentro de la tolerancia declarada **y** la cota del
+modelo tiene fuente IBA; lo demás se reporta como discrepancia cuantificada.
+
+| Supuesto KIUBE-V04 | Valor V04 | kiube v0.35 | Fuente en el modelo | Resultado |
+|---|---|---|---|---|
+| Radio de cámara | 548 mm | 548 mm | TUP04 Fig. 2 (IBA), ±3 mm | re-etiquetado |
+| N.º de bocas de bombeo | 4 | 4 | TUD03 (IBA); KIUBE-OM Tabla 1-1 (4 ODP) | re-etiquetado |
+| Radio / posición de boca | 127 / 375 mm | 127 / 375 mm | TUP04 Fig. 2 (IBA) | re-etiquetado |
+| Gap efectivo | 132 mm | 102,6 mm (geométrico 112) | CALC (valle 200 mm, PAT16) | discrepancia −22 % |
+| Ubicación de bombas | tapa superior (EST) | 2 bajo la máquina + 2 en carcasas RF | renders DS + EST | discrepancia cualitativa |
+| S_eff (H₂O) | 7559 l/s | 3565 l/s | CALC (TPMC) | discrepancia −53 % |
+| Carga H₂ de la fuente | 1e-3 mbar·l/s | 3,4e-2 mbar·l/s | CALC (calibrada con 81 % medido, TUD03) | discrepancia ×34 |
+
+Inventario F75: acero 14,6 t → 15,0 t (+3 %, cambio de geometría v0.8 → v0.35); bobinas 2,12 t coinciden (Cu 2,00 t de
+IPAC26; 0,12 t de epoxi/agua EST, por eso no se re-etiqueta). SRG: masa 17,9 t / 18 t, altura 1850 mm, envolvente
+2040 × 1920 mm (SRG 2000; ficha DS 1900). KIUBE-OM: 4 ODP y 8 puertos coinciden; la potencia RF que pide el modelo
+(21,4 kW con factor de Q real 0,65 EST) supera el amplificador de 16 kW → el factor EST queda contradicho (con Q ideal:
+15,1 kW).

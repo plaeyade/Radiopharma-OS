@@ -1,5 +1,11 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.16.0 — F90 ecosistema
+- Contrato `cyclotron-sim/termino_fuente@1` (fixture KIUBE) y verificación de planes de producción contra el presupuesto operativo del blindaje (corriente máxima, µA·h/semana).
+- F86–F89 (Zumaya) migradas a `plaeyade/Zumaya-AI`; F81–F85 también en `plaeyade/Cyclotron-SIM`.
+- `config/ecosistema.yaml`, `docs/ecosistema.md`. 3 pruebas.
+
+
 ## v1.25.0 — F58-multi + F59 Batch Manager + F60 eficiencias citadas (2026-10-14)
 - F58-multi: lotes teóricos e2e ¹¹C/⁶⁸Ga/⁶⁴Cu (pipelines/lotes_multi_f58.py,
   4 tests), datasets IAEA versionados, λ de biblioteca nuclear, registro
@@ -248,3 +254,69 @@ Todas las versiones siguen semver. Cada fase tiene commit, tag y evidencia en
 - gas_stripping.PerfilPresion.desde_mapa: acoplamiento mapa→stripping.
 - Flujos y s de bomba: EST declarados pendiente_fuente. 8 tests (pipelines 91).
 - Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.7.0 — 2026-10-28 — Fase 81: ingesta multiformato kiube v0.35 + verificación cruzada V04/F75/SRG/KIUBE-OM
+- pipelines/ingesta_kiube_v035_f81.py: paquete del gemelo kiube v0.35 (565 artefactos: STEP, h5m DAGMC, GDML, STL,
+  3MF/GLB, Molflow XML, mapas npz, curvas JSON, parámetros, telemetría simulada), md5 verificado artefacto a artefacto.
+- Verificación cruzada (22 filas): coinciden radio de cámara 548 mm, 4 bocas r=127 mm @ 375 mm (T04F2/TUD03 → re-etiquetado
+  append-only a `fuente_modelo_oficial_IBA (vía usuario)`), bobinas 2,12 t, masa 17,9 t vs 18 t SRG, 4 ODP, 8 puertos.
+  Discrepancias cuantificadas (sin sobrescribir V04): gap efectivo 132 → 102,6 mm (−22 %), S_eff 7559 → 3565 l/s (−53 %),
+  carga H₂ ×34, pérdida por gas F65 0,00123 % frente a 15 % (TUD03 medido), acero 14,6 → 15,0 t (+3 %), potencia RF del
+  modelo 21,4 kW frente al amplificador de 16 kW (KIUBE-OM), ubicación de bombas (cualitativa).
+- Impacto en cadena (marcas append-only, evidencias originales intactas): F66/F74/F67/F65 y F70 prioridad alta;
+  F71–F78, F75 y F68/F69 prioridad media.
+- Calibration Layer: BatchMeasurement.origen ("real" | "simulado_declarado"); la puerta 17.21 rechaza lo simulado
+  (memoria 3) y lo deja auditado. API: campo `origen` (por defecto "real"). 3 tests nuevos; 5 tests de la fase.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.8.0 — 2026-10-28 — Fase 82: re-corrida F66/F74/F65 con cámara y bombeo kiube v0.35 + corrección de unidades
+- pipelines/vacio_v035_f82.py: gap efectivo 102,6 mm; 4 ODP en los agujeros de valle (2 difusoras abajo, 2 en
+  carcasas RF, EST); brida (H₂O 1300 / H₂ 2000 l/s, EST) en serie con el agujero A+C (Clausing 0,42); cargas H₂O 5,2e-4
+  (10 h) y H₂ 2 sccm. Dos gases, 600k moléculas cada uno. Entradas verificadas por md5 contra el manifiesto F81.
+- F66 (TPMC): H₂O 2,9e-7 mbar (medida IBA con RF: 2,7e-7, +8 %); H₂ 1,6e-5 (centro) → 1,0e-5 mbar (pared).
+- F74 (analítico): S_eff H₂O 3672 l/s (V04: 7559), H₂ 6588 l/s; TPMC/Q/S = 2,0–2,2 por la conductancia del gap fino.
+- F65 (stripping): pérdida por gas 8,6 % (2 sccm) y 13,5 % (3,5 sccm, AMIT) frente al 19 % de pérdida total medido por
+  IBA (TUD03; kiube atribuye 15 % al gas).
+- CORRECCIÓN: gas_stripping.MBAR_A_PA = 0,1 → 100 (1 mbar = 100 Pa). Todas las pérdidas por gas de F65/F66 eran 1000×
+  bajas (F66: 0,00123 % → 1,23 % con V04). Evidencias históricas intactas; registro append-only en
+  fase82/correcciones_historicas.jsonl (precedente F73). vacuum_tpmc: dos factores de unidades que se compensaban se
+  escriben explícitos (presiones idénticas). Rangos de 2 pruebas vivas de F65/F66 corregidos.
+- vacuum_tpmc.CamaraVacio.bombas: bombas configurables (posición, tapa, radio, captura); por defecto, la disposición V04
+  (regresión bit a bit). F67 (Molflow+) sigue afectada y pendiente. 6 pruebas nuevas.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.9.0 — 2026-10-28 — Fase 83: re-corrida de F70 con la geometría kiube v0.35 (Geant4)
+- pipelines/blindaje_v035_f83.py: máquina kiube v0.35 (blancos F18 en la cara del yugo, puertas HDPE 18 cm) en el
+  bloque BIND de F70 (muros 2,11 m, losa 0,55 m, techo 1,45 m); 18O(p,n) BON21, 2 × 90 µA. Geant4 11.4 QGSP_BIC_HP
+  (sin ENDF/B-VIII.0 HDF5 para OpenMC en el entorno): cálculo independiente; la evidencia de F70 no se toca.
+- Cascarones laterales de importancia (×2,15 cada 10 cm): primeras cuentas DIRECTAS fuera del muro: 0,002–0,008 µSv/h
+  (media de cara, contacto 0–30 cm), parche frente a T1 0,027 µSv/h. Transmisión del muro 0,6–2,5e-9; TVL 25–28 cm
+  (SRG Tabla 9 ≈ 30 cm). Fracción de dosis fuera del bloque 2,7e-4 (criterio F70 < 0,05).
+- F78 CONTRADICHA: μ = 0,0142 cm⁻¹ (TVL 162 cm) da T(225 cm) = 4,1e-2; F83 da 2,4e-9 → la extrapolación de F78
+  sobreestima la dosis exterior ~1,7e7 veces (conservadora, no representativa). Registro append-only.
+- Activación de saturación (Høgdahl): Co60 10 GBq, Eu152 4,8 GBq, Cu64 590 GBq (0,7–1,6 × F72), Ag110m 0,57 GBq
+  (0,025 × F72; I0 Ag109→110m EST). 12 corridas × 2000 historias, error estándar entre corridas.
+- Artefacto de varianza declarado (meseta a 1,4–2,0 m de profundidad); F71/F76/F77 siguen afectadas. 4 pruebas.
+- Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).
+
+## v3.10.0 — 2026-10-28 — Fase 84: Molflow+ oficial con la cámara v0.35 + corrección de los motores de vacío
+- molflowCLI 2.11.1 (paquete Debian del usuario). Validación analítica previa (cilindro con una boca, P = Q/S):
+  encontró y corrige tres errores; las evidencias anteriores no se reescriben (correcciones_historicas.jsonl):
+  - vacuum_tpmc: área de una sola tapa para los impactos de las dos → presiones de F66/F82 ×2 (2,003 → 1,001 × Q/S);
+  - tools/kiube_camara_molflow.py: corona abierta entre tapa y pared (fuga) → Molflow 0,064 → 0,998 × Q/S;
+  - tools/kiube_camara_molflow.py: fuente de H₂ de 2 caras con caudal dividido entre 2 (Molflow lo toma como total);
+  - vacuum_tpmc (modo V04): bocas en ambas tapas (8) frente a las 4 de la tapa superior de F67/F74.
+- Cámara v0.35 (F82 recalculada con el motor corregido): Molflow/TPMC = 1,00 en H₂O y H₂ (0,99–1,03 por radio),
+  absorbido 99,8–99,9 %; pérdida por gas 4,4 % (2 sccm) / 7,0 % (3,5 sccm), Molflow 4,43 % frente a TPMC 4,42 %.
+  P(H₂O) 1,45e-7 mbar (medida IBA con RF 2,7e-7). Control V04: Molflow/TPMC 1,006 (F66 y F67 conciliadas).
+- F67 usaba E = 17,4 MeV, ΔE = 80 keV y B = 1,77 T para la pérdida (distinto de F65/F66): declarado.
+- Rangos de 3 pruebas de F82 ampliados para aceptar la física corregida. 3 pruebas nuevas.
+
+## v3.11.0 — 2026-10-28 — Fase 85: cierre de la cadena de blindaje F70–F78 (kiube v0.35)
+- F83 ampliada a 17 corridas (34 000 historias; 5 con malla de fluencia en 3 grupos). Esquema v2 de importancia
+  (techo y losa) probado y descartado por coste; artefacto de varianza de F83 declarado.
+- F70 sustituida (fuera de bloque 2,7e-4); F71 tabla F83/F85/SRG (TVL medio 26,2 cm; SRG ≈ 30); F72 actualizada
+  (Co60 10,2 ± 0,1 GBq, Eu152 4,8, Cu64 583, Ag110m 0,57); F76 métrica H*(10) ICRP-74, E(AP) ICRP-116 pendiente_fuente;
+  F77 mallas_gemelo_f77.npz (885 720 vóxeles, H*(10) y fluencia en 3 grupos, media/σ); F78 exterior DIRECTO:
+  0,005–0,012 µSv/h (cara), 0,024 µSv/h frente a T1; dosis anual ≤ 0,02 mSv con 150 k µAh/año (límite 1 mSv).
+- 4 pruebas. Todo simulacion_teorica: no cierra 18.19; PQ no_declarada_nunca (14.9).

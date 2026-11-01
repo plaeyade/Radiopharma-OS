@@ -41,11 +41,12 @@ def test_perdida_monotona_en_presion():
 
 
 def test_perdida_en_rango_fisico():
-    # nominal 3e-7 mbar: pérdida del orden de 1e-5 – 1e-3 (0,001–0,1 %)
+    # nominal 3e-7 mbar: pérdida del orden de 1e-3 – 1e-1 (0,1–10 %). F82: hasta v3.7.0 el rango esperado era
+    # 1e-5 – 1e-3 porque MBAR_A_PA valía 0,1 (1 mbar = 100 Pa); la evidencia histórica de F65 no se reescribe.
     r = simular_perdida_gas(corriente_ua=200, energia_final_mev=18.0,
                             delta_e_kev_vuelta=98.5, b_media_t=1.360,
                             perfil=PerfilPresion(3e-7))
-    assert 1e-5 < r.fraccion_perdida < 1e-3
+    assert 1e-3 < r.fraccion_perdida < 1e-1
     assert r.potencia_perdida_w > 0
 
 
