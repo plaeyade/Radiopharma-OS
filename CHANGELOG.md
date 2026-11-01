@@ -1,5 +1,9 @@
 # CHANGELOG — Radiopharma OS
 
+## v3.17.1 — F86 parcial sin DWSIM (2026-11-01)
+- F86 ya no se rompe con TypeError cuando F85 está en «pendiente_entorno»: marca los conceptos que dependen de DWSIM como `pendiente_F85_DWSIM`, sin cantidad ni costo; el total los excluye y se advierte; el estado queda en `parcial_pendiente_F85`.
+- Nueva prueba del camino parcial; F86 sale de la lista de calificación de entorno.
+
 ## v3.17.0 — Depuración (2026-10-31)
 - Pruebas ya no escriben en datos versionados (Yield Engine: 84 tablas de stopping de prueba retiradas; Process Service: costos).
 - Raíz única `RPOS_AGENTS_ROOT` en lugar de 158 rutas `/mnt/agents` fijas; pipelines se ejecutan desde este repo.

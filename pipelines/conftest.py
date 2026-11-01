@@ -68,9 +68,6 @@ _ENTORNO = {
     "test_informe_regulatorio_f54.py::test_integra_evidencia_real": "integra evidencia MC real",
     "test_informe_regulatorio_f54.py::test_sintesis_solo_valores_publicados": "integra evidencia MC real",
     "test_dwsim_f84.py::test_estado_y_runtime": "runtime DWSIM instalado",
-    # F86 consume resultados DWSIM de F85; sin runtime F85 los deja en null y F86 falla con TypeError
-    # (hallazgo: F86 debería declarar «pendiente» en vez de romperse).
-    "test_utilidades_f86.py": "requiere resultados DWSIM de F85 (runtime)",
     # El veredicto del planner depende del estado de la evidencia de fases previas en la raíz.
     "test_madse_f92.py::test_planner_y_orquestador": "veredicto según evidencia de fases previas",
 }

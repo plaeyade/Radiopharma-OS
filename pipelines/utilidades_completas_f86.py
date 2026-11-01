@@ -46,7 +46,12 @@ def md5_file(p, chunk=1 << 20):
 def main():
     os.makedirs(EV, exist_ok=True)
     base = json.load(open(F85))
-    u85 = base["utilidades"]
+    u85 = base.get("utilidades")
+    f85_completa = base.get("estado") == "completada" and isinstance(u85, dict)
+    if not f85_completa:
+        # F85 sin resultados DWSIM (p. ej. estado «pendiente_entorno»): los conceptos que dependen
+        # de DWSIM quedan PENDIENTES; no se inventan cantidades ni se rompe la fase.
+        u85 = {}
     s = SUPUESTOS
     cc = s["cuarto_caliente"]
     # HVAC cuarto caliente: Q = rho*cp*(V*ACH/3600)*dT
@@ -54,12 +59,18 @@ def main():
     kwh_hvac = q_hvac_kw * s["horas_lote"]
     kwh_vapor_planta = s["vapor_planta"]["reheat_kW"] * s["vapor_planta"]["horas"]
 
+    def de_f85(*ruta):
+        v = u85
+        for k in ruta:
+            v = v.get(k) if isinstance(v, dict) else None
+        return v
+
     items = [
-        {"concepto": "evaporacion_agua_enriquecida", "cantidad": u85["vapor_o_electricidad_evaporacion"]["kWh_lote"],
+        {"concepto": "evaporacion_agua_enriquecida", "cantidad": de_f85("vapor_o_electricidad_evaporacion", "kWh_lote"),
          "unidad": "kWh", "tarifa": TARIFAS_DECLARADAS_MXN["electricidad_kWh"], "fuente": "DWSIM IAPWS (F84/F85)"},
-        {"concepto": "trampa_fria_LN2", "cantidad": u85["LN2_trampa_fria"]["kg_LN2_lote"],
+        {"concepto": "trampa_fria_LN2", "cantidad": de_f85("LN2_trampa_fria", "kg_LN2_lote"),
          "unidad": "kg LN2", "tarifa": TARIFAS_DECLARADAS_MXN["LN2_kg"], "fuente": "DWSIM PR78 hfg (F85)"},
-        {"concepto": "aire_comprimido", "cantidad": u85["aire_comprimido"]["kWh_lote"],
+        {"concepto": "aire_comprimido", "cantidad": de_f85("aire_comprimido", "kWh_lote"),
          "unidad": "kWh", "tarifa": TARIFAS_DECLARADAS_MXN["electricidad_kWh"], "fuente": "analitico isotermo (F85)"},
         {"concepto": "HVAC_cuarto_caliente", "cantidad": round(kwh_hvac, 2),
          "unidad": "kWh", "tarifa": TARIFAS_DECLARADAS_MXN["electricidad_kWh"], "fuente": "analitico declarado (F86)"},
@@ -72,10 +83,16 @@ def main():
         {"concepto": "agua_proceso", "cantidad": s["agua_proceso_m3"],
          "unidad": "m3", "tarifa": TARIFAS_DECLARADAS_MXN["agua_m3"], "fuente": "supuesto declarado (F86)"},
     ]
+    pendientes = []
     for it in items:
-        it["costo_mxn_lote"] = round(it["cantidad"] * it["tarifa"], 2)
-    total = round(sum(it["costo_mxn_lote"] for it in items), 2)
-    kwh_elec = round(sum(it["cantidad"] for it in items if it["unidad"] == "kWh"), 2)
+        if it["cantidad"] is None:
+            it["costo_mxn_lote"] = None
+            it["estado"] = "pendiente_F85_DWSIM"
+            pendientes.append(it["concepto"])
+        else:
+            it["costo_mxn_lote"] = round(it["cantidad"] * it["tarifa"], 2)
+    total = round(sum(it["costo_mxn_lote"] for it in items if it["costo_mxn_lote"] is not None), 2)
+    kwh_elec = round(sum(it["cantidad"] for it in items if it["unidad"] == "kWh" and it["cantidad"] is not None), 2)
 
     ev = {
         "fase": "F86",
@@ -90,13 +107,16 @@ def main():
         "totales": {"costo_utilidades_mxn_lote": total,
                      "electricidad_kWh_lote": kwh_elec,
                      "nota": "solo utilidades; excluye insumos (agua enriquecida, reactivos) y mano de obra"},
-        "estado": "completada",
+        "estado": "completada" if not pendientes else "parcial_pendiente_F85",
+        "estado_F85": base.get("estado"),
+        "conceptos_pendientes": pendientes,
         "advertencias": [
             "Tarifas son SUPUESTOS declarados: tarifa CFE real y tipo de cambio MXN siguen pendientes (lista de pendientes del proyecto).",
             "HVAC y vapor de planta son analiticos con supuestos declarados, no mediciones.",
             "El total cubre SOLO utilidades; no es el costo del lote completo.",
             "Registro documental; no es decision operativa (18.10).",
-        ],
+        ] + ([f"PARCIAL: F85 en estado «{base.get('estado')}» sin resultados DWSIM; "
+              f"{len(pendientes)} conceptos pendientes y el total los EXCLUYE."] if pendientes else []),
     }
     outp = os.path.join(EV, "utilidades_completas_f86.json")
     json.dump(ev, open(outp, "w"), ensure_ascii=False, indent=1)
@@ -112,7 +132,7 @@ def main():
     entry["md5"] = hashlib.md5(json.dumps(entry, sort_keys=True).encode()).hexdigest()
     with open(regp, "a") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    print(json.dumps({"evidencia": outp, "total_mxn_lote": total, "md5": entry["md5"]}, indent=1))
+    print(json.dumps({"evidencia": outp, "total_mxn_lote": total, "estado": ev["estado"], "md5": entry["md5"]}, indent=1))
 
 
 if __name__ == "__main__":

@@ -22,10 +22,10 @@ Antes, fuera del entorno original: 101 + servicios con 21 fallos/errores y 95 en
 
 CI nuevo: `.github/workflows/ci.yml` (no había).
 
-## Hallazgo abierto
+## Hallazgo resuelto (v3.17.1)
 
-F86 (`utilidades_completas_f86.py`) se rompe con `TypeError` si F85 no tiene resultados DWSIM
-(runtime ausente); debería declarar «pendiente» como hacen las demás fases.
+F86 se rompía con `TypeError` si F85 no tenía resultados DWSIM (runtime ausente). Ahora declara
+esos conceptos pendientes y queda `parcial_pendiente_F85`.
 
 ## Usar la evidencia real
 
