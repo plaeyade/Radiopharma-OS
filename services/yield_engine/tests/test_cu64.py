@@ -72,5 +72,11 @@ def test_stopping_proxy_cu_declarado_en_fuente():
     t = TARGET_CATALOG["ni64"]
     assert t.stopping_material == "ni64"
     assert "proxy" in t.label.lower()
+    import importlib.util
+
     fuente = service.stopping_status()["fuente"]
-    assert "PSTAR" in fuente
+    # Con pycatima (imagen Docker) Ni-64 usa ATIMA real; sin él, el proxy Cu PSTAR declarado.
+    if importlib.util.find_spec("pycatima") is not None:
+        assert "ATIMA" in fuente
+    else:
+        assert "PSTAR" in fuente

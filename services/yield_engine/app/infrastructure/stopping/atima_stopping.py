@@ -15,6 +15,9 @@ _MATERIALS = {
     "n2": {"elements": [[14, 7, 2]], "density": 1.0},
     "zn68": {"elements": [[68, 30, 1]], "density": 1.0},
     "n15": {"elements": [[15, 7, 2]], "density": 1.0},
+    # 64Ni enriquecido (A = 63.928, Z = 28; ρ = 8.908 g/cm³). Con pycatima ya no hace falta el proxy
+    # Cu de PSTAR: el S(E) másico es el de níquel. Sin pycatima se mantiene el proxy declarado.
+    "ni64": {"elements": [[63.928, 28, 1]], "density": 8.908},
 }
 
 

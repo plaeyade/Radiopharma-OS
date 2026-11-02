@@ -56,8 +56,9 @@ TARGET_CATALOG: dict[str, TargetMaterial] = {
     # exportada por el usuario → calibración/promoción 19.10).
     "ni64": TargetMaterial(
         material_id="ni64",
-        label=("Níquel enriquecido 64Ni (stopping: proxy Cu PSTAR "
-               "declarado; enriquecimiento típico comercial declarado)"),
+        label=("Níquel enriquecido 64Ni (stopping: ATIMA con pycatima; si no está "
+               "disponible, proxy Cu PSTAR declarado; enriquecimiento típico "
+               "comercial declarado)"),
         stopping_material="ni64",
         target_nuclide="64Ni",
         molar_mass_g_mol=64.0,
