@@ -128,4 +128,4 @@ app.include_router(neutrons_api.router)
 
 @app.get("/health", tags=["meta"])
 def health() -> dict:
-    return {"service": "yield-engine", "status": "ok", "version": "0.2.0"}
+    return {"service": "yield-engine", "status": "ok", "version": app.version}

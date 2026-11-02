@@ -1,0 +1,10 @@
+.git
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+out/
+node_modules/
+console/node_modules/
+dashboard/node_modules/
+airflow/logs/
+*.log
