@@ -7,128 +7,103 @@
 
 [![ci.yml](https://github.com/plaeyade/radiopharma-os/actions/workflows/ci.yml/badge.svg)](https://github.com/plaeyade/radiopharma-os/actions/workflows/ci.yml) [![imagen.yml](https://github.com/plaeyade/radiopharma-os/actions/workflows/imagen.yml/badge.svg)](https://github.com/plaeyade/radiopharma-os/actions/workflows/imagen.yml) ![versión](https://img.shields.io/badge/versi%C3%B3n-v3.21-blue) ![Python](https://img.shields.io/badge/Python-3.12-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688) ![licencia](https://img.shields.io/badge/licencia-propietaria-lightgrey)
 
-[Objetivos](#objetivos) · [Servicios (FastAPI)](#servicios-fastapi) · [Pipelines principales (`pipelines/`)](#pipelines-principales-pipelines) · [Contenedores](#contenedores) · [Uso](#uso) · [Ecosistema GAMMA](#ecosistema-gamma)
+[Qué aporta](#qué-aporta) · [Capacidades](#capacidades) · [Sustento científico](#sustento-científico) · [Integración con el ecosistema](#integración-con-el-ecosistema) · [Contenedores](#contenedores) · [Ecosistema GAMMA](#ecosistema-gamma)
 
 </div>
 
 > [!IMPORTANT]
-> Repositorio privado, de uso interno. Las recomendaciones de QC y los rendimientos son herramientas técnicas: la liberación de lotes la firma el responsable sanitario.
+> Repositorio privado, de uso individual del titular. Las recomendaciones de control de calidad y los rendimientos son herramientas técnicas: la liberación de cada lote la firma el responsable sanitario.
 <!-- /encabezado-gamma -->
 
-Plataforma de operación de una radiofarmacia con ciclotrón: datos nucleares, rendimiento de
-producción, planeación semanal contra el ciclotrón real, control de calidad y liberación,
-telemetría, trazabilidad y costos. Corresponde a la fase **B.17 (Radiopharma OS & Nuclear Medicine
-Operations)** del plan canónico de GAMMA.
+Radiopharma OS opera una radiofarmacia con ciclotrón: datos nucleares, rendimiento de producción,
+planeación semanal contra el ciclotrón real, control de calidad y liberación, telemetría,
+trazabilidad del lote y costos.
 
-**Versión: v3.21.0** (ver `CHANGELOG.md`).
+## Qué aporta
 
-## Objetivos
+- **Planear contra la instalación real.** El plan semanal se verifica a la vez contra el ciclotrón
+  IBA KIUBE (término fuente de Cyclotron-SIM), el presupuesto de blindaje del edificio (Zumaya-AI) y
+  la actividad teórica calculada con datos nucleares del OIEA.
+- **Hechos distintos, no un solo número.** Actividad teórica, medida, preparada y administrada se
+  registran por separado y se comparan lote por lote.
+- **Liberación auditada.** Especificaciones de QC versionadas; la recomendación de liberar,
+  rechazar o revisar queda registrada con su fundamento.
 
-1. **Planear contra la instalación real.** El plan de producción se verifica contra tres fuentes:
-   - el ciclotrón IBA KIUBE (contrato `cyclotron-sim/termino_fuente@1`);
-   - el presupuesto de blindaje del edificio (`zumaya-ai/presupuesto_operativo@1`);
-   - la actividad teórica calculada con datos IAEA.
-2. **Distinguir hechos.** Actividad teórica, medida, preparada y administrada son hechos
-   distintos (B.17). El tablero compara lo medido con lo teórico, lote por lote.
-3. **QC trazable.** Las especificaciones están versionadas y la recomendación de liberación,
-   rechazo o revisión queda auditada.
-4. **Cada ficha con su fuente.** Las fichas por isótopo y del ciclotrón citan documento, página y
-   fragmento obtenidos de GAMMA-AI.
+## Capacidades
 
-## Servicios (FastAPI)
-
-| Servicio | Puerto | Función |
+| Servicio | Puerto | Qué hace |
 |---|---|---|
 | `nuclear_data_service` | 8001 | Biblioteca de radionúclidos versionada: decaimiento, espectros, EXFOR/NNDC |
-| `yield_engine` | 8002 | Rendimiento EOB/EOS por reacción y blanco (secciones eficaces IAEA, frenado), lotes |
-| `data_lake_service` | 8003 | Evidencia, hilo digital, PDF de expediente de lote (EBR) |
-| `auth_service` | 8004 | Autenticación y roles (Keycloak opcional) |
-| `qc_engine` | 8005 | Protocolos y especificaciones de QC; Release Engine (liberación / rechazo / revisión) |
-| `telemetry_service` | 8006 | Telemetría de planta (OPC UA / MQTT) |
-| `process_service` | 8007 | Gemelo de proceso: KPIs y costos |
-| `surrogate_service` | 8008 | Modelos sustitutos y agentes (cap. 20) |
+| `yield_engine` | 8002 | Rendimiento EOB/EOS por reacción y blanco grueso: σ(E) del OIEA y poder de frenado ATIMA |
+| `data_lake_service` | 8003 | Evidencia, hilo digital y expediente de lote (EBR) en PDF |
+| `auth_service` | 8004 | Autenticación y roles |
+| `qc_engine` | 8005 | Protocolos y especificaciones de QC; motor de liberación |
+| `telemetry_service` | 8006 | Telemetría de planta (OPC UA, MQTT) |
+| `process_service` | 8007 | Gemelo de proceso: indicadores y costos |
+| `surrogate_service` | 8008 | Modelos sustitutos |
 
-`console/` es la consola web (React, servida por nginx en el puerto 8080). `dashboard/` contiene
-los tableros de Grafana y Streamlit, y `airflow/dags/` la orquestación.
-
-## Pipelines principales (`pipelines/`)
-
-| Pipeline | Qué hace |
+| Flujo | Qué hace |
 |---|---|
-| `plan_produccion.py` | Plan semanal (F-18 con doble haz, Ga-68, Cu-64) frente al KIUBE, el blindaje y el EOB teórico. Agrega fichas citadas por GAMMA |
-| `tablero_produccion.py` | Tablero por lote: EOB teórico frente al medido, rendimiento de blanco, rendimiento de síntesis corregido por decaimiento y QC. Salida JSON o HTML |
-| `gamma_evidencia.py` | Cliente de GAMMA: consulta en vivo (`GAMMA_URL`) o paquete versionado; verifica el SHA-256 de cada cita |
-| `ecosistema.py` | Contratos con Cyclotron-SIM y Zumaya-AI |
-| `lote_fdg_f58.py`, `batch_cli.py`, `qc_cli.py`, `ebr_cli.py` | Lotes, QC y expediente de lote |
+| `pipelines/plan_produccion.py` | Plan semanal de F-18 (doble haz), Ga-68 y Cu-64 con fichas citadas por GAMMA |
+| `pipelines/tablero_produccion.py` | EOB teórico frente al medido, rendimiento de blanco y de síntesis, QC por lote |
+| `pipelines/gamma_evidencia.py` | Evidencia de GAMMA en vivo o por paquete, con SHA-256 verificado |
 
-El índice de las fases históricas (F1–F97) y su ubicación actual está en `docs/FASES.md`. La
-física del gemelo KIUBE vive en Cyclotron-SIM y la del edificio en Zumaya-AI.
+## Sustento científico
+
+| Fuente | Uso |
+|---|---|
+| IAEA, secciones eficaces recomendadas para producción de radionúclidos | σ(E) de cada reacción |
+| CATIMA/ATIMA (GSI) y NIST PSTAR | Poder de frenado de protones en blancos |
+| NNDC/ENSDF | Semividas y datos de decaimiento |
+| IBA Cyclone KIUBE SRG | Corriente, puertos y blancos del ciclotrón |
+| Farmacopeas (FEUM, Ph. Eur.) | Especificaciones de QC (FDG; Ga-68 y Cu-64 al cargar sus monografías) |
+
+## Integración con el ecosistema
+
+| Con | Contrato | Uso |
+|---|---|---|
+| Cyclotron-SIM | `cyclotron-sim/termino_fuente@1` | Corriente, energía y rendimiento por puerto |
+| Zumaya-AI | `zumaya-ai/presupuesto_operativo@1` | Límite de µA·h por semana con el que se diseñó el blindaje |
+| GAMMA-AI | `gamma/evidencia@1`, `gamma/paquete_evidencia@1` | Fichas por isótopo y del ciclotrón con cita verificable |
+
+Diferencia con los demás repositorios: aquí se **opera** la producción. La física del ciclotrón
+vive en Cyclotron-SIM, la del edificio en Zumaya-AI y la evidencia documental en GAMMA-AI.
 
 ## Contenedores
 
-`docker-compose.yml`:
+| Imagen | Contenido |
+|---|---|
+| `Dockerfile` (raíz) | Yield Engine con uvicorn en el puerto 8002; la construcción corre su suite de pruebas y la imagen ejecuta sin privilegios |
+| `docker-compose.yml` | Los 8 servicios, consola web y PostgreSQL, MinIO, InfluxDB, Redis, Mosquitto, simulador OPC UA |
 
-| Servicio | Imagen | Puerto |
-|---|---|---|
-| Servicios de la plataforma (8) | `Dockerfile` (python:3.12-slim) | 8001–8008 |
-| `console` | `console/Dockerfile` (nginx) | 8080 |
-| `postgres` | postgres:16-alpine | 5432 |
-| `minio` | minio/minio | 9000 |
-| `influxdb` | influxdb:2.7-alpine | 8086 |
-| `redis` | redis:7-alpine | 6379 |
-| `mosquitto` | eclipse-mosquitto:2 | 1883 |
-| `opcua-sim` | python:3.12-slim | 4840 |
-| `verapdf` | verapdf/verapdf:1.26 | — |
-| `osrm` | osrm/osrm-backend | 5000 |
-
-Pilas opcionales: `docker-compose.dashboards.yml` (Grafana 11.2 y Streamlit) y
-`docker-compose.keycloak.yml` (Keycloak 26.0).
+```bash
+docker build -t radiopharma-os:dev .
+docker run -d --name rpos -p 8002:8002 radiopharma-os:dev    # http://localhost:8002/docs
+docker compose up -d                                          # plataforma completa
+```
 
 ## Uso
 
 ```bash
-pip install -r requirements-lock.txt   # Python 3.12 (la CI usa 3.12)
-make test                              # todas las pruebas
-make nds   # un servicio en local (ye, dl, auth, qc, tel, process, surrogate: ver Makefile)
-make up / make down                    # pila Docker
-python pipelines/plan_produccion.py                                   # plan semanal (JSON)
+pip install -r requirements-lock.txt     # Python 3.12
+make test                                # todas las pruebas
+python pipelines/plan_produccion.py
 python pipelines/tablero_produccion.py pipelines/fixtures/lotes_ejemplo.json --html tablero.html
 ```
 
-Variables útiles:
-- `CYCLOTRON_SIM_RAIZ` y `ZUMAYA_RAIZ`: rutas a los repos hermanos. Sin ellas se usan las copias
-  versionadas de sus contratos.
-- `GAMMA_URL`: servicio de evidencia de GAMMA (`gamma ecosistema servir`).
-- `RPOS_AGENTS_ROOT`: raíz de la evidencia de fases fuera de git. Sin ella, las pruebas que la
-  requieren se omiten con motivo; `RPOS_REQUIRE_EVIDENCIA=1` hace que fallen.
+Variables: `CYCLOTRON_SIM_RAIZ`, `ZUMAYA_RAIZ` (repos hermanos; sin ellas se usan las copias
+versionadas de sus contratos) y `GAMMA_URL` (servicio de evidencia).
 
-## Integración con el ecosistema
+## Colaboraciones
 
-| Con | Contrato | Dónde |
-|---|---|---|
-| **Cyclotron-SIM** | `cyclotron-sim/termino_fuente@1` | `pipelines/ecosistema.py` |
-| **Zumaya-AI** | `zumaya-ai/presupuesto_operativo@1` | `pipelines/fixtures/presupuesto_operativo_zumaya.json` |
-| **GAMMA-AI** | `gamma/evidencia@1`, `gamma/paquete_evidencia@1` | `pipelines/gamma_evidencia.py`, `pipelines/fixtures/gamma_evidencia_produccion.json` |
+Abierto a colaboradores invitados: radiofarmacéuticos (protocolos de QC y monografías), físicos de
+ciclotrón (blancos y rendimientos medidos) e ingenieros de proceso (DWSIM, telemetría).
 
-## Calidad
+## Hoja de ruta
 
-La CI (`.github/workflows/ci.yml`) corre `make test` con Python 3.12 en cada PR. Las pruebas no
-escriben en datos versionados. Detalle de la depuración en `docs/DEPURACION.md`.
-
-## Pendientes conocidos
-
-- Sólo existe protocolo de QC para FDG. Ga-68 y Cu-64 aparecen como «sin protocolo» hasta cargar
-  sus monografías (FEUM o Ph. Eur.) en GAMMA.
-- Los rendimientos reales de blanco y síntesis requieren datos de producción. El EOB del plan es
-  teórico.
-
-## Documentación
-
-- `docs/FASES.md`: índice de fases.
-- `docs/ecosistema.md`: contratos.
-- `docs/VALIDATION.md`, `docs/protocolos_iq_oq.md`: validación y calificación.
-- `docs/despliegue_*.md`: despliegue.
-- `docs/README-historico.md`: README anterior, con el detalle por capítulo y fase.
+1. Protocolos de QC de Ga-68 y Cu-64 con sus monografías.
+2. Rendimientos medidos de blanco y síntesis para calibrar el EOB teórico.
+3. Gemelo de proceso con DWSIM (F85–F86).
 
 ## Ecosistema GAMMA
 
