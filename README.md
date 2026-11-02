@@ -1,12 +1,24 @@
+<!-- encabezado-gamma -->
+<div align="center">
+
 # Radiopharma OS
+
+**Operación de una radiofarmacia con ciclotrón: producción, QC, liberación y trazabilidad**
+
+[![ci.yml](https://github.com/plaeyade/radiopharma-os/actions/workflows/ci.yml/badge.svg)](https://github.com/plaeyade/radiopharma-os/actions/workflows/ci.yml) [![imagen.yml](https://github.com/plaeyade/radiopharma-os/actions/workflows/imagen.yml/badge.svg)](https://github.com/plaeyade/radiopharma-os/actions/workflows/imagen.yml) ![versión](https://img.shields.io/badge/versi%C3%B3n-v3.21-blue) ![Python](https://img.shields.io/badge/Python-3.12-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688) ![licencia](https://img.shields.io/badge/licencia-propietaria-lightgrey)
+
+[Objetivos](#objetivos) · [Servicios (FastAPI)](#servicios-fastapi) · [Pipelines principales (`pipelines/`)](#pipelines-principales-pipelines) · [Contenedores](#contenedores) · [Uso](#uso) · [Ecosistema GAMMA](#ecosistema-gamma)
+
+</div>
+
+> [!IMPORTANT]
+> Repositorio privado, de uso interno. Las recomendaciones de QC y los rendimientos son herramientas técnicas: la liberación de lotes la firma el responsable sanitario.
+<!-- /encabezado-gamma -->
 
 Plataforma de operación de una radiofarmacia con ciclotrón: datos nucleares, rendimiento de
 producción, planeación semanal contra el ciclotrón real, control de calidad y liberación,
 telemetría, trazabilidad y costos. Corresponde a la fase **B.17 (Radiopharma OS & Nuclear Medicine
 Operations)** del plan canónico de GAMMA.
-
-> Repositorio privado, de uso interno. Las recomendaciones de QC y los rendimientos son herramientas
-> técnicas: la liberación de lotes la firma el responsable sanitario.
 
 **Versión: v3.21.0** (ver `CHANGELOG.md`).
 
@@ -117,3 +129,33 @@ escriben en datos versionados. Detalle de la depuración en `docs/DEPURACION.md`
 - `docs/VALIDATION.md`, `docs/protocolos_iq_oq.md`: validación y calificación.
 - `docs/despliegue_*.md`: despliegue.
 - `docs/README-historico.md`: README anterior, con el detalle por capítulo y fase.
+
+## Ecosistema GAMMA
+
+Cinco repositorios privados unidos por contratos JSON versionados, no por imports. Este repositorio
+está resaltado.
+
+```mermaid
+flowchart LR
+  G["GAMMA-AI<br/><sub>motor científico · núcleo clínico</sub>"]
+  R["RadShieldMx<br/><sub>blindajes y memoria CNSNS</sub>"]
+  P["Radiopharma OS<br/><sub>producción · QC · liberación</sub>"]
+  C["Cyclotron-SIM<br/><sub>gemelo físico · Monte Carlo</sub>"]
+  Z["Zumaya-AI<br/><sub>instalación · búnker · estructura</sub>"]
+  G -- "gamma/evidencia@1" --> R
+  G -- "gamma/evidencia@1" --> P
+  C -- "termino_fuente@1" --> P
+  C -- "flujo_aire@1" --> R
+  Z -- "presupuesto_operativo@1" --> P
+  Z -- "planos · materiales" --> C
+  R & P & C & Z -. "gamma/ingesta@1" .-> G
+  classDef actual fill:#1f6feb,stroke:#0b3d91,color:#fff,stroke-width:2px
+  class P actual
+```
+
+## Confidencialidad y licencia
+
+Software propietario de uso individual del titular; no es de código abierto ni se distribuye.
+Los documentos fuente son propiedad del titular, que tiene los derechos de uso. Ningún dato de
+pacientes reales entra a este repositorio: los datos clínicos permanecen anonimizados y fuera de
+GitHub. Las salidas técnicas no sustituyen la revisión ni la firma del profesional responsable.
