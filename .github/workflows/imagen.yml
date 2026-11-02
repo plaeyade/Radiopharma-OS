@@ -1,0 +1,35 @@
+name: Imagen Docker (Yield Engine)
+
+on:
+  push:
+    branches: [master]
+    paths: ["Dockerfile", ".dockerignore", "services/yield_engine/**", ".github/workflows/imagen.yml"]
+  pull_request:
+    paths: ["Dockerfile", ".dockerignore", "services/yield_engine/**", ".github/workflows/imagen.yml"]
+
+jobs:
+  construir-y-probar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Construir (incluye la suite del Yield Engine)
+        run: |
+          docker build -t radiopharma-os:ci \
+            --build-arg BUILD_COMMIT=$(git rev-parse --short HEAD) \
+            --build-arg BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ) .
+      - name: Arrancar y verificar /health y /docs
+        run: |
+          docker run -d --name rpos -p 8002:8002 radiopharma-os:ci
+          for i in $(seq 1 30); do
+            curl -fsS http://localhost:8002/health && break
+            sleep 2
+          done
+          curl -fsS http://localhost:8002/health | grep '"status":"ok"'
+          curl -fsS -o /dev/null http://localhost:8002/docs
+          test "$(docker inspect -f '{{.Config.User}}' rpos)" = "rpos"
+      - name: Registro del contenedor
+        if: always()
+        run: docker logs rpos || true
+      - name: Tamaño de la imagen
+        run: docker image ls radiopharma-os:ci
